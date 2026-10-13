@@ -1,0 +1,22 @@
+{
+  "name": "tolmol-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@arkiv-network/sdk": "0.8.1",
+    "tolmol-sdk": "0.1.0",
+    "viem": "2.57.5"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.10.6",
+    "vite": "7.3.7"
+  }
+}

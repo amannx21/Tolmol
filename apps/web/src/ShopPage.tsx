@@ -1,0 +1,237 @@
+import { useEffect, useState } from "preact/hooks"
+import {
+  daysLeft,
+  dedupeReports,
+  evidenceRows,
+  explorerAddressUrl,
+  formatBp,
+  formatKg,
+  shopReports,
+  shopStats,
+  shopWitnesses,
+  toCsv,
+  toJson,
+  validWitnesses,
+  type Report,
+  type Shop,
+  type Witness,
+} from "tolmol-sdk"
+import { reader, short } from "./arkiv"
+import { STATE_NAMES, useLang } from "./i18n"
+import { go } from "./router"
+import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
+
+type Data = { shop: Shop | undefined; reports: Report[]; witnesses: Witness[]; atBlock: bigint; head: bigint }
+
+function download(name: string, text: string, type: string) {
+  const url = URL.createObjectURL(new Blob([text], { type }))
+  const a = Object.assign(document.createElement("a"), { href: url, download: name })
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: string; atBlock?: string }) {
+  const { t, lang } = useLang()
+  const [data, setData] = useState<Data | null>(null)
+  const [err, setErr] = useState<unknown>(null)
+  const [blockInput, setBlockInput] = useState(atBlock ?? "")
+
+  useEffect(() => {
+    setData(null)
+    setErr(null)
+    ;(async () => {
+      const head = await reader.getBlockNumber({ cacheTime: 0 })
+      const at = atBlock && /^\d+$/.test(atBlock) && BigInt(atBlock) <= head ? BigInt(atBlock) : head
+      const [shops, reps, wits] = await Promise.all([
+        loadShops(),
+        shopReports(reader, shopId, month, { atBlock: at }),
+        shopWitnesses(reader, shopId, month, { atBlock: at }),
+      ])
+      setData({ shop: shops.find((s) => s.shopId === shopId), reports: reps.items, witnesses: wits.items, atBlock: at, head })
+    })().catch(setErr)
+  }, [shopId, month, atBlock])
+
+  if (err) return <ErrorBox error={err} />
+  if (!data) return <Loading />
+
+  const kept = dedupeReports(data.reports)
+  const keptKeys = new Set(kept.map((r) => r.key.toLowerCase()))
+  const stats = shopStats(data.reports, data.witnesses)[0]
+  const byMonth = new Map<string, { e: number; s: number; n: number }>()
+  for (const r of kept) {
+    const m = byMonth.get(r.month) ?? { e: 0, s: 0, n: 0 }
+    m.e += r.entitledG
+    m.s += r.shortfallG
+    m.n++
+    byMonth.set(r.month, m)
+  }
+  const months = [...byMonth.keys()].sort()
+  const sorted = [...data.reports].sort((a, b) => (a.createdAt > b.createdAt ? -1 : a.createdAt < b.createdAt ? 1 : 0))
+  const historic = data.atBlock !== data.head
+  const q = (extra: Record<string, string | undefined>) => {
+    const p = new URLSearchParams()
+    const all = { month, block: atBlock, ...extra }
+    for (const [k, v] of Object.entries(all)) if (v) p.set(k, v)
+    const s = p.toString()
+    return `#/shop/${shopId}${s ? `?${s}` : ""}`
+  }
+
+  const exportAs = (fmt: "csv" | "json") => {
+    const rows = evidenceRows(data.reports, data.witnesses, data.atBlock)
+    const base = `tolmol-${shopId}-${month ?? "all"}-block${data.atBlock}`
+    if (fmt === "csv") download(`${base}.csv`, toCsv(rows), "text/csv")
+    else
+      download(
+        `${base}.json`,
+        toJson(rows, {
+          note: "SYNTHETIC demo data. Each row can be re-checked on the Arkiv Tiramisu explorer by entity key.",
+          network: "Arkiv Tiramisu testnet, chain 7738577",
+          shop_id: shopId,
+          month: month ?? "all",
+          read_at_block: data.atBlock.toString(),
+          exported_at: new Date().toISOString(),
+        }),
+        "application/json",
+      )
+  }
+
+  return (
+    <>
+      <section class="card">
+        <h2>
+          {data.shop ? (lang === "hi" ? data.shop.labelHi : data.shop.labelEn) : shopId}
+        </h2>
+        <p class="small muted">
+          <span class="mono">{shopId}</span>
+          {data.shop && ` · ${data.shop.district} · ${STATE_NAMES[data.shop.state]?.[lang] ?? data.shop.state}`}
+          {!data.shop && " · not in the trusted registry"}
+        </p>
+        {stats ? (
+          <div class="statrow">
+            <div>
+              <div class="big">{formatBp(stats.shortfallBp)}</div>
+              <div class="label">{t("shortfall")}</div>
+            </div>
+            <div>
+              <div class="big">{stats.reports}</div>
+              <div class="label">{t("reports")}</div>
+            </div>
+            <div>
+              <div class="big">{stats.corroborated}</div>
+              <div class="label">{t("corroboratedReports")}</div>
+            </div>
+          </div>
+        ) : (
+          <p class="muted">{t("empty")}</p>
+        )}
+        <div class="row wrap">
+          <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
+            <option value="">{t("allMonths")}</option>
+            {[...new Set(data.reports.map((r) => r.month))].sort().reverse().map((m) => (
+              <option value={m}>{m}</option>
+            ))}
+          </select>
+          <a class="button secondary" href={`#/report?shop=${shopId}`}>
+            {t("ctaReport")}
+          </a>
+        </div>
+      </section>
+
+      {months.length > 1 && (
+        <section class="card">
+          <h3>Timeline</h3>
+          <ul class="timeline">
+            {months.map((m) => {
+              const v = byMonth.get(m)!
+              const bp = Math.floor((v.s * 10_000) / v.e)
+              return (
+                <li>
+                  <span class="mono">{m}</span> <ShortfallBar bp={bp} /> <strong>{formatBp(bp)}</strong> <span class="small muted">({v.n})</span>
+                </li>
+              )
+            })}
+          </ul>
+        </section>
+      )}
+
+      <section class="card">
+        <h3>{t("reports")}</h3>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>{t("month")}</th>
+              <th>{t("item")}</th>
+              <th>{t("shortfall")}</th>
+              <th>{t("witnesses")}</th>
+              <th>{t("reporter")}</th>
+              <th>{t("expires")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((r) => {
+              const w = validWitnesses(r, data.witnesses).length
+              const counted = keptKeys.has(r.key.toLowerCase())
+              return (
+                <tr class={counted ? "" : "dim"}>
+                  <td class="mono">{r.month}</td>
+                  <td>{t(r.item)}</td>
+                  <td>
+                    <a href={`#/r/${r.key}`}>
+                      {formatKg(r.shortfallG)} · {formatBp(r.shortfallBp)}
+                    </a>
+                    {!counted && <span class="tag">{t("duplicateIgnored")}</span>}
+                  </td>
+                  <td>{w}</td>
+                  <td>
+                    <a class="mono small" href={explorerAddressUrl(r.creator)} target="_blank" rel="noopener">
+                      {short(r.creator)}
+                    </a>
+                  </td>
+                  <td class="small">
+                    {daysLeft(r.expiresAt, data.atBlock)} {t("days")} · <Explorer k={r.key} label="↗" />
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      <section class="card">
+        <h3>{t("export")}</h3>
+        <div class="row wrap">
+          <button class="secondary" onClick={() => exportAs("csv")}>
+            CSV
+          </button>
+          <button class="secondary" onClick={() => exportAs("json")}>
+            JSON
+          </button>
+        </div>
+        <form
+          class="row wrap"
+          onSubmit={(e) => {
+            e.preventDefault()
+            go(q({ block: blockInput.trim() || undefined }))
+          }}
+        >
+          <label class="inline">
+            {t("asOfBlock")}{" "}
+            <input class="mono" inputMode="numeric" value={blockInput} placeholder={data.head.toString()} onInput={(e) => setBlockInput(e.currentTarget.value)} />
+          </label>
+          <button class="secondary" type="submit">
+            {t("apply")}
+          </button>
+          {historic && (
+            <a href={q({ block: undefined })} onClick={() => setBlockInput("")}>
+              {t("asOfNow")}
+            </a>
+          )}
+        </form>
+        <p class="small muted mono">
+          read at block {data.atBlock.toString()}
+          {historic && ` (head ${data.head.toString()})`}
+        </p>
+      </section>
+    </>
+  )
+}

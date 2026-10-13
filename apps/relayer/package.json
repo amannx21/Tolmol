@@ -1,0 +1,16 @@
+{
+  "name": "tolmol-relayer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "description": "Gas-drip endpoint: sends a small amount of Tiramisu test GLM to fresh Tolmol device wallets. Never writes Tolmol data.",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "node --env-file=../../.env --import tsx src/node.ts"
+  },
+  "dependencies": {
+    "viem": "2.57.5",
+    "@arkiv-network/sdk": "0.8.1"
+  }
+}
