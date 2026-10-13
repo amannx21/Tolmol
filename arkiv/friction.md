@@ -301,3 +301,14 @@ This file is updated as we build. Entries only describe things we actually hit o
   within 6 s) and **resubscribed**: the next event still arrived over WebSocket. Re-creating the
   watcher also worked. Tolmol shows a live/reconnecting badge and re-creates the watcher on error
   as a belt-and-braces fallback.
+- **Full browser flow with a browser-generated key (chain, 2026-10-13 10:08 to 10:12 UTC).** Chrome, Vite dev
+  build, viem `privateKeyToAccount` on a key from `generatePrivateKey()` kept in `localStorage`, public RPC over
+  HTTP with CORS (`access-control-allow-origin: *`). The local relayer dripped 0.005 GLM to the fresh device.
+  The report form sent one `executeBatch` (create + transfer to `0x…dEaD`): report
+  `0xba2886c3a3128179c5e56e09ff08e9e5332c7d3a2b725a97592b001c9fdc5e03`, block 518183, owner `0x…dEaD`.
+  A second browser key then got its own drip and corroborated it (witness at block 518235). Both
+  writes worked first time from the browser, with no wallet extension.
+- **Cost of reads (chain, 2026-10-13 09:48 UTC).** Each `arkiv_query` returned `arkiv-cost: 100`, whether it
+  selected only `key` or full attributes with `limit 200`. `eth_blockNumber` carried no `arkiv-cost`. The SDK's
+  `predictEntityKeys` uses `eth_call` (`entityNonce`), not `arkiv_query`. We designed the app's reads around this
+  (see F13 and `schema.md`, "Live updates").

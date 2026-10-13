@@ -65,7 +65,7 @@ export function About() {
         <h3>{t("readCheck")}</h3>
         <pre class="code">{RAW_QUERY}</pre>
         <p class="small">
-          Or with the SDK: <code>npx tolmol query --shop SYN-BR-0042</code>. Data contract:{" "}
+          Or from a clone of the repo: <code>npm run tolmol -- query --shop SYN-BR-0042</code>. Data contract:{" "}
           <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">arkiv/schema.md</a>.
         </p>
       </section>

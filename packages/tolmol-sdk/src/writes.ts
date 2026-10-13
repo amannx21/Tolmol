@@ -2,8 +2,8 @@ import { ExpirationTime, type WalletArkivClient } from "@arkiv-network/sdk"
 import type { Account } from "viem"
 import { reportAttributes, witnessAttributes } from "./attributes.js"
 import { BURN_ADDRESS, LIFETIME_DAYS } from "./constants.js"
-import { validateReportInput, type Report, type Shop } from "./model.js"
-import { getReport, myExistingReport, myExistingWitness, reportWitnesses, type Reader } from "./queries.js"
+import { validateReportInput, type Report, type Shop, type Witness } from "./model.js"
+import { getReport, myExistingReport, reportWitnesses, type Reader } from "./queries.js"
 import { extensionTarget, validWitnesses } from "./rules.js"
 
 type Hex = `0x${string}`
@@ -48,13 +48,15 @@ export async function submitReport(
   writer: Writer,
   rawInput: unknown,
   shop: Pick<Shop, "shopId" | "state" | "district">,
-  opts: { synthetic: boolean; now?: Date } = { synthetic: true },
+  opts: { synthetic: boolean; now?: Date; /** Caller already checked for a duplicate (saves one query). */ skipDuplicateCheck?: boolean } = { synthetic: true },
 ): Promise<WriteResult> {
   const input = validateReportInput(rawInput, opts.now)
   if (input.shopId !== shop.shopId) throw new Error("shop does not match the report's shopId")
   const me = writer.account.address
-  const existing = await myExistingReport(reader, me, input)
-  if (existing) throw new DuplicateError("You already reported this shop, month and item", existing.key)
+  if (!opts.skipDuplicateCheck) {
+    const existing = await myExistingReport(reader, me, input)
+    if (existing) throw new DuplicateError("You already reported this shop, month and item", existing.key)
+  }
 
   const [predicted] = await reader.predictEntityKeys({ owner: me, count: 1 })
   if (!predicted) throw new Error("could not predict the entity key")
@@ -95,18 +97,24 @@ export async function corroborate(
   reader: Reader,
   writer: Writer,
   reportKey: Hex,
-  opts: { synthetic: boolean; now?: Date } = { synthetic: true },
+  opts: {
+    synthetic: boolean
+    now?: Date
+    /** Already-read report and its witnesses (saves three queries). Used on the first attempt only. */
+    known?: { report: Report; witnesses: Witness[] }
+  } = { synthetic: true },
 ): Promise<CorroborateResult> {
   const me = writer.account.address
   for (let attempt = 0; ; attempt++) {
-    const report: Report | null = await getReport(reader, reportKey)
+    const known = attempt === 0 ? opts.known : undefined
+    const report: Report | null = known?.report ?? (await getReport(reader, reportKey))
     if (!report) throw new ReportNotFoundError(reportKey)
     if (same(report.creator, me)) throw new SelfWitnessError()
-    const mine = await myExistingWitness(reader, me, report.key)
-    if (mine) throw new DuplicateError("You already corroborated this report", mine.key)
-
     const head = await reader.getBlockNumber({ cacheTime: 0 })
-    const existing = validWitnesses(report, (await reportWitnesses(reader, report.key, { atBlock: head })).items)
+    const all = known?.witnesses ?? (await reportWitnesses(reader, report.key, { atBlock: head })).items
+    const mine = all.find((w) => same(w.creator, me) && same(w.reportKey, report.key))
+    if (mine) throw new DuplicateError("You already corroborated this report", mine.key)
+    const existing = validWitnesses(report, all)
     const after = existing.length + 1
     const target = extensionTarget(report, after, head)
     const deadline = target ?? report.expiresAt

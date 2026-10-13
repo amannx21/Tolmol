@@ -13,14 +13,15 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "npm run build -w tolmol-sdk && npm run build --workspaces --if-present --include-workspace-root=false",
+    "build": "npm run build -w tolmol-sdk && npm run build -w tolmol-web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "test:e2e": "node --env-file=.env ./node_modules/vitest/vitest.mjs run --project e2e",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed": "node --env-file=.env --import tsx scripts/seed.ts"
+    "seed": "node --env-file=.env --import tsx scripts/seed.ts",
+    "tolmol": "node packages/tolmol-sdk/dist/cli.js"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

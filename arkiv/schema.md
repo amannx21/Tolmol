@@ -1,6 +1,6 @@
 # Tolmol data schema on Arkiv
 
-Status: **draft v1, 2026-10-13.** Every limit and behaviour below was tested on Tiramisu with
+Status: **v1, 2026-10-13.** Every limit and behaviour below was tested on Tiramisu with
 `@arkiv-network/sdk` 0.8.1 (evidence in `arkiv/friction.md`). This file is updated whenever the
 code changes.
 
@@ -89,6 +89,7 @@ The witness pseudo-ID is the device wallet, read from `$creator`. It is never co
 | `schema_version` | i32 | `1` | |
 | `report_key` | key | `0x612b...a7fd` | the report being corroborated |
 | `shop_id` | str | `SYN-BR-0042` | copied from the report |
+| `state` | str | `BR` | copied from the report, so the dashboard can fetch witnesses by state |
 | `month` | str | `2026-10` | copied from the report |
 | `item` | str | `rice` | copied from the report |
 | `reported_at` | u64 | `1791882241095` | device clock, ms |
@@ -159,7 +160,8 @@ Pages are at most 200. Multi-page walks are pinned with `.atBlock(head)` and use
 | Q2 | Shop page: reports for a month | `project AND type = "tolmol.report" AND shop_id = <id> AND month = <m>` |
 | Q3 | Witnesses of a report | `project AND type = "tolmol.witness" AND report_key = key(<k>)` |
 | Q4 | Dedupe check before a report | `project AND type = "tolmol.report" AND shop_id AND month AND item`, `.createdBy(me)` |
-| Q5 | Dedupe check before a witness | `project AND type = "tolmol.witness" AND report_key = key(<k>)`, `.createdBy(me)` |
+| Q5 | Witnesses of a report, used for the dedupe check before a witness | `project AND type = "tolmol.witness" AND report_key = key(<k>)`, then filtered by `creator` on the device (saves a query) |
+| Q5b | Dashboard witnesses | `project AND type = "tolmol.witness" AND state = <s> AND month = <m>` (one query per month) |
 | Q6 | Dashboard | `project AND type = "tolmol.report" AND state = <s> AND month_num >= <from> AND month_num <= <to>`, all pages, then rules 2 to 4 on the device |
 | Q7 | Worst-shortfall filter | Q6 `AND shortfall_bp >= <threshold>` |
 | Q8 | Evidence "as of block N" | Q2 or Q3 with `.atBlock(N)` |
@@ -174,8 +176,11 @@ left is computed on the device from the selected `expiresAt` and the current hea
 ## Live updates
 
 The dashboard runs `watchEntityEvents` on a **WebSocket** transport with no `fromBlock`, so the
-node pushes events (tested). Events carry only the key, so for each `EntityCreated` the app calls
-`getEntity` and keeps it if it is a Tolmol report or witness in view. On a socket error the app
+node pushes events (tested). Events carry only the key, and each `getEntity` costs 100 units of the
+viewer's anonymous query budget (friction F13). So the app does **not** fetch every entity created on
+Tiramisu: it reacts to `OwnershipTransferred` events whose new owner is `0x…dEaD`. Every Tolmol report
+and witness gets exactly that transfer in its creating batch, so this filters out other projects' traffic
+for free. The fetched entity is still fully validated before it is shown. On a socket error the app
 shows "reconnecting". viem resubscribes on its own (tested), and the app also re-creates the
 watcher as a fallback.
 

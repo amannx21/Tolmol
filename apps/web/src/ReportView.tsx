@@ -50,7 +50,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const validKeys = new Set(valid.map((w) => w.key.toLowerCase()))
   const mine = r.creator.toLowerCase() === me.toLowerCase()
   const iWitnessed = data.witnesses.some((w) => w.creator.toLowerCase() === me.toLowerCase())
-  const link = location.href.replace(/\?.*$/, "")
+  const link = `${location.origin}${location.pathname}#/r/${r.key}`
 
   const confirm = async () => {
     setBusy(true)

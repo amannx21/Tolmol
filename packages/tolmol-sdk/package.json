@@ -23,5 +23,20 @@
   "dependencies": {
     "@arkiv-network/sdk": "0.8.1",
     "viem": "2.57.5"
-  }
+  },
+  "bin": {
+    "tolmol": "./dist/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amannx21/Tolmol",
+    "directory": "packages/tolmol-sdk"
+  },
+  "keywords": [
+    "arkiv",
+    "pds",
+    "ration",
+    "india",
+    "evidence"
+  ]
 }

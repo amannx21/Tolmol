@@ -15,20 +15,23 @@ import {
   addMonths,
   corroborate,
   currentMonth,
+  dashboardReports,
+  dashboardWitnesses,
   DEFAULT_REGISTRY,
   DuplicateError,
   httpReader,
   LIFETIME_DAYS,
   listShops,
   MAX_CREATES_PER_BATCH,
-  myExistingReport,
   NFSA,
   shopAttributes,
   submitReport,
   tiramisu,
   writerFor,
   type Item,
+  type Report,
   type Shop,
+  type Witness,
 } from "../packages/tolmol-sdk/src/index.js"
 
 const SEED_FILE = ".seed-wallets.json"
@@ -124,6 +127,12 @@ async function main() {
   const registry = env("REGISTRY_PRIVATE_KEY")
   if (registry.address.toLowerCase() !== DEFAULT_REGISTRY.toLowerCase()) throw new Error("REGISTRY key does not match DEFAULT_REGISTRY")
   const devices = loadDevices()
+  // Carry transaction hashes of earlier runs forward, so the manifest stays complete across idempotent reruns.
+  const prevTx = new Map<string, string>()
+  if (fs.existsSync(MANIFEST)) {
+    const old = JSON.parse(fs.readFileSync(MANIFEST, "utf8")) as { reports?: { key: string; txHash?: string }[]; witnesses?: { key: string; txHash?: string }[] }
+    for (const x of [...(old.reports ?? []), ...(old.witnesses ?? [])]) if (x.txHash) prevTx.set(x.key.toLowerCase(), x.txHash)
+  }
   const manifest: Record<string, unknown> = {
     note: "SYNTHETIC demo data for Tolmol on Tiramisu (chain 7738577). No real shop, dealer or person.",
     generatedAt: new Date().toISOString(),
@@ -178,7 +187,9 @@ async function main() {
   devices.forEach((_, di) => {
     const home = [allDistricts[di % allDistricts.length]!, allDistricts[(di + 3) % allDistricts.length]!]
     if (di < 3) home.push("BR:gaya") // several devices share the demo shop's district
-    const myShops = shops.filter((s) => home.includes(`${s.state}:${s.district}`))
+    const demo = shops.find((s) => s.shopId === "SYN-BR-0042")!
+    // The demo shop gets reports from devices 0-3, so the README and video have a well-corroborated example.
+    const myShops = [...(di < 4 ? [demo] : []), ...shops.filter((s) => s !== demo && home.includes(`${s.state}:${s.district}`))]
     const members = 2 + Math.floor(rand() * 5) // household size: used only to compute entitlement, never stored
     const aay = rand() < 0.2
     for (const shop of myShops.slice(0, 3)) {
@@ -197,6 +208,23 @@ async function main() {
   })
   log("planned", plans.length, "reports from", devices.length, "devices")
 
+  // Each arkiv_query costs 100 units of a 10,000-unit anonymous budget (friction F13), so read state-wide
+  // once and skip per-write pre-checks instead of querying before every write.
+  const states = Object.keys(DISTRICTS)
+  const loadReports = async () => {
+    const m = new Map<string, Report>()
+    for (const st of states) for (const r of (await dashboardReports(reader, { state: st, fromMonth: months[0]!, toMonth: months[2]! })).items) m.set(r.key.toLowerCase(), r)
+    return m
+  }
+  const loadWitnesses = async () => {
+    const out: Witness[] = []
+    for (const st of states) out.push(...(await dashboardWitnesses(reader, { state: st, months })).items)
+    return out
+  }
+  const dedupeId = (creator: string, shopId: string, month: string, item: string) => `${creator.toLowerCase()}|${shopId}|${month}|${item}`
+  const before = await loadReports()
+  const existingIds = new Map([...before.values()].map((r) => [dedupeId(r.creator, r.shopId, r.month, r.item), r.key]))
+
   const writers = devices.map((d) => writerFor(d))
   const filed: { key: `0x${string}`; device: number; shop: SeedShop }[] = []
   // Devices write in parallel (separate wallets, separate nonces); each device writes sequentially.
@@ -208,31 +236,37 @@ async function main() {
         const shop = onChain.get(p.shop.shopId)
         if (!shop) throw new Error(`shop ${p.shop.shopId} missing from registry`)
         const input = { shopId: p.shop.shopId, month: p.month, item: p.item, entitledG: p.entitledG, receivedG: p.receivedG }
-        try {
-          const res = await submitReport(reader, writers[di]!, input, shop, { synthetic: true })
-          ;(manifest.reports as unknown[]).push({ ...input, key: res.entityKey, creator: d.address, txHash: res.txHash })
-          filed.push({ key: res.entityKey, device: di, shop: p.shop })
-          log("report", p.shop.shopId, p.month, p.item, `${p.receivedG}/${p.entitledG} g`, "by device", di)
-        } catch (e) {
-          if (e instanceof DuplicateError) {
-            filed.push({ key: e.existingKey, device: di, shop: p.shop })
-            const prev = await myExistingReport(reader, d.address, input)
-            ;(manifest.reports as unknown[]).push({ ...input, key: e.existingKey, creator: d.address, existing: true, expiresAt: prev?.expiresAt.toString() })
-          } else throw e
+        const prev = existingIds.get(dedupeId(d.address, p.shop.shopId, p.month, p.item))
+        if (prev) {
+          filed.push({ key: prev, device: di, shop: p.shop })
+          ;(manifest.reports as unknown[]).push({ ...input, key: prev, creator: d.address, txHash: prevTx.get(prev.toLowerCase()), existing: true })
+          continue
         }
+        const res = await submitReport(reader, writers[di]!, input, shop, { synthetic: true, skipDuplicateCheck: true })
+        ;(manifest.reports as unknown[]).push({ ...input, key: res.entityKey, creator: d.address, txHash: res.txHash })
+        filed.push({ key: res.entityKey, device: di, shop: p.shop })
+        log("report", p.shop.shopId, p.month, p.item, `${p.receivedG}/${p.entitledG} g`, "by device", di)
       }
     },
   )
+  const reportsNow = await loadReports()
+  log("reports on chain in scope:", reportsNow.size)
 
   // 4. Witnesses: at short and bad shops, other devices that share the district corroborate.
   // Round r gives each report its r-th witness, so no two devices corroborate the same report at once.
   const witnessPlan = filed
     .filter((f) => f.shop.profile !== "fair")
     .map((f) => {
-      const peers = devices.map((_, i) => i).filter((i) => i !== f.device && plans.some((p) => p.device === i && p.shop.district === f.shop.district))
+      // Prefer devices that also reported at this shop, then in this district, then anyone (all synthetic).
+      const others = devices.map((_, i) => i).filter((i) => i !== f.device)
+      const atShop = others.filter((i) => plans.some((p) => p.device === i && p.shop.shopId === f.shop.shopId))
+      const inDistrict = others.filter((i) => !atShop.includes(i) && plans.some((p) => p.device === i && p.shop.district === f.shop.district))
+      const rest = others.filter((i) => !atShop.includes(i) && !inDistrict.includes(i))
+      const peers = [...atShop, ...inDistrict, ...rest]
       return { key: f.key, peers: peers.slice(0, f.shop.profile === "bad" ? 2 : 1) }
     })
   for (let round = 0; round < 2; round++) {
+    const witnessesNow = await loadWitnesses()
     const jobs = new Map<number, `0x${string}`[]>()
     for (const w of witnessPlan) {
       const dev = w.peers[round]
@@ -241,11 +275,14 @@ async function main() {
     await pool([...jobs.entries()], 5, async ([wi, keys]) => {
       for (const k of keys) {
         try {
-          const res = await corroborate(reader, writers[wi]!, k, { synthetic: true })
+          const report = reportsNow.get(k.toLowerCase())
+          const known = report ? { report, witnesses: witnessesNow.filter((w) => w.reportKey.toLowerCase() === k.toLowerCase()) } : undefined
+          const res = await corroborate(reader, writers[wi]!, k, { synthetic: true, known })
           ;(manifest.witnesses as unknown[]).push({ reportKey: k, key: res.entityKey, creator: devices[wi]!.address, txHash: res.txHash, extendedTo: res.extendedTo?.toString() ?? null })
           log("witness round", round + 1, k.slice(0, 10), "by device", wi, res.extendedTo ? `extended to block ${res.extendedTo}` : "")
         } catch (e) {
-          if (e instanceof DuplicateError) (manifest.witnesses as unknown[]).push({ reportKey: k, key: e.existingKey, creator: devices[wi]!.address, existing: true })
+          if (e instanceof DuplicateError)
+            (manifest.witnesses as unknown[]).push({ reportKey: k, key: e.existingKey, creator: devices[wi]!.address, txHash: prevTx.get(e.existingKey.toLowerCase()), existing: true })
           else throw e
         }
       }
