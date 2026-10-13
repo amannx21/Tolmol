@@ -41,7 +41,7 @@ phone numbers, Aadhaar or card numbers are ever stored, and all demo data is syn
 
 ## Organiser questions (private to judges)
 
-1. **Live app URL** \*: [FILL: GitHub Pages URL] (public, no login, up through 23 Oct)
+1. **Live app URL** \*: https://amannx21.github.io/Tolmol/ (public, no login, static on GitHub Pages)
 2. **Indian nationality** \*: Yes (AMAN ARORA)
 3. **Why Arkiv?** \*
 
