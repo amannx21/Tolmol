@@ -1,16 +1,30 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "target": "ES2022",
     "lib": [
       "ES2022",
       "DOM",
       "DOM.Iterable"
     ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "sourceMap": true,
     "types": [
       "node"
     ],
-    "noEmit": true,
-    "declaration": false
+    "noEmit": true
   },
   "include": [
     "src",

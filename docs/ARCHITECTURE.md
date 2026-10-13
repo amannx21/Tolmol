@@ -31,7 +31,7 @@ flowchart LR
 |---|---|---|---|
 | `apps/web` | Static files on GitHub Pages (or any static host) | The device key, in that browser only | Arkiv public RPC directly, the relayer |
 | `packages/tolmol-sdk` | npm workspace package, used by the app, the seed script and the CLI | No | Arkiv RPC |
-| `apps/relayer` | Serverless function (Cloudflare Workers / Node) | Relayer key (test GLM only) | Arkiv RPC |
+| `apps/relayer` | Vercel serverless function, https://tolmol-relayer.vercel.app (also runs on Cloudflare Workers / Node) | Relayer key (test GLM only) | Arkiv RPC |
 | `scripts/seed.ts` | Developer machine | Seed keys in `.env` and `.seed-wallets.json` (git-ignored) | Arkiv RPC |
 | Arkiv Tiramisu | Arkiv network | n/a | n/a |
 
