@@ -17,7 +17,6 @@ const wallets = Object.fromEntries(["REPORTER", "WITNESS_A", "WITNESS_B"].map((n
   const account = acct(n)
   return [n, createWalletClient({ chain: tiramisu, transport: http(), account })]
 }))
-const addr = (n) => wallets[n].account.address
 const results = []
 const j = (v) => JSON.stringify(v, (_, x) => (typeof x === "bigint" ? x.toString() : x))
 

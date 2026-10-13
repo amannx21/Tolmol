@@ -177,6 +177,26 @@ This file is updated as we build. Entries only describe things we actually hit o
   witness wallets were funded by incoming transfers, so their pages do not show where their GLM came from.
 - **Fix suggestion:** show balance and incoming transfers, and publish a documented read API.
 
+### F13. Anonymous query budget runs out silently: reads look like hangs
+
+- **Surface:** public HTTP RPC quota for `arkiv_query` + viem/SDK retry behaviour.
+- **Observed by:** chain, 2026-10-13 09:24 to 09:34 UTC, while two seed runs (about 150 writes, each
+  preceded by dedupe reads) ran from one IP. Severity: **high** for anyone seeding or indexing without an access key.
+- **Expected:** a clear error when the budget is used up.
+- **Actual:** `arkiv_query` started returning **HTTP 429** with body
+  `{"error":"ANON_COST_LIMITED","message":"unauthenticated query budget exhausted; get an API key at https://hub.arkiv.network for a monthly quota"}`
+  and headers `ratelimit: limit=10000, remaining=0, reset=785` and `retry-after: 785`. `eth_blockNumber` on
+  the same IP kept returning 200 (`limit=600`), so the RPC looked healthy. In our scripts a
+  `select().fetch()` did not fail fast. With viem's transport retries it sat until our own 90 s
+  watchdog killed it, with no message mentioning the quota.
+- **Repro:** run many `arkiv_query` calls from one IP without an access key, then
+  `curl -i` an `arkiv_query`. Compare with `eth_blockNumber`.
+- **Workaround:** fewer reads per write in the seed, one seed run at a time (lock file), and an
+  access key for scripts. In the app, every visitor reads from their own IP.
+- **Fix suggestion:** surface 429 + `Retry-After` as a typed `QuotaExceededError` in the SDK (no
+  silent retry for a 13-minute window), and document the anonymous budget (10,000 cost units per
+  window) next to the access-key page.
+
 ## Paths tested that worked
 
 - **Read-only public client on Tiramisu.** `createPublicClient({ chain: tiramisu, transport: http() })`

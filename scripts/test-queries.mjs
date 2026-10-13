@@ -1,5 +1,5 @@
 // Phase 0: batch writes, create+burn-transfer in one batch, query operators, pagination past 200, cursor resume, atBlock.
-// Real writes: 2 batches of 105 tiny entities (6h life) + 1 burn test. Usage: node --env-file=.env scripts/test-queries.mjs
+// Real writes: 5 batches of 42 tiny entities (6h life) + 1 burn test. Usage: node --env-file=.env scripts/test-queries.mjs
 import { ExpirationTime } from "@arkiv-network/sdk"
 import { str, i32, u64, bool } from "@arkiv-network/sdk/attr"
 import { eq, gte, lt, not, or, startsWith, ne } from "@arkiv-network/sdk/query"
@@ -110,4 +110,24 @@ for (const back of [1000n, 10000n, 100000n, 500000n]) {
   })
 }
 
+// --- Create + burn transfer in one atomic batch (predicted key). Set SKIP_BURN=1 to skip on reruns.
+if (!process.env.SKIP_BURN) {
+  let burnt
+  await step("one batch: create readonly+permissionlessExtension, transfer to 0x...dEaD", "owner=dEaD, creator=reporter", async () => {
+    const [p] = await pub.predictEntityKeys({ owner: R.account.address, count: 1 })
+    const c = mk(9999)
+    c.attributes.test = str("burn")
+    c.salt = p.salt
+    c.flags = { readonly: true, permissionlessExtension: true }
+    const r = await R.executeBatch({ creates: [c], ownershipChanges: [{ entityKey: p.key, newOwner: BURN }] })
+    const e = await pub.getEntity(p.key)
+    burnt = p.key
+    return { txHash: r.txHash, predicted: p.key, created: r.createdEntities[0], owner: e.owner, creator: e.creator, flags: e.creationFlags }
+  })
+  await step("reporter deletes the burnt entity", "rejected NotOwner", async () => ({ txHash: (await R.deleteEntity({ entityKey: burnt })).txHash }))
+  await step("witness A extends the burnt entity", "ok", async () => {
+    const r = await A.extendEntity({ entityKey: burnt, expires: ExpirationTime.fromHours(8) })
+    return { txHash: r.txHash, expiresAt: r.expiresAt }
+  })
+}
 console.log("RESULTS_FILE", file)

@@ -16,10 +16,6 @@ async function realCreate(variant, expires) {
   return { entityKey: r.entityKey, txHash: r.txHash, block: rc.blockNumber, expiresAt: r.expiresAt,
     lifetimeBlocks: r.expiresAt - rc.blockNumber, gasUsed: rc.gasUsed }
 }
-async function dry(role, params) {
-  const { client, probe } = dryWallet(role)
-  try { await client.createEntity(params) } finally { if (probe.gas !== undefined) console.log("  estimatedGas", probe.gas.toString()) }
-}
 const dryWithGas = (params) => async () => {
   const { client, probe } = dryWallet("REPORTER")
   try { await client.createEntity(params); return { note: "unexpected broadcast path" } }

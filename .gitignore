@@ -150,3 +150,7 @@ vite.config.ts.timestamp-*
 
 # local chain-test logs
 test-results/
+
+# synthetic seed device keys (testnet)
+.seed-wallets.json
+.seed.lock

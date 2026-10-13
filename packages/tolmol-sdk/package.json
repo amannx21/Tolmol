@@ -1,0 +1,27 @@
+{
+  "name": "tolmol-sdk",
+  "version": "0.1.0",
+  "description": "Read and write Tolmol PDS shortfall reports on Arkiv (Tiramisu)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@arkiv-network/sdk": "0.8.1",
+    "viem": "2.57.5"
+  }
+}
