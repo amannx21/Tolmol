@@ -191,8 +191,13 @@ This file is updated as we build. Entries only describe things we actually hit o
   watchdog killed it, with no message mentioning the quota.
 - **Repro:** run many `arkiv_query` calls from one IP without an access key, then
   `curl -i` an `arkiv_query`. Compare with `eth_blockNumber`.
+- **Root cause of the "hang" (found 2026-10-13 10:40 UTC):** viem's HTTP transport retries a 429 and
+  honours `Retry-After` (`node_modules/viem/_esm/utils/buildRequest.js`, lines 132 to 136). With
+  `retry-after: 780` it silently waits 13 minutes. Our deployed dashboard sat on "Reading from Arkiv…" for this
+  reason. With `http(url, { retryCount: 0 })` the same read fails in 1,182 ms and the 429 is visible.
 - **Workaround:** fewer reads per write in the seed, one seed run at a time (lock file), and an
-  access key for scripts. In the app, every visitor reads from their own IP.
+  access key for scripts. In the app, every visitor reads from their own IP, readers use `retryCount: 0`,
+  and the UI shows "free read limit used up, try again in N min" from `Retry-After`.
 - **Fix suggestion:** surface 429 + `Retry-After` as a typed `QuotaExceededError` in the SDK (no
   silent retry for a 13-minute window), and document the anonymous budget (10,000 cost units per
   window) next to the access-key page.

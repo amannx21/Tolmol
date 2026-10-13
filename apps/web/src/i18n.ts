@@ -88,6 +88,8 @@ const en = {
   language: "हिन्दी",
   notFound: "Not found or expired",
   aboutTitle: "About Tolmol",
+  quota: "Arkiv's free read limit for your network is used up for now (each network gets about 100 reads every 13 minutes). Your data is safe; nothing is lost.",
+  quotaWait: "Please try again in about",
 } as const
 
 export type Key = keyof typeof en
@@ -177,6 +179,8 @@ const hi: Record<Key, string> = {
   language: "English",
   notFound: "नहीं मिला या समय समाप्त",
   aboutTitle: "तोलमोल के बारे में",
+  quota: "आपके नेटवर्क के लिए Arkiv की मुफ़्त पढ़ने की सीमा अभी पूरी हो गई है (हर नेटवर्क को लगभग 13 मिनट में 100 बार पढ़ने की अनुमति है)। आपका डेटा सुरक्षित है, कुछ भी खोया नहीं है।",
+  quotaWait: "कृपया लगभग इतने समय बाद फिर कोशिश करें:",
 }
 
 const dicts: Record<Lang, Record<Key, string>> = { en, hi }

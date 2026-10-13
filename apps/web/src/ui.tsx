@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact"
 import { useState } from "preact/hooks"
-import { explorerAddressUrl, explorerEntityUrl, listShops, type Shop } from "tolmol-sdk"
+import { explorerAddressUrl, explorerEntityUrl, listShops, quotaError, type Shop } from "tolmol-sdk"
 import { device, MIN_WRITE_WEI, reader, requestGas, short, useBalance } from "./arkiv"
 import { useLang } from "./i18n"
 import type { Route } from "./router"
@@ -104,6 +104,16 @@ export function Loading() {
 
 export function ErrorBox({ error }: { error: unknown }) {
   const { t } = useLang()
+  const q = quotaError(error)
+  if (q) {
+    const mins = q.retryAfterSeconds ? Math.ceil(q.retryAfterSeconds / 60) : null
+    return (
+      <p class="err" role="alert">
+        {t("quota")}
+        {mins ? ` ${t("quotaWait")} ${mins} min.` : ""}
+      </p>
+    )
+  }
   return (
     <p class="err" role="alert">
       {t("error")}: {String((error as Error)?.message ?? error).split("\n")[0]}
