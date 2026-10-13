@@ -16,7 +16,7 @@ const FEATURES = [
   ["Compound + range query (dashboard)", "state AND month_num range AND optional shortfall_bp threshold.", "packages/tolmol-sdk/src/queries.ts", /export function dashboardReports/, 15],
   ["createdBy(): per-device dedupe", "One report per device, shop, month and grain.", "packages/tolmol-sdk/src/queries.ts", /export async function myExistingReport/, 6],
   ["Creation flags", "readonly: nobody edits; permissionlessExtension: anyone can keep evidence alive.", "packages/tolmol-sdk/src/writes.ts", /const FLAGS =/, 1],
-  ["Atomic batch: create + ownership transfer to 0x…dEaD", "Nobody, not even the reporter, can delete a report. predictEntityKeys lets the same batch reference the new key.", "packages/tolmol-sdk/src/writes.ts", /const \[predicted\] = await reader.predictEntityKeys\(\{ owner: me, count: 1 \}\)\n  if/, 23],
+  ["Atomic batch: create + ownership transfer to 0x…dEaD", "Nobody, not even the reporter, can delete a report. predictEntityKeys lets the same batch reference the new key.", "packages/tolmol-sdk/src/writes.ts", /const \[predicted\] = await reader.predictEntityKeys\(\{ owner: me, count: 1 \}\)\n {2}if/, 23],
   ["Lifetime Extension as a lease renewed by corroboration", "The 2nd distinct witness extends the report and its witnesses in the same batch as the witness create.", "packages/tolmol-sdk/src/writes.ts", /const extensions = target/, 25],
   ["Extension target rule", "max(current, head + 180 days), capped at created + 365 days, never shorter.", "packages/tolmol-sdk/src/rules.ts", /export function extensionTarget/, 13],
   ["Entity Expiration per type", "Shop 180 days, report 90 days, corroborated 180, cap 365.", "packages/tolmol-sdk/src/constants.ts", /export const LIFETIME_DAYS/, 9],

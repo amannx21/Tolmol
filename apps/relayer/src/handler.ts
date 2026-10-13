@@ -77,15 +77,17 @@ export function makeHandler(env: RelayerEnv, store: CounterStore) {
 
   return async function handle(req: Request): Promise<Response> {
     const url = new URL(req.url)
+    // Hosts mount the handler at different prefixes (/api on Vercel); route on the last path segment.
+    const path = "/" + (url.pathname.split("/").filter(Boolean).pop() ?? "")
     const h = cors(req.headers.get("origin"), env)
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h })
 
-    if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
+    if (req.method === "GET" && (path === "/" || path === "/health" || path === "/api")) {
       const bal = await pub.getBalance({ address: account.address })
       return json(200, { ok: true, relayer: account.address, balanceGlm: formatEther(bal), dripGlm: formatEther(DRIP_WEI), network: "tiramisu", chainId: tiramisu.id }, h)
     }
 
-    if (req.method !== "POST" || url.pathname !== "/drip") return json(404, { error: "not found" }, h)
+    if (req.method !== "POST" || (path !== "/drip" && path !== "/api")) return json(404, { error: "not found" }, h)
 
     let address: unknown
     try {
