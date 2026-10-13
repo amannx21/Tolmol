@@ -22,7 +22,8 @@ const ready = keys.every((k) => /^0x[0-9a-fA-F]{64}$/.test(k ?? ""))
 
 describe.skipIf(!ready)("Tolmol on Tiramisu (live)", () => {
   const reader = httpReader()
-  const [reporter, witnessA, witnessB] = keys.map((k) => writerFor(privateKeyToAccount(k as `0x${string}`)))
+  // Built only when the suite actually runs (keys present), never at definition time.
+  const [reporter, witnessA, witnessB] = ready ? keys.map((k) => writerFor(privateKeyToAccount(k as `0x${string}`))) : []
   // A throwaway synthetic shop in test state "ZZ", so each run starts clean.
   const shop = { shopId: `SYN-ZZ-${String(Math.floor(Math.random() * 10_000)).padStart(4, "0")}`, state: "ZZ", district: "e2e-test" }
   const month = currentMonth()
