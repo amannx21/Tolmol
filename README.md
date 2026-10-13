@@ -8,7 +8,7 @@ Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Security, Ope
 
 | | |
 |---|---|
-| Live app | **[FILL: GitHub Pages URL]** (no login, works on a phone, English + हिन्दी) |
+| Live app | **https://amannx21.github.io/Tolmol/** (no login, works on a phone, English + हिन्दी) |
 | Demo video (3 min) | **[FILL]** |
 | Network | Arkiv **Tiramisu** testnet, chain ID `7738577` · [explorer](https://tiramisu.explorer.arkiv.network) |
 | Data contract | [`arkiv/schema.md`](arkiv/schema.md) · Friction report: [`arkiv/friction.md`](arkiv/friction.md) · Wallets: [`arkiv/wallets.md`](arkiv/wallets.md) |

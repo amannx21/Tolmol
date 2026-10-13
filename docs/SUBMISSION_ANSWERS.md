@@ -75,7 +75,7 @@ phone numbers, Aadhaar or card numbers are ever stored, and all demo data is syn
 7. **Schema** \*: https://github.com/amannx21/Tolmol/blob/[FILL final SHA]/arkiv/schema.md
 8. **How judges can reproduce** \*:
    1. Run the curl in the README ("See the data without our website"). Every report has `owner = 0x…dEaD`.
-   2. Open the live app [FILL], go to Dashboard (Bihar). It ranks shops from `arkiv_query`; the badge says Live.
+   2. Open the live app https://amannx21.github.io/Tolmol/, go to Dashboard (Bihar). It ranks shops from `arkiv_query`; the badge says Live.
    3. Open shop SYN-BR-0042. Type a past block (e.g. 518000) in "Show as it was at block" to see `atBlock` history.
    4. Tap Report, "Get free test gas", file a report. Open the link in another browser profile, get gas, tap
       "I also got less at this shop this month". Watch the dashboard update in the first window.
