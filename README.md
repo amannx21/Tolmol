@@ -10,6 +10,7 @@ Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Open Source, 
 |---|---|
 | Live app | **https://amannx21.github.io/Tolmol/** (no login, works on a phone, English + हिन्दी) |
 | Mirror (second host) | https://tolmol-web-kappa.vercel.app (same build, deployed from `main` on Vercel) |
+| npm package | [`tolmol-sdk`](https://www.npmjs.com/package/tolmol-sdk): `npm install tolmol-sdk` (read the data and apply the rules; read-only CLI `npx tolmol-sdk`) |
 | One-file reader | [`mirror.html`](https://amannx21.github.io/Tolmol/mirror.html): no framework, no build, any Arkiv RPC; save it and open it anywhere |
 | Gas-drip relayer | https://tolmol-relayer.vercel.app/health (Vercel; sends test GLM to fresh device wallets only) |
 | Demo video (3 min) | **[FILL]** |
@@ -240,7 +241,7 @@ filled in bursts. See the threat model below for what is still open.
 
 **Open Source.** MIT. A documented data contract ([`arkiv/schema.md`](arkiv/schema.md), and as JSON Schema in
 [`docs/data-contract.schema.json`](docs/data-contract.schema.json)), a reusable [`tolmol-sdk`](packages/tolmol-sdk)
-package, a read-only CLI, a [minimal reader](examples/minimal-reader.mjs) with no Tolmol code, and contribution
+package **published on npm** (`npm install tolmol-sdk`), a read-only CLI, a [minimal reader](examples/minimal-reader.mjs) with no Tolmol code, and contribution
 notes. Every shop and dashboard page prints the exact queries it ran ("How this is computed"). Another scheme
 (mid-day meals, MGNREGA wages) could reuse the same pattern: synthetic registry, device-signed claims,
 corroboration as lease renewal.

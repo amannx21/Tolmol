@@ -56,8 +56,8 @@ synthetic.
   straight from Arkiv by anyone, with curl, the SDK, our CLI or a one-file `mirror.html` that takes any RPC. The site
   runs on two hosts, and Settings accepts any Arkiv endpoint.
 - **Open Source.** Social-audit groups and other civic projects can build on the dataset without asking: MIT code, a
-  documented data contract (`arkiv/schema.md` plus `docs/data-contract.schema.json`), a reusable `tolmol-sdk`, a
-  read-only CLI, and a minimal reader with no Tolmol code. Every page prints the queries it ran.
+  documented data contract (`arkiv/schema.md` plus `docs/data-contract.schema.json`), a reusable `tolmol-sdk` published
+  on npm (`npm install tolmol-sdk`), a read-only CLI, and a minimal reader with no Tolmol code. Every page prints the queries it ran.
 - **Privacy.** A card holder who complains about the dealer they depend on every month is exposed if the record
   names them. The explorer shows no personal data: no name, phone, Aadhaar, card number, address, household size or
   free text, not even hashed. Reports have 16 small attributes, an empty payload, and the time rounded to the day. The user

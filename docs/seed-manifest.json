@@ -3484,5 +3484,55 @@
       "txHash": "0x5a2250043bc073120f3651d712b19fa6c1a491ff597988d02342c38470cbbd71",
       "block": "516883"
     }
+  ],
+  "attestations": [
+    {
+      "device": "0xf125a4CeC04AA7632559c2d2928de4DD237E8A9B",
+      "shopId": "SYN-BR-0001",
+      "key": "0xc061c99835028ce761cc910f58a5fe553f39406ed331d9a6a5abb547a0ae67d2",
+      "txHash": "0x24f6423b351d326373b3c41c7909f3f9d1d085ef4ce4d2716271efeeaf5920f3",
+      "verifier": "0x1C58335A9C5c5a3440f8018984cf9069b7C9408B",
+      "note": "seed device verified with a private TEST card"
+    },
+    {
+      "device": "0x64a2843da41E9a5681F8956D05297e885C458DbD",
+      "shopId": "SYN-BR-0002",
+      "key": "0x10246936ffbc682c5d51a43cf853c336e93fb159899b5caccf667873335ce2b0",
+      "txHash": "0x7d3d7a69c19af59e0b0c14d9a113acd012462c40ff083d9f0d31ba21218d0a92",
+      "verifier": "0x1C58335A9C5c5a3440f8018984cf9069b7C9408B",
+      "note": "seed device verified with a private TEST card"
+    },
+    {
+      "device": "0x4EA5b8EBda63Ed7f28065496BB12Cb50AbD1cbF5",
+      "shopId": "SYN-BR-0002",
+      "key": "0x3c5970f1b67e3b7a97c40f01d8085d950ed2edebdbd04a875ba19b1b7574da17",
+      "txHash": "0xb742231db61c0ad67bdc7111e51b38473fdd4da5301b629f09a361937af34e09",
+      "verifier": "0x1C58335A9C5c5a3440f8018984cf9069b7C9408B",
+      "note": "seed device verified with a private TEST card"
+    },
+    {
+      "device": "0x943492Bc0C1396B684F42d62F9E2493A6ED24474",
+      "shopId": "SYN-BR-0007",
+      "key": "0x65562cd13b27b5b280a44d85d28baedf98368eaef607279431e9adacd7374a71",
+      "txHash": "0x6f32b228f7929f7846fc007b3cf84f5d9a9eec1cc4e08c5e57c4970774daeeb8",
+      "verifier": "0x1C58335A9C5c5a3440f8018984cf9069b7C9408B",
+      "note": "seed device verified with a private TEST card"
+    },
+    {
+      "device": "0x6bF3F6864F5C6Cda1118ab6f7845Ff45D75040cb",
+      "shopId": "SYN-UP-0002",
+      "key": "0xb320e07d49bcf7f01a03d8d13faf409872e70b56fab5e19816f7c69b55ecd3dc",
+      "txHash": "0x3ce69bcd75c731fa67701644f3b7a2891d4c145047e041b38ac8853b325fae0e",
+      "verifier": "0x1C58335A9C5c5a3440f8018984cf9069b7C9408B",
+      "note": "seed device verified with a private TEST card"
+    },
+    {
+      "device": "0xf985803904E79A5E601bD5F8773F65A4051bF801",
+      "shopId": "SYN-UP-0003",
+      "key": "0x94058fb28e805c4bc7358403db4099dd9d65c1d204b0c32ab3f9246498982ec6",
+      "txHash": "0x71f6c7218de376a92c6977aa9f85c45dcbe69030f27a1142ecbe15f0222b7813",
+      "verifier": "0x1C58335A9C5c5a3440f8018984cf9069b7C9408B",
+      "note": "seed device verified with a private TEST card"
+    }
   ]
 }
