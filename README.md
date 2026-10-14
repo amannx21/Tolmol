@@ -266,6 +266,15 @@ flowchart LR
 
 No Tolmol database, no Tolmol read API. Details: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
+## Future scope: government adoption
+
+Fake accounts are the main open problem: anyone can make a device ID. The plan is a **verified, anonymous card-holder
+badge**: one real ration card = one verified member, checked once (from home with the DigiLocker ration card through a
+department-run or NGO verifier, or in person at a social-audit camp), after which reports prove "a verified card
+holder" without saying who, so even a state verifier cannot tell who complained. It also covers department replies
+on the record and signed ePoS weighing receipts. All of it is Arkiv entities trusted by `$creator`, with no Tolmol
+database: [`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md) (design, not built).
+
 ## Known limitations
 
 - Testnet only. Gas comes from the faucet or our relayer.

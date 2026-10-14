@@ -1,7 +1,8 @@
 # Verified card holders without revealing who they are (design)
 
-> **Status: design, not built.** Nothing in the app, the SDK or on Arkiv claims verification today. This page is the
-> plan for the open threats T9 (sybil) and T10 (collusion) in [`THREAT_MODEL.md`](THREAT_MODEL.md). Written 2026-10-14.
+> **Status: design and future scope, not built.** Nothing in the app, the SDK or on Arkiv claims verification today.
+> This page is the plan for the open threats T9 (fake accounts) and T10 (collusion) in [`THREAT_MODEL.md`](THREAT_MODEL.md),
+> and the path for a state government to adopt Tolmol. Written 2026-10-14.
 
 ## The problem
 
@@ -65,6 +66,26 @@ build would therefore run path 2 **only in Anon Aadhaar's test mode, with UIDAI 
 real deployment would need a legal review under the Aadhaar Act and the DPDP Act 2023 first. It proves an Aadhaar,
 not a ration card; with One Nation One Ration Card any card holder may use any shop, so "a unique resident of this
 state" is still a real barrier to one person running many phones.
+
+## Future scope: a state government adopts Tolmol
+
+Tolmol is built so a state Food and Civil Supplies department could adopt it **without becoming able to silence or
+unmask the people complaining about its own shops**. Each step below plugs into the same Arkiv entities; none needs a
+Tolmol server or a new database.
+
+| Step | What the department does | What stays protected |
+|---|---|---|
+| **1. Verify card holders from home with DigiLocker** | The department (an existing DigiLocker *issuer* of ration cards in several states) runs, or accredits, a verifier service. A card holder shares their DigiLocker ration card once; the service checks the issuer's signature and that the card has not joined before, then adds the phone's anonymous commitment to the group (a `tolmol.member` created by the verifier's wallet). The service keeps no card data, only a keyed "already used" fingerprint, off Arkiv | With the Semaphore design, reports carry only a nullifier and a group root, so **the department learns that a card holder joined, never which reports they filed**. The simpler "verifier signs the device" shortcut would let the verifier link reports, so it must not be used when the verifier is the state |
+| **2. Read the evidence directly** | District Grievance Redressal Officers and the State Food Commission open the dashboard or run the queries in `arkiv/schema.md` themselves. No data-sharing agreement, no export from us | Nobody, including the department, can edit or delete a report (readonly, owned by `0x…dEaD`) |
+| **3. Answer on the record** | The department publishes a reply entity (e.g. `tolmol.response`: inspection done, stock found short, dealer suspended) created by its own registry-named wallet, pointing at a shop and month | Replies sit next to the complaints; they cannot overwrite them. Trust by `$creator`, as for shops |
+| **4. Signed ePoS receipts** | The ePoS device, already linked to electronic weighing scales "to ensure right quantity to beneficiaries" ([PIB, 21 Jun 2021](https://www.pib.gov.in/PressReleasePage.aspx?PRID=1729070)), prints a QR of the weighed quantity signed by the department's key | A report could then prove "the shop's own machine says I got 4 kg", turning a claim into a measurement. The receipt is checked on the phone; only the signed quantity and shop, never the card, would reach Arkiv |
+| **5. Camps through social audits** | Gram sabhas and social-audit units, which NFSA s.28 already asks to audit fair-price shops, act as camp verifiers for people without DigiLocker or a smartphone | Same anonymous group; same protections |
+
+**Conditions for a safe hand-over:** verification stays optional and unverified reports stay visible (exclusion); the
+anonymous-proof design is mandatory once the verifier is the state; at least one verifier outside the government
+(an NGO or social-audit unit) is always accredited, so the department cannot stop new members joining; the code stays
+MIT and the data stays on Arkiv, so anyone can keep reading it even if the official deployment is switched off; and a
+legal review under the DPDP Act 2023 (and the Aadhaar Act, if the Aadhaar route is used) comes first.
 
 ## How it uses Arkiv (no other database, no Tolmol server)
 
