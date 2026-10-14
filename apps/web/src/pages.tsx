@@ -58,6 +58,11 @@ export function About() {
         </ul>
         <h3>What Tolmol never stores</h3>
         <p>No names, phone numbers, Aadhaar, ration card numbers, photos or free text. Only shop, month, grain, entitled and received grams.</p>
+        <h3>{t("limitsTitle")}</h3>
+        <p>
+          {t("limitsText")}{" "}
+          <a href="https://github.com/amannx21/Tolmol/blob/main/docs/THREAT_MODEL.md">Threat model</a>
+        </p>
         <h3>Synthetic data</h3>
         <p>Every shop in this demo is invented (IDs start with SYN-). The districts are real places; the shops and reports are not.</p>
       </section>

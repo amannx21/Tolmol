@@ -130,7 +130,9 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
                 {short(w.creator)}
               </a>{" "}
               · <span class="mono small">#{w.createdAt.toString()}</span> · <Explorer k={w.key} />
-              {!validKeys.has(w.key.toLowerCase()) && <span class="tag">{t("selfWitnessIgnored")}</span>}
+              {!validKeys.has(w.key.toLowerCase()) && (
+                <span class="tag">{w.creator.toLowerCase() === r.creator.toLowerCase() ? t("selfWitnessIgnored") : t("duplicateIgnored")}</span>
+              )}
             </li>
           ))}
         </ul>

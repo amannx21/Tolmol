@@ -1,4 +1,5 @@
-import { useEffect, useState } from "preact/hooks"
+import { useEffect, useMemo, useState } from "preact/hooks"
+import qrcode from "qrcode-generator"
 import {
   daysLeft,
   dedupeReports,
@@ -19,7 +20,19 @@ import {
 import { reader, short } from "./arkiv"
 import { STATE_NAMES, useLang } from "./i18n"
 import { go } from "./router"
+import { draftRti } from "./rti"
 import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
+
+/** A QR code (inline SVG) for this shop's public page, to print and stick up near the shop. */
+function ShopQr({ url }: { url: string }) {
+  const svg = useMemo(() => {
+    const qr = qrcode(0, "M")
+    qr.addData(url)
+    qr.make()
+    return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true })
+  }, [url])
+  return <div class="qr" role="img" aria-label={url} dangerouslySetInnerHTML={{ __html: svg }} />
+}
 
 type Data = { shop: Shop | undefined; reports: Report[]; witnesses: Witness[]; atBlock: bigint; head: bigint }
 
@@ -32,6 +45,7 @@ function download(name: string, text: string, type: string) {
 
 export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: string; atBlock?: string }) {
   const { t, lang } = useLang()
+  const [rtiText, setRtiText] = useState<string | null>(null)
   const [data, setData] = useState<Data | null>(null)
   const [err, setErr] = useState<unknown>(null)
   const [blockInput, setBlockInput] = useState(atBlock ?? "")
@@ -231,6 +245,49 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
           read at block {data.atBlock.toString()}
           {historic && ` (head ${data.head.toString()})`}
         </p>
+      </section>
+
+      <section class="card">
+        <h3>{t("rtiTitle")}</h3>
+        <p class="small">{t("rtiHelp")}</p>
+        <div class="row wrap">
+          <button
+            class="secondary"
+            onClick={() =>
+              setRtiText(
+                draftRti(
+                  {
+                    shop: data.shop,
+                    shopId,
+                    months: month ? [month] : [...new Set(kept.map((r) => r.month))].sort(),
+                    reports: data.reports,
+                    witnesses: data.witnesses,
+                    atBlock: data.atBlock,
+                    pageUrl: `${location.origin}${location.pathname}#/shop/${shopId}${month ? `?month=${month}` : ""}`,
+                  },
+                  lang,
+                ),
+              )
+            }
+          >
+            {t("rtiDraft")}
+          </button>
+          {rtiText && (
+            <button class="secondary" onClick={() => download(`rti-${shopId}-${month ?? "all"}-${lang}.txt`, rtiText, "text/plain;charset=utf-8")}>
+              {t("rtiDownload")}
+            </button>
+          )}
+        </div>
+        {rtiText && <textarea class="rti" readOnly rows={14} value={rtiText} aria-label={t("rtiTitle")} />}
+      </section>
+
+      <section class="card">
+        <h3>{t("qrTitle")}</h3>
+        <p class="small">{t("qrHelp")}</p>
+        <ShopQr url={`${location.origin}${location.pathname}#/shop/${shopId}`} />
+        <button class="secondary" onClick={() => window.print()}>
+          {t("print")}
+        </button>
       </section>
     </>
   )

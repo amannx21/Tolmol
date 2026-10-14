@@ -90,6 +90,18 @@ const en = {
   aboutTitle: "About Tolmol",
   quota: "Arkiv's free read limit for your network is used up for now (each network gets about 100 reads every 13 minutes). Your data is safe; nothing is lost.",
   quotaWait: "Please try again in about",
+  rtiTitle: "Draft an RTI application",
+  rtiHelp: "Creates a Right to Information request to the District Supply Office for this shop's stock and distribution records, with this page's evidence attached. Fill in your name and address by hand on paper: Tolmol never asks for them.",
+  rtiDraft: "Draft my RTI",
+  rtiDownload: "Download (.txt)",
+  qrTitle: "QR code for this shop",
+  qrHelp: "Print it and share it with other card holders, so they can open this shop's record and confirm reports.",
+  print: "Print",
+  onlyConfirmed: "Count only reports confirmed by another device",
+  queued: "No internet: your report is saved on this phone and will be sent automatically when you are back online.",
+  queuedCount: "reports waiting to be sent",
+  limitsTitle: "What Tolmol cannot prove",
+  limitsText: "A report is a claim, not a measurement. Tolmol cannot prove that a device belongs to a real card holder at that shop, so one person with many phones, or a dealer's friends, could add reports. Confirmations from different devices make a report stronger, and every report shows which device wrote it, so patterns are visible. Nobody can delete or edit reports, including us.",
 } as const
 
 export type Key = keyof typeof en
@@ -181,6 +193,18 @@ const hi: Record<Key, string> = {
   aboutTitle: "तोलमोल के बारे में",
   quota: "आपके नेटवर्क के लिए Arkiv की मुफ़्त पढ़ने की सीमा अभी पूरी हो गई है (हर नेटवर्क को लगभग 13 मिनट में 100 बार पढ़ने की अनुमति है)। आपका डेटा सुरक्षित है, कुछ भी खोया नहीं है।",
   quotaWait: "कृपया लगभग इतने समय बाद फिर कोशिश करें:",
+  rtiTitle: "RTI आवेदन का मसौदा",
+  rtiHelp: "इस दुकान के स्टॉक और वितरण रिकॉर्ड के लिए ज़िला आपूर्ति कार्यालय को सूचना के अधिकार का आवेदन बनाता है, और इस पेज का सबूत साथ जोड़ता है। अपना नाम और पता काग़ज़ पर हाथ से भरें: तोलमोल इन्हें कभी नहीं माँगता।",
+  rtiDraft: "मेरा RTI बनाएँ",
+  rtiDownload: "डाउनलोड करें (.txt)",
+  qrTitle: "इस दुकान का QR कोड",
+  qrHelp: "इसे प्रिंट करके दूसरे कार्डधारकों से साझा करें, ताकि वे इस दुकान का रिकॉर्ड खोलकर रिपोर्टों की पुष्टि कर सकें।",
+  print: "प्रिंट करें",
+  onlyConfirmed: "सिर्फ़ वही रिपोर्टें गिनें जिनकी किसी दूसरे डिवाइस ने पुष्टि की हो",
+  queued: "इंटरनेट नहीं है: आपकी रिपोर्ट इस फ़ोन पर सहेजी गई है और इंटरनेट आने पर अपने आप भेज दी जाएगी।",
+  queuedCount: "रिपोर्टें भेजे जाने का इंतज़ार कर रही हैं",
+  limitsTitle: "तोलमोल क्या साबित नहीं कर सकता",
+  limitsText: "रिपोर्ट एक दावा है, नाप नहीं। तोलमोल यह साबित नहीं कर सकता कि कोई डिवाइस उस दुकान के असली कार्डधारक का है, इसलिए कई फ़ोन वाला एक व्यक्ति या डीलर के साथी भी रिपोर्ट जोड़ सकते हैं। अलग-अलग डिवाइसों की पुष्टियाँ रिपोर्ट को मज़बूत बनाती हैं, और हर रिपोर्ट दिखाती है कि उसे किस डिवाइस ने लिखा, इसलिए पैटर्न दिखते हैं। कोई भी, हम भी नहीं, रिपोर्ट मिटा या बदल नहीं सकता।",
 }
 
 const dicts: Record<Lang, Record<Key, string>> = { en, hi }

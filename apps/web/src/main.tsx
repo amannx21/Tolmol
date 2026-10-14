@@ -3,10 +3,22 @@ import { Dashboard } from "./Dashboard"
 import { About, Home } from "./pages"
 import { ReportForm } from "./ReportForm"
 import { ReportView } from "./ReportView"
+import { startQueue, useQueueCount } from "./queue"
 import { useRoute } from "./router"
 import { ShopPage } from "./ShopPage"
+import { useLang } from "./i18n"
 import { Layout } from "./ui"
 import "./styles.css"
+
+function QueueBanner() {
+  const n = useQueueCount()
+  const { t } = useLang()
+  return n > 0 ? (
+    <p class="queue" role="status">
+      {n} {t("queuedCount")}
+    </p>
+  ) : null
+}
 
 function App() {
   const route = useRoute()
@@ -30,7 +42,18 @@ function App() {
     default:
       page = <Home />
   }
-  return <Layout route={route}>{page}</Layout>
+  return (
+    <Layout route={route}>
+      <QueueBanner />
+      {page}
+    </Layout>
+  )
 }
 
 render(<App />, document.getElementById("app")!)
+startQueue()
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {
+    /* offline support is optional */
+  })
+}

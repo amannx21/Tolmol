@@ -17,6 +17,7 @@ import {
 } from "tolmol-sdk"
 import { device, reader } from "./arkiv"
 import { STATE_NAMES, useLang } from "./i18n"
+import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { DeviceCard, ErrorBox, Loading, loadShops } from "./ui"
 
@@ -34,6 +35,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   const [members, setMembers] = useState("4")
   const [step, setStep] = useState<"form" | "confirm" | "sending">("form")
   const [error, setError] = useState<string | null>(null)
+  const [queued, setQueued] = useState(false)
 
   useEffect(() => {
     loadShops()
@@ -79,6 +81,13 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
     if (!shop || !parsed) return
     setStep("sending")
     setError(null)
+    const input = { shopId: shop.shopId, month, item, entitledG: parsed.e, receivedG: parsed.r }
+    if (!navigator.onLine) {
+      enqueueReport(input, shop)
+      setQueued(true)
+      setStep("confirm")
+      return
+    }
     try {
       const { writer } = device()
       const res = await submitReport(reader, writer, { shopId: shop.shopId, month, item, entitledG: parsed.e, receivedG: parsed.r }, shop, { synthetic: true })
@@ -86,7 +95,10 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
     } catch (e) {
       setStep("confirm")
       if (e instanceof DuplicateError) setError(t("alreadyReported"))
-      else setError(String((e as Error).message ?? e).split("\n")[0] ?? "error")
+      else if (isOffline(e)) {
+        enqueueReport(input, shop)
+        setQueued(true)
+      } else setError(String((e as Error).message ?? e).split("\n")[0] ?? "error")
     }
   }
 
@@ -120,6 +132,11 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           </dd>
         </dl>
         <p class="notice">{t("permanentWarning")}</p>
+        {queued && (
+          <p class="ok" role="status">
+            {t("queued")}
+          </p>
+        )}
         <DeviceCard compact />
         {error && (
           <p class="err" role="alert">
@@ -130,7 +147,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           <button class="secondary" onClick={() => setStep("form")} disabled={step === "sending"}>
             ←
           </button>
-          <button onClick={send} disabled={step === "sending"}>
+          <button onClick={send} disabled={step === "sending" || queued}>
             {step === "sending" ? t("sending") : t("submit")}
           </button>
         </div>

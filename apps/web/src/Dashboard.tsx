@@ -8,6 +8,7 @@ import {
   formatKg,
   monthToNum,
   shopStats,
+  validWitnesses,
   watchTolmol,
   type LiveStatus,
   type Report,
@@ -31,6 +32,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   const [status, setStatus] = useState<LiveStatus>("connecting")
   const [flash, setFlash] = useState<Set<string>>(new Set())
   const [err, setErr] = useState<unknown>(null)
+  const [onlyConfirmed, setOnlyConfirmed] = useState(false)
   const scope = useRef({ state, from: monthToNum(fromMonth), to: monthToNum(toMonth) })
   scope.current = { state, from: monthToNum(fromMonth), to: monthToNum(toMonth) }
 
@@ -81,7 +83,13 @@ export function Dashboard({ initialState }: { initialState?: string }) {
     return stop
   }, [])
 
-  const ranked = useMemo(() => (reports ? shopStats([...reports.values()], [...witnesses.values()]) : []), [reports, witnesses])
+  // Trust-weighted view: optionally count only reports that at least one other device has confirmed.
+  const ranked = useMemo(() => {
+    if (!reports) return []
+    const ws = [...witnesses.values()]
+    const rs = [...reports.values()].filter((r) => !onlyConfirmed || validWitnesses(r, ws).length > 0)
+    return shopStats(rs, ws)
+  }, [reports, witnesses, onlyConfirmed])
 
   return (
     <>
@@ -110,6 +118,9 @@ export function Dashboard({ initialState }: { initialState?: string }) {
             {t("to")} {toMonth}
           </span>
         </div>
+        <label class="inline check">
+          <input type="checkbox" checked={onlyConfirmed} onChange={(e) => setOnlyConfirmed(e.currentTarget.checked)} /> {t("onlyConfirmed")}
+        </label>
       </section>
       {err ? (
         <ErrorBox error={err} />

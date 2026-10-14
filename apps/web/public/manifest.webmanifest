@@ -1,0 +1,12 @@
+{
+  "name": "Tolmol: ration shortfall evidence",
+  "short_name": "Tolmol",
+  "description": "Community-witnessed, tamper-evident records of ration (PDS) shortfalls on Arkiv. Demo with synthetic data.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f5f0",
+  "theme_color": "#0f5132",
+  "lang": "en",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
