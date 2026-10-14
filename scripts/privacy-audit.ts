@@ -32,8 +32,12 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   "tolmol.verifier": { project: oneOf("tolmol"), schema_version: oneOf(1), type: oneOf("tolmol.verifier"), verifier: re(/^0x[0-9a-f]{40}$/), synthetic: oneOf(true) },
   "tolmol.attestation": {
     project: oneOf("tolmol"), schema_version: oneOf(1), type: oneOf("tolmol.attestation"), device: re(/^0x[0-9a-f]{40}$/), state: re(STATE), shop_id: re(SHOP),
-    card_tag: re(HEX32), method: oneOf("test_card", "camp"), verified_on: any, synthetic: oneOf(true, false),
+    card_tag: re(HEX32), method: oneOf("test_card", "camp"), role: oneOf("card_holder", "dealer"), verified_on: any, synthetic: oneOf(true, false),
   },
+  // Shops answer (fixed choices only) and reporters confirm; no free text on either side.
+  "tolmol.response": { ...COMMON, type: oneOf("tolmol.response"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH),
+    action: oneOf("full_quantity", "stock_arrived", "scale_checked", "open_as_displayed", "board_updated", "receipt_given", "money_returned", "auth_help", "quality_replaced", "portability_served", "disputed") },
+  "tolmol.followup": { ...COMMON, type: oneOf("tolmol.followup"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), status: oneOf("fixed", "not_fixed") },
 }
 
 const r = httpReader()

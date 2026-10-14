@@ -638,6 +638,183 @@
         },
         "synthetic": {
           "$ref": "#/$defs/bool"
+        },
+        "role": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "enum": [
+                    "card_holder",
+                    "dealer"
+                  ]
+                }
+              }
+            }
+          ],
+          "description": "card_holder (ration card) or dealer (fair-price-shop licence). Absent on attestations made before 2026-10-15 = card_holder."
+        }
+      }
+    },
+    {
+      "title": "tolmol.response",
+      "description": "A shop's answer to a report, from a fixed list (no free text). Counted only when $creator is a device with a dealer attestation for this shop_id; one per (report, action). readonly, transferred to 0x...dEaD, lives until the report's createdAt + 365 days. Empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "report_key",
+        "shop_id",
+        "state",
+        "month",
+        "reported_at",
+        "synthetic",
+        "action"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.response"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "report_key": {
+          "$ref": "#/$defs/key"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "month": {
+          "$ref": "#/$defs/month"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        },
+        "action": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "enum": [
+                    "full_quantity",
+                    "stock_arrived",
+                    "scale_checked",
+                    "open_as_displayed",
+                    "board_updated",
+                    "receipt_given",
+                    "money_returned",
+                    "auth_help",
+                    "quality_replaced",
+                    "portability_served",
+                    "disputed"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "title": "tolmol.followup",
+      "description": "The reporter's word on whether the shop fixed it. Counted only from the report's own $creator; the latest one wins. readonly, transferred to 0x...dEaD, lives until the report's createdAt + 365 days. Empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "report_key",
+        "shop_id",
+        "state",
+        "month",
+        "reported_at",
+        "synthetic",
+        "status"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.followup"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "report_key": {
+          "$ref": "#/$defs/key"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "month": {
+          "$ref": "#/$defs/month"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        },
+        "status": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "enum": [
+                    "fixed",
+                    "not_fixed"
+                  ]
+                }
+              }
+            }
+          ]
         }
       }
     }

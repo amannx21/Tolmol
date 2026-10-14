@@ -3,7 +3,8 @@
 > **Status (2026-10-15): the simple version is built** (test cards). A verifier checks a signed ration card once and
 > publishes a `tolmol.attestation`; reports from verified phones show "✓ verified card holder" (`arkiv/schema.md`,
 > `apps/relayer/src/verifier.ts`, `packages/tolmol-sdk/src/verify.ts`). Its cards are **synthetic test cards**, and the
-> verifier can link a phone to its card (threat model T26). Everything below (camps, the anonymous Semaphore design,
+> verifier can link a phone to its card (threat model T26). The same flow verifies a shop's **dealer** with a test dealer
+> licence (card type `FPS`), who can then answer reports (`tolmol.response`, see `arkiv/schema.md`). Everything below (camps, the anonymous Semaphore design,
 > Aadhaar QR, DigiLocker, government adoption) is **design and future scope, not built**. Written 2026-10-14.
 
 ## The problem

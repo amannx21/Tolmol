@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import {
+  answerStats,
   dedupeReports,
+  latestFollowups,
+  stateFollowups,
+  stateResponses,
+  validResponses,
+  type AnswerStats,
+  type Followup,
+  type Response,
   addMonths,
   currentMonth,
   dashboardReports,
@@ -24,7 +32,7 @@ import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts } from "./extras"
 import { ErrorBox, Loading, loadShops, ShortfallBar } from "./ui"
-import { useVerified } from "./verified"
+import { useDealers, useVerified } from "./verified"
 
 const STATES = ["BR", "UP", "JH"]
 
@@ -44,6 +52,18 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   const [hideRapid, setHideRapid] = useState(false)
   const [onlyVerified, setOnlyVerified] = useState(false)
   const verified = useVerified()
+  const dealers = useDealers()
+  const [answers, setAnswers] = useState<{ rs: Response[]; fs: Followup[] } | null>(null)
+  useEffect(() => {
+    let live = true
+    setAnswers(null)
+    Promise.all([stateResponses(reader, state), stateFollowups(reader, state)])
+      .then(([rs, fs]) => live && setAnswers({ rs: rs.items, fs: fs.items }))
+      .catch(() => live && setAnswers({ rs: [], fs: [] }))
+    return () => {
+      live = false
+    }
+  }, [state])
   const [corrections, setCorrections] = useState<Correction[]>([])
   const scope = useRef({ state, from: monthToNum(fromMonth), to: monthToNum(toMonth) })
   scope.current = { state, from: monthToNum(fromMonth), to: monthToNum(toMonth) }
@@ -125,6 +145,16 @@ export function Dashboard({ initialState }: { initialState?: string }) {
     for (const r of dedupeReports(all, withdrawnKeys(all, corrections))) if (verified.has(r.creator.toLowerCase())) m.set(r.shopId, (m.get(r.shopId) ?? 0) + 1)
     return m
   }, [reports, verified, corrections])
+  const answersByShop = useMemo(() => {
+    const m = new Map<string, AnswerStats>()
+    if (!reports || !answers || !dealers) return m
+    const all = [...reports.values()]
+    const counted = dedupeReports(all, withdrawnKeys(all, corrections))
+    const valid = validResponses(counted, answers.rs, dealers)
+    const fus = latestFollowups(counted, answers.fs)
+    for (const shop of new Set(counted.map((r) => r.shopId))) m.set(shop, answerStats(counted.filter((r) => r.shopId === shop), valid, fus))
+    return m
+  }, [reports, answers, dealers, corrections])
 
   return (
     <>
@@ -183,6 +213,9 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
                   <IssueCounts counts={s.issueCounts} />
+                  {(answersByShop.get(s.shopId)?.answered ?? 0) > 0 && (
+                    <span class="tag">{t("answeredRow", { a: answersByShop.get(s.shopId)!.answered, n: answersByShop.get(s.shopId)!.reports, f: answersByShop.get(s.shopId)!.fixed })}</span>
+                  )}
                   {(verifiedByShop.get(s.shopId) ?? 0) > 0 && <span class="tag ok-tag">{t("verifiedRow", { n: verifiedByShop.get(s.shopId) ?? 0 })}</span>}
                   {!hideRapid && (rapidByShop.get(s.shopId) ?? 0) > 0 && <span class="tag warn">{t("rapidBadge", { n: rapidByShop.get(s.shopId) ?? 0 })}</span>}
                   <div class="small muted">

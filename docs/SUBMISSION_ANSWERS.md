@@ -128,6 +128,10 @@ synthetic.
    9. Verified card holders: open https://amannx21.github.io/Tolmol/#/test-cards, tap "Use on this phone" on any card,
       then "Verify this phone". The About page then says the phone is verified, and its reports show ✓. The same card
       in another browser profile is refused (one card, one phone).
+   10. Shops answer: open https://amannx21.github.io/Tolmol/#/shop/SYN-BR-0042. The score card reads "Answered 4 of 29
+      reports · fixed (confirmed by reporters) 3". Open one of those reports to see the shop's answer and the
+      reporter's "fixed ✓". To act as a dealer, use a test dealer licence on #/test-cards, then open a report of that
+      shop: the answer buttons appear (fixed choices, no text box).
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.

@@ -23,6 +23,7 @@ import { reader, short } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts, PatternsCard } from "./extras"
+import { ShopScoreCard } from "./answersUI"
 import { draftComplaint, draftRti, type RtiInput } from "./rti"
 import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
 import { useVerified, VerifiedBadge } from "./verified"
@@ -294,6 +295,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         {rtiText && <textarea class="rti" readOnly rows={16} value={rtiText} aria-label={t("rtiTitle")} />}
       </section>
 
+      <ShopScoreCard shopId={shopId} counted={kept} />
       <PatternsCard reports={data.reports} witnesses={data.witnesses} withdrawn={data.withdrawn} />
       <details class="card">
         <summary>{t("howComputed")}</summary>

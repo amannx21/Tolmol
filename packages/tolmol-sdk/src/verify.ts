@@ -27,10 +27,15 @@ export const VERIFY_TYPE = { verifier: "tolmol.verifier", attestation: "tolmol.a
 /** Public address of the TEST card issuer. Its cards are synthetic; in production the issuer is the state (DigiLocker). */
 export const TEST_ISSUER = "0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f" as const
 export const VERIFY_LIFETIME_DAYS = { verifier: 180, attestation: 365 } as const
-export const CARD_TYPES = ["PHH", "AAY"] as const
+/** PHH / AAY: ration cards (card holders). FPS: a fair-price-shop dealer licence (the shop's dealer). */
+export const CARD_TYPES = ["PHH", "AAY", "FPS"] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const ATTEST_METHODS = ["test_card", "camp"] as const
 export type AttestMethod = (typeof ATTEST_METHODS)[number]
+export const ROLES = ["card_holder", "dealer"] as const
+export type Role = (typeof ROLES)[number]
+/** A dealer licence verifies the shop's dealer; a ration card verifies a card holder. */
+export const roleForCard = (type: CardType): Role => (type === "FPS" ? "dealer" : "card_holder")
 
 // ------------------------------------------------------------------ test ration cards
 /** A synthetic ration card: no name, no card number, no family details. `serial` is random, `sig` is the issuer's. */
@@ -100,6 +105,8 @@ export type Attestation = {
   shopId: string
   cardTag: Hex
   method: AttestMethod
+  /** Absent on attestations made before 2026-10-15, which are all card holders. */
+  role: Role
   verifiedOn: bigint
   synthetic: boolean
   createdAt: bigint
@@ -111,7 +118,7 @@ export function verifierAttributes(verifier: string): AttributeInputs {
   return { project: str(PROJECT), type: str(VERIFY_TYPE.verifier), schema_version: i32(SCHEMA_VERSION), verifier: str(lc(verifier)), synthetic: bool(true) }
 }
 
-export function attestationAttributes(a: { device: string; state: string; shopId: string; cardTag: Hex; method: AttestMethod; verifiedOnMs: bigint; synthetic: boolean }): AttributeInputs {
+export function attestationAttributes(a: { device: string; state: string; shopId: string; cardTag: Hex; method: AttestMethod; role?: Role; verifiedOnMs: bigint; synthetic: boolean }): AttributeInputs {
   if (!/^0x[0-9a-fA-F]{40}$/.test(a.device)) throw new Error("invalid device address")
   if (!STATE_RE.test(a.state) || !SHOP_ID_RE.test(a.shopId) || !/^0x[0-9a-f]{64}$/.test(a.cardTag)) throw new Error("invalid attestation fields")
   return {
@@ -123,6 +130,7 @@ export function attestationAttributes(a: { device: string; state: string; shopId
     shop_id: str(a.shopId),
     card_tag: key(a.cardTag),
     method: str(a.method),
+    role: str(a.role ?? "card_holder"),
     verified_on: u64(dayStartMs(a.verifiedOnMs)),
     synthetic: bool(a.synthetic),
   }
@@ -153,10 +161,13 @@ export function parseAttestation(e: RawEntity): Attestation | null {
   const method = val(e, "method", "str")
   const verifiedOn = val(e, "verified_on", "u64")
   const synthetic = val(e, "synthetic", "bool")
+  const roleRaw = val(e, "role", "str")
+  const role = roleRaw === undefined ? "card_holder" : roleRaw
+  if (!ROLES.includes(role as Role)) return null
   if (!isAddr(device) || typeof state !== "string" || !STATE_RE.test(state) || typeof shopId !== "string" || !SHOP_ID_RE.test(shopId)) return null
   if (typeof tag !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(tag) || !ATTEST_METHODS.includes(method as AttestMethod)) return null
   if (typeof verifiedOn !== "bigint" || typeof synthetic !== "boolean") return null
-  return { key: e.key!, creator: e.creator!, device, state, shopId, cardTag: lc(tag) as Hex, method: method as AttestMethod, verifiedOn, synthetic, createdAt: e.createdAt!, expiresAt: e.expiresAt! }
+  return { key: e.key!, creator: e.creator!, device, state, shopId, cardTag: lc(tag) as Hex, method: method as AttestMethod, role: role as Role, verifiedOn, synthetic, createdAt: e.createdAt!, expiresAt: e.expiresAt! }
 }
 
 // ------------------------------------------------------------------ reads
@@ -213,7 +224,7 @@ const earlier = (a: { createdAt: bigint; key: string }, b: { createdAt: bigint; 
  * (the earliest attestation for a card_tag wins) and one card per device. Deterministic for any input order.
  * Returns lower-cased device address -> its attestation.
  */
-export function verifiedDevices(verifiers: readonly Verifier[], attestations: readonly Attestation[]): Map<string, Attestation> {
+export function verifiedDevices(verifiers: readonly Verifier[], attestations: readonly Attestation[], role: Role = "card_holder"): Map<string, Attestation> {
   const trusted = new Set(verifiers.map((v) => lc(v.verifier)))
   const byTag = new Map<string, Attestation>()
   for (const a of attestations) {
@@ -223,6 +234,7 @@ export function verifiedDevices(verifiers: readonly Verifier[], attestations: re
   }
   const byDevice = new Map<string, Attestation>()
   for (const a of byTag.values()) {
+    if (a.role !== role) continue
     const cur = byDevice.get(lc(a.device))
     if (!cur || earlier(a, cur)) byDevice.set(lc(a.device), a)
   }
@@ -243,8 +255,11 @@ export async function registerVerifier(registry: Writer, verifier: string) {
   })
 }
 
+/** Verified dealers: device -> attestation (its shop is the shop it may answer for). */
+export const verifiedDealers = (verifiers: readonly Verifier[], attestations: readonly Attestation[]) => verifiedDevices(verifiers, attestations, "dealer")
+
 /** Verifier: publish one attestation. Readonly; owned by the verifier, so a mistaken one can be deleted. */
-export async function attestDevice(verifier: Writer, a: { device: string; state: string; shopId: string; cardTag: Hex; method: AttestMethod; synthetic: boolean; now?: Date }) {
+export async function attestDevice(verifier: Writer, a: { device: string; state: string; shopId: string; cardTag: Hex; method: AttestMethod; role?: Role; synthetic: boolean; now?: Date }) {
   return verifier.createEntity({
     payload: EMPTY,
     contentType: "application/octet-stream",

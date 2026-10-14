@@ -23,6 +23,7 @@ import { useFmt, useLang } from "./i18n"
 import { IssueList, NextSteps, PrivacyPanel } from "./extras"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 import { useVerified, VerifiedBadge } from "./verified"
+import { ShopAnswer } from "./answersUI"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const { t } = useLang()
@@ -197,6 +198,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
       </section>
+      {prefs.mode === "full" && <ShopAnswer report={r} mine={mine} />}
       {data.raw && <PrivacyPanel raw={data.raw} />}
     </>
   )
@@ -270,6 +272,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {withdrawBox}
         {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
       </section>
+      <ShopAnswer report={r} mine={mine} big />
       {mine && <NextSteps shopId={r.shopId} mask={r.issues} />}
       <details class="card auditors">
         <summary>{t("detailsAuditors")}</summary>

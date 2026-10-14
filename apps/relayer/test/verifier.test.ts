@@ -16,6 +16,13 @@ describe("verifier matches the SDK's card format", () => {
     const signed = { ...c, sig: await issuer.signMessage({ message: sdk.cardMessage(c) }) }
     expect(v.decodeCard(sdk.encodeCard(signed))).toEqual(signed)
   })
+  it("accepts dealer licences (FPS) as well as ration cards", async () => {
+    const issuer = privateKeyToAccount(generatePrivateKey())
+    const c = { v: 1 as const, state: "BR", shopId: "SYN-BR-0042", type: "FPS" as const, serial: "ffeeddccbbaa99887766554433221100" }
+    const signed = { ...c, sig: await issuer.signMessage({ message: sdk.cardMessage(c) }) }
+    expect(v.decodeCard(sdk.encodeCard(signed))?.type).toBe("FPS")
+    expect(sdk.roleForCard("FPS")).toBe("dealer")
+  })
   it("rejects malformed cards", () => {
     expect(v.decodeCard("x")).toBeNull()
     expect(v.decodeCard(123)).toBeNull()

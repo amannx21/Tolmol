@@ -9,6 +9,7 @@ import {
   encodeCard,
   parseAttestation,
   parseCard,
+  verifiedDealers,
   verifiedDevices,
   verifyCard,
   type Attestation,
@@ -55,7 +56,7 @@ describe("test ration cards", () => {
 describe("attestations", () => {
   it("parse back from their attributes, with no card data", () => {
     const attrs = attestationAttributes({ device: dev(7), state: "BR", shopId: "SYN-BR-0042", cardTag: k(99), method: "test_card", verifiedOnMs: 1_791_900_000_123n, synthetic: true })
-    expect(Object.keys(attrs).sort()).toEqual(["card_tag", "device", "method", "project", "schema_version", "shop_id", "state", "synthetic", "type", "verified_on"])
+    expect(Object.keys(attrs).sort()).toEqual(["card_tag", "device", "method", "project", "role", "schema_version", "shop_id", "state", "synthetic", "type", "verified_on"])
     const raw: RawEntity = {
       key: k(1),
       creator: dev(500),
@@ -70,7 +71,7 @@ describe("attestations", () => {
 
   const v = (n: number): Verifier => ({ key: k(1000 + n), creator: dev(1), verifier: dev(500 + n), createdAt: 1n, expiresAt: 9n })
   const att = (n: number, over: Partial<Attestation>): Attestation => ({
-    key: k(n), creator: dev(500), device: dev(n), state: "BR", shopId: "SYN-BR-0042", cardTag: k(9000 + n), method: "test_card",
+    key: k(n), creator: dev(500), device: dev(n), state: "BR", shopId: "SYN-BR-0042", cardTag: k(9000 + n), method: "test_card", role: "card_holder",
     verifiedOn: 0n, synthetic: true, createdAt: BigInt(n), expiresAt: 99n, ...over,
   })
 
@@ -83,5 +84,10 @@ describe("attestations", () => {
     expect(m.get(dev(1))?.key).toBe(k(1))
     expect(m.has(dev(2))).toBe(false)
     expect(m.size).toBe(1)
+  })
+  it("keeps dealers and card holders apart", () => {
+    const xs = [att(1, {}), att(2, { role: "dealer", shopId: "SYN-BR-0002" })]
+    expect([...verifiedDevices([v(0)], xs).keys()]).toEqual([dev(1)])
+    expect([...verifiedDealers([v(0)], xs).entries()].map(([d, a]) => [d, a.shopId])).toEqual([[dev(2), "SYN-BR-0002"]])
   })
 })

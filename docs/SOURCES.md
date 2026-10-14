@@ -123,6 +123,29 @@ The other four tags (asked to pay, shop closed on ration day, bad grain, no rece
 we chose ourselves; we cite no statistic for them. Source 2 shows that PMGKAY grain is free, which is why "asked to
 pay money" is a complaint at all. Tolmol stores all tags only as a 7-bit number, never as text.
 
+## 10. What a fair-price shop owner must do (official)
+
+**The Targeted Public Distribution System (Control) Order, 2015, clause 10.** https://indiankanoon.org/doc/74257660/
+(opened 2026-10-15)
+
+> Clause 10(3): "The fair price shop owner shall not retain the ration cards after the supply of the foodgrains."
+
+Clause 10(4) lists the owner's duties, including display boards for entitlement, scale of issue, retail prices and
+"timings of opening and closing of the fair price shop" (10(4)(ii)), records such as the stock and sale registers
+(10(4)(iii)), and opening and closing as per the displayed timings (10(4)(vii)).
+Used for: the fixed list of answers a verified dealer can give (`RESPONSE_ACTIONS` in `packages/tolmol-sdk/src/answers.ts`).
+
+## 11. Community score cards (method)
+
+**World Bank, "The Community Score Card Process"** (methodology note).
+https://www.betterevaluation.org/sites/default/files/community_scorecard_process_worldbank03.pdf and the CIVICUS
+toolkit https://www.civicus.org/documents/toolkits/PGX_H_Community%20Score%20Cards.pdf
+
+Community score cards have service users score a service, the provider assess itself, and both meet to agree on
+improvements. Tolmol's "shops answer, reporters confirm" follows that loop on Arkiv: reports are the users' scores, the
+dealer's answers are the provider's side, and the reporter's "fixed / not fixed" closes the loop.
+Used for: the shop score card.
+
 ## What we do not claim
 
 - We do not claim any specific dealer or shop short-weighs. All shops in Tolmol are synthetic.

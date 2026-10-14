@@ -748,3 +748,20 @@ ul.cards li {
   width: 96px;
   flex: none;
 }
+
+/* ---------------- shop answers ---------------- */
+section.answers .followup {
+  margin-top: 10px;
+}
+section.answers .dealer-answer {
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+section.score .notice ul {
+  margin: 6px 0 0;
+}
+ol.rank .tag {
+  display: inline-block;
+  margin: 2px 6px 2px 0;
+}

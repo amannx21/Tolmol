@@ -7,6 +7,7 @@ import {
   deviceProofMessage,
   listAttestations,
   listVerifiers,
+  verifiedDealers,
   verifiedDevices,
   type Attestation,
   type TestCard,
@@ -17,31 +18,37 @@ import { STATE_NAMES, useLang } from "./i18n"
 
 // ------------------------------------------------------------------ who is verified (cached per page load)
 let verifiersP: Promise<Verifier[]> | null = null
-let verifiedP: Promise<Map<string, Attestation>> | null = null
+let attP: Promise<Attestation[]> | null = null
 
-/** lower-cased device -> attestation, for every verified phone. Two queries for the whole app. */
-export function loadVerified(fresh = false): Promise<Map<string, Attestation>> {
-  if (fresh) verifiedP = null
+function load(fresh: boolean) {
+  if (fresh) attP = null
   verifiersP ??= listVerifiers(reader).then((r) => r.items)
-  verifiedP ??= Promise.all([verifiersP, listAttestations(reader)]).then(([vs, as]) => verifiedDevices(vs, as.items))
-  verifiedP.catch(() => {
+  attP ??= listAttestations(reader).then((r) => r.items)
+  const both = Promise.all([verifiersP, attP])
+  both.catch(() => {
     verifiersP = null
-    verifiedP = null
+    attP = null
   })
-  return verifiedP
+  return both
 }
+/** lower-cased device -> attestation, for every verified card holder. Two queries for the whole app. */
+export const loadVerified = (fresh = false) => load(fresh).then(([vs, as]) => verifiedDevices(vs, as))
+/** lower-cased device -> attestation, for every verified shop dealer (its shopId is the shop it answers for). */
+export const loadDealers = (fresh = false) => load(fresh).then(([vs, as]) => verifiedDealers(vs, as))
 
-export function useVerified(): Map<string, Attestation> | null {
+function useLoaded(f: () => Promise<Map<string, Attestation>>): Map<string, Attestation> | null {
   const [m, setM] = useState<Map<string, Attestation> | null>(null)
   useEffect(() => {
     let live = true
-    loadVerified().then((x) => live && setM(x), () => live && setM(new Map()))
+    f().then((x) => live && setM(x), () => live && setM(new Map()))
     return () => {
       live = false
     }
   }, [])
   return m
 }
+export const useVerified = () => useLoaded(() => loadVerified())
+export const useDealers = () => useLoaded(() => loadDealers())
 
 export function VerifiedBadge({ a }: { a: Attestation | undefined }) {
   const { t } = useLang()
@@ -75,8 +82,12 @@ export async function verifyThisPhone(cardText: string, card: TestCard): Promise
 export function PhoneVerification() {
   const { t } = useLang()
   const m = useVerified()
-  const a = m?.get(device().account.address.toLowerCase())
-  if (!m) return null
+  const dealers = useDealers()
+  const me = device().account.address.toLowerCase()
+  const a = m?.get(me)
+  const d = dealers?.get(me)
+  if (!m || !dealers) return null
+  if (d) return <p class="small ok">{t("phoneIsDealer", { shop: d.shopId })} <a href={`#/shop/${d.shopId}`}>{d.shopId} →</a></p>
   return a ? (
     <p class="small ok">{t("phoneVerified", { shop: a.shopId })}</p>
   ) : (
@@ -96,30 +107,32 @@ export function CardPage({ c }: { c: string }) {
     setState("busy")
     const r = await verifyThisPhone(c, card)
     if (r.ok) {
-      await loadVerified(true).catch(() => undefined)
+      await load(true).catch(() => undefined)
       setState(r.already ? "already" : "done")
     } else setState(r.error === "card_used" ? "used" : "failed")
   }
+  const isDealer = card.type === "FPS"
   return (
     <section class="card">
-      <h2>{t("cardTitle")}</h2>
-      <p class="notice small">{t("cardSynthetic")}</p>
+      <h2>{t(isDealer ? "dealerLicenceTitle" : "cardTitle")}</h2>
+      <p class="notice small">{isDealer ? t("dealerLicenceHelp", { shop: card.shopId }) : t("cardSynthetic")}</p>
       <dl class="facts">
         <dt>{t("state")}</dt>
         <dd>{STATE_NAMES[card.state]?.[lang] ?? card.state}</dd>
         <dt>{t("shop")}</dt>
         <dd class="mono">{card.shopId}</dd>
         <dt>{t("cardTypeLabel")}</dt>
-        <dd>{t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
+        <dd>{isDealer ? t("dealerLicenceTitle") : t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
       </dl>
       <p class="small">{t("verifyPrivacy", { shop: card.shopId })}</p>
       {state === "done" || state === "already" ? (
         <p class="ok" role="status">
-          {t(state === "done" ? "verifyDone" : "verifyAlready")} <a href={`#/report?shop=${card.shopId}`}>{t("ctaReport")} →</a>
+          {isDealer && state === "done" ? t("dealerDone", { shop: card.shopId }) : t(state === "done" ? "verifyDone" : "verifyAlready")}{" "}
+          <a href={isDealer ? `#/shop/${card.shopId}` : `#/report?shop=${card.shopId}`}>{isDealer ? card.shopId : t("ctaReport")} →</a>
         </p>
       ) : (
         <button class="big-action" onClick={go} disabled={state === "busy"}>
-          {state === "busy" ? t("verifying") : t("verifyWithCard")}
+          {state === "busy" ? t("verifying") : t(isDealer ? "verifyAsDealer" : "verifyWithCard")}
         </button>
       )}
       {state === "used" && <p class="error" role="alert">{t("verifyUsed")} <a href="#/test-cards">{t("testCardsTitle")}</a></p>}
@@ -139,14 +152,19 @@ function Qr({ url }: { url: string }) {
 export function TestCardsPage() {
   const { t } = useLang()
   const [cards, setCards] = useState<{ text: string; card: TestCard }[] | null>(null)
+  const [dealers, setDealers] = useState<{ text: string; card: TestCard }[]>([])
   const [err, setErr] = useState(false)
   useEffect(() => {
     fetch("test-cards.json")
-      .then((r) => r.json() as Promise<{ cards: string[] }>)
-      .then((j) => setCards(j.cards.flatMap((text) => {
-        const card = decodeCard(text)
-        return card ? [{ text, card }] : []
-      })))
+      .then((r) => r.json() as Promise<{ cards: string[]; dealers?: string[] }>)
+      .then((j) => {
+        const dec = (list: string[]) => list.flatMap((text) => {
+          const card = decodeCard(text)
+          return card ? [{ text, card }] : []
+        })
+        setCards(dec(j.cards))
+        setDealers(dec(j.dealers ?? []))
+      })
       .catch(() => setErr(true))
   }, [])
   const base = `${location.origin}${location.pathname}`
@@ -170,6 +188,26 @@ export function TestCardsPage() {
           </li>
         ))}
       </ul>
+      {dealers.length > 0 && (
+        <>
+          <h3>{t("testDealersTitle")}</h3>
+          <p class="small">{t("testDealersHelp")}</p>
+          <ul class="cards">
+            {dealers.map(({ text, card }, i) => (
+              <li>
+                <Qr url={`${base}#/card?c=${text}`} />
+                <div>
+                  <strong>D{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("dealerLicenceTitle")}
+                  <br />
+                  <a class="button secondary" href={`#/card?c=${text}`}>
+                    {t("useCard")}
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   )
 }
