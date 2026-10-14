@@ -24,6 +24,7 @@ import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts, PatternsCard } from "./extras"
 import { ShopScoreCard } from "./answersUI"
+import { OfficialActionsCard } from "./officialUI"
 import { draftComplaint, draftRti, type RtiInput } from "./rti"
 import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
 import { useVerified, VerifiedBadge } from "./verified"
@@ -296,6 +297,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
       </section>
 
       <ShopScoreCard shopId={shopId} counted={kept} />
+      {data.shop && <OfficialActionsCard shop={data.shop} />}
       <PatternsCard reports={data.reports} witnesses={data.witnesses} withdrawn={data.withdrawn} />
       <details class="card">
         <summary>{t("howComputed")}</summary>

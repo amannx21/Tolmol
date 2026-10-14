@@ -146,6 +146,24 @@ improvements. Tolmol's "shops answer, reporters confirm" follows that loop on Ar
 dealer's answers are the provider's side, and the reporter's "fixed / not fixed" closes the loop.
 Used for: the shop score card.
 
+## 12. What the department can and must do about a shop (official)
+
+**The Targeted Public Distribution System (Control) Order, 2015.** https://indiankanoon.org/doc/74257660/ (opened 2026-10-15)
+
+> Clause 10(7): "The designated authority shall take prompt action in respect of violation of any condition of licence
+> including any irregularity committed by the fair price shop owner, which may include suspension or cancellation of
+> the fair price shop owner's licence."
+
+> Clause 11(1): "The State Government shall ensure regular inspections of fair price shops not less than once in three
+> months by the designated authority."
+
+> Clause 13: "If any person contravenes any of the provisions of this Order he shall be liable to punishment under
+> section 7 of the Act." (the Essential Commodities Act, 1955)
+
+Clause 10(9) requires a new licence within a month of a cancellation; clause 11(4) sets up vigilance committees down
+to the shop level, and clause 12(2) asks every local authority to conduct periodic social audits.
+Used for: the fixed list of official actions (`OFFICIAL_ACTIONS` in `packages/tolmol-sdk/src/official.ts`).
+
 ## What we do not claim
 
 - We do not claim any specific dealer or shop short-weighs. All shops in Tolmol are synthetic.

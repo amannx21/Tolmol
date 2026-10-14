@@ -25,6 +25,7 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | `tolmol.attestation` | A verifier named by the registry | That verifier | readonly | 365 days (re-verify yearly) | empty |
 | `tolmol.response` | A device verified as that shop's dealer (counted only then) | burn address | readonly | until the report's `createdAt` + 365 days | empty |
 | `tolmol.followup` | The report's own device (counted only then) | burn address | readonly | until the report's `createdAt` + 365 days | empty |
+| `tolmol.action` | A device verified as an official of the shop's district (counted only then) | burn address | readonly | 365 days | empty |
 
 ### Why these flags and owners
 
@@ -184,7 +185,7 @@ ration card (`docs/VERIFIED_REPORTERS.md`). Verification is optional: unverified
 | `shop_id` | str | `SYN-BR-0003` | the card's (synthetic) shop |
 | `card_tag` | key | `0x8c1e…` | HMAC-SHA256(verifier secret, card serial). The serial is random, not personal; without the secret nobody can link the tag to a card |
 | `method` | str | `test_card` | `test_card` today; `camp` reserved for in-person verification |
-| `role` | str | `card_holder` | `card_holder` (ration card) or `dealer` (fair-price-shop licence, card type `FPS`). Absent on attestations before 2026-10-15 = `card_holder`. One device holds one role |
+| `role` | str | `card_holder` | `card_holder` (ration card), `dealer` (fair-price-shop licence, card type `FPS`) or `official` (official ID, card type `GOV`; jurisdiction = the district of `shop_id` in the registry). Absent on attestations before 2026-10-15 = `card_holder`. One device holds one role |
 | `verified_on` | u64 | `1791936000000` | start of the UTC day, ms |
 | `synthetic` | bool | `true` | |
 
@@ -215,6 +216,26 @@ it said. Both live until the report's `createdAt` + 365 days.
 | `reported_at` | u64 | `1791936000000` | start of the UTC day, ms |
 | `synthetic` | bool | `true` | |
 
+## `tolmol.action` (officials act on the record)
+
+What the department did about a shop, from a fixed list grounded in the TPDS (Control) Order 2015: cl. 10(7) (prompt
+action, including suspending or cancelling the licence), cl. 11(1) (inspections at least once in three months) and
+cl. 13 (punishment under section 7 of the Essential Commodities Act). Sealed (readonly + `0x…dEaD`), 365 days.
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.action`, `1` | |
+| `shop_id`, `state`, `district` | str | `SYN-BR-0042`, `BR`, `gaya` | the district must match the registry's district for the shop |
+| `action` | str | `show_cause_notice` | one of `inspection_ordered`, `inspected_shortage_found`, `inspected_no_issue`, `show_cause_notice`, `licence_suspended`, `licence_cancelled`, `case_registered`, `grain_restored` |
+| `reported_at` | u64 | `1791936000000` | start of the UTC day, ms |
+| `synthetic` | bool | `true` | |
+
+**Needs official attention** (`needsAttention` in `packages/tolmol-sdk/src/official.ts`), worked out by every reader
+from public data: a shop is listed only with evidence of a problem (grain-weighted shortfall >= 20% over 3+ reports
+from 2+ devices, money charged for free grain, or a reporter saying "not fixed"); confirmations, 3+ unanswered
+shortfall reports and verified card holders add weight. Recording an action does not remove a shop from the list;
+only better numbers do.
+
 ## Rules the app enforces
 
 1. **One report per (device, shop, month, item).** Before creating, the app queries
@@ -242,6 +263,8 @@ it said. Both live until the report's `createdAt` + 365 days.
 9. **A shop's answer counts only from that shop's verified dealer** (`role = dealer`, same `shop_id`), once per
    (report, action), the earliest. 10. **"Fixed / not fixed" counts only from the report's own `$creator`**, latest wins.
    The score card counts "fixed" only from these confirmations, never from the dealer's claims.
+11. **An official action counts only from a verified official of the shop's district** (`role = official`, the
+   district of the ID's shop = the shop's district in the registry), once per (shop, action), the earliest.
 
 These rules live in the app and the SDK package. Arkiv cannot enforce them, because anyone can
 write any entity. The dashboard applies them when it reads, so a bypassing writer gains nothing.
@@ -259,6 +282,7 @@ Tiramisu blocks are 2 s, so 1 day = 43,200 blocks. Durations use whole days only
 | `tolmol.verifier` | 180 days, extended by the registry | letting it lapse revokes the verifier everywhere, with no delete and no server |
 | `tolmol.attestation` | 365 days | a card holder re-verifies once a year |
 | `tolmol.response`, `tolmol.followup` | until report `createdAt` + 365 days | outlive the report they are about |
+| `tolmol.action` | 365 days | a year of a shop's enforcement history |
 
 **Corroboration renews the lease.** When a witness corroborates a report that will then have
 **2 or more distinct witnesses**, the witness's device sends one atomic batch:
@@ -307,6 +331,8 @@ Pages are at most 200. Multi-page walks are pinned with `.atBlock(head)` and use
 | Q15 | Verifier: card already used? | `project AND type = "tolmol.attestation" AND card_tag = key(<tag>)`, `.createdBy(verifier)` |
 | Q16 | Report page: the shop's answers and the reporter's word | `project AND type = "tolmol.response" AND report_key = key(<k>)`, and the same for `tolmol.followup` |
 | Q17 | Shop score card | `project AND type = "tolmol.response" AND shop_id = <id>`, and the same for `tolmol.followup` |
+| Q19 | Shop page: official actions | `project AND type = "tolmol.action" AND shop_id = <id>` |
+| Q20 | Dashboard: official actions, attention list | `project AND type = "tolmol.action" AND state = <s>` |
 | Q18 | Dashboard answered / fixed | `project AND type = "tolmol.response" AND state = <s>`, and the same for `tolmol.followup` |
 
 Fields selected: `key`, `creator`, `owner`, `createdAt`, `expiresAt`, `creationFlags`, `attributes` (never the

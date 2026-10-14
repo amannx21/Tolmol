@@ -649,13 +649,14 @@
                 "value": {
                   "enum": [
                     "card_holder",
-                    "dealer"
+                    "dealer",
+                    "official"
                   ]
                 }
               }
             }
           ],
-          "description": "card_holder (ration card) or dealer (fair-price-shop licence). Absent on attestations made before 2026-10-15 = card_holder."
+          "description": "card_holder (ration card), dealer (fair-price-shop licence, FPS) or official (official ID, GOV; jurisdiction = the district of shop_id). Absent on attestations made before 2026-10-15 = card_holder."
         }
       }
     },
@@ -815,6 +816,83 @@
               }
             }
           ]
+        }
+      }
+    },
+    {
+      "title": "tolmol.action",
+      "description": "An official action on a shop, from a fixed list grounded in the TPDS (Control) Order 2015 (cl. 10(7), 11(1), 13). Counted only when $creator is a device with an 'official' attestation whose shop is in the same district as this shop (from the registry); one per (shop, action). readonly, transferred to 0x...dEaD, 365 days. Empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "shop_id",
+        "state",
+        "district",
+        "action",
+        "reported_at",
+        "synthetic"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.action"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "action": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "enum": [
+                    "inspection_ordered",
+                    "inspected_shortage_found",
+                    "inspected_no_issue",
+                    "show_cause_notice",
+                    "licence_suspended",
+                    "licence_cancelled",
+                    "case_registered",
+                    "grain_restored"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
         }
       }
     }

@@ -55,6 +55,9 @@ This page lists who might attack that promise, what stops them, and what is stil
 | T29 | Someone poses as a shop's dealer, or a dealer answers for another shop | An answer counts only from a device with a `role = dealer` attestation for that `shop_id`, from a registry-named verifier (dealer licence). Others' answers are ignored by every reader | **Mitigated** |
 | T30 | A dealer claims everything is fixed to improve the score | "Fixed" counts only from the report's own device (`tolmol.followup`, `$creator` = reporter). Dealer claims are shown as claims; "disputed" is visible too | **Mitigated** |
 | T31 | A dealer pressures customers to tap "fixed" | The dealer does not know which device is whose, so cannot target the reporter, but could pressure everyone who comes in. The latest follow-up wins, so a reporter can change their answer later, and later months' reports still show any shortfall | **Partly mitigated. Open** |
+| T32 | A fake "official action" defames a shop, or an official acts outside their district | An action counts only from a device with an `official` attestation (registry-named verifier) whose ID's shop is in the same district as the shop. Actions are a fixed list, so no accusations in free text | **Mitigated** |
+| T33 | Officials ignore the evidence | The "Needs official attention" list is public and computed by every reader from the evidence, so inaction is visible to card holders, journalists and the State Food Commission | **Mitigated** (visibility) |
+| T34 | An official whitewashes a shop ("inspected: no issue") | The action is recorded and attributable, but a shop leaves the attention list only when its numbers improve. Later reports keep counting | **Mitigated** |
 
 ## What Tolmol does not solve
 

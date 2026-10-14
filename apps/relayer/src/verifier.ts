@@ -20,8 +20,12 @@ export const TEST_ISSUER = "0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f" as const
 export const VERIFY_PER_IP_PER_DAY = 5
 
 export type VerifierEnv = { VERIFIER_PRIVATE_KEY?: string; CARD_TAG_SECRET?: string; CARD_ISSUER?: string; RPC_URL?: string }
-/** PHH / AAY: a ration card (verifies a card holder). FPS: a fair-price-shop dealer licence (verifies the shop's dealer). */
-export type Card = { v: 1; state: string; shopId: string; type: "PHH" | "AAY" | "FPS"; serial: string; sig: Hex }
+/**
+ * PHH / AAY: a ration card (verifies a card holder). FPS: a fair-price-shop dealer licence (the shop's dealer). GOV: an
+ * official's ID (jurisdiction = the district of the shop named on it).
+ */
+export type Card = { v: 1; state: string; shopId: string; type: "PHH" | "AAY" | "FPS" | "GOV"; serial: string; sig: Hex }
+const roleOf = (t: Card["type"]) => (t === "FPS" ? "dealer" : t === "GOV" ? "official" : "card_holder")
 
 export const cardMessage = (c: Omit<Card, "sig">) => `Tolmol TEST ration card (synthetic, not a real card)\nv1|${c.state}|${c.shopId}|${c.type}|${c.serial}`
 export const deviceProofMessage = (serial: string, device: string) => `Tolmol: verify this phone with test card ${serial}\ndevice ${device.toLowerCase()}`
@@ -32,7 +36,7 @@ export function decodeCard(s: unknown): Card | null {
     const c = JSON.parse(atob(s.replace(/-/g, "+").replace(/_/g, "/"))) as Partial<Card>
     if (c.v !== 1 || typeof c.state !== "string" || !/^[A-Z]{2}$/.test(c.state)) return null
     if (typeof c.shopId !== "string" || !/^SYN-[A-Z]{2}-\d{4}$/.test(c.shopId) || !c.shopId.startsWith(`SYN-${c.state}-`)) return null
-    if (c.type !== "PHH" && c.type !== "AAY" && c.type !== "FPS") return null
+    if (c.type !== "PHH" && c.type !== "AAY" && c.type !== "FPS" && c.type !== "GOV") return null
     if (typeof c.serial !== "string" || !/^[0-9a-f]{32}$/.test(c.serial) || typeof c.sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(c.sig)) return null
     return { v: 1, state: c.state, shopId: c.shopId, type: c.type, serial: c.serial, sig: c.sig as Hex }
   } catch {
@@ -110,7 +114,7 @@ export function makeVerifier(env: VerifierEnv) {
             shop_id: str(card.shopId),
             card_tag: key(tag),
             method: str("test_card"),
-            role: str(card.type === "FPS" ? "dealer" : "card_holder"),
+            role: str(roleOf(card.type)),
             verified_on: u64(dayStartMs(Date.now())),
             synthetic: bool(true),
           },
@@ -121,7 +125,7 @@ export function makeVerifier(env: VerifierEnv) {
       queue = run.catch(() => undefined)
       try {
         const res = await run
-        return { status: 200, body: { ok: true, entityKey: res.entityKey, txHash: res.txHash, shopId: card.shopId, role: card.type === "FPS" ? "dealer" : "card_holder" } }
+        return { status: 200, body: { ok: true, entityKey: res.entityKey, txHash: res.txHash, shopId: card.shopId, role: roleOf(card.type) } }
       } catch (e) {
         return { status: 502, body: { error: `write failed: ${String((e as Error).message).split("\n")[0]}` } }
       }

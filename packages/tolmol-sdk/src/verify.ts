@@ -27,15 +27,18 @@ export const VERIFY_TYPE = { verifier: "tolmol.verifier", attestation: "tolmol.a
 /** Public address of the TEST card issuer. Its cards are synthetic; in production the issuer is the state (DigiLocker). */
 export const TEST_ISSUER = "0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f" as const
 export const VERIFY_LIFETIME_DAYS = { verifier: 180, attestation: 365 } as const
-/** PHH / AAY: ration cards (card holders). FPS: a fair-price-shop dealer licence (the shop's dealer). */
-export const CARD_TYPES = ["PHH", "AAY", "FPS"] as const
+/**
+ * PHH / AAY: ration cards (card holders). FPS: a fair-price-shop dealer licence (the shop's dealer). GOV: an official's ID
+ * (food department / District Grievance Redressal Officer); its jurisdiction is the district of the shop named on it.
+ */
+export const CARD_TYPES = ["PHH", "AAY", "FPS", "GOV"] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const ATTEST_METHODS = ["test_card", "camp"] as const
 export type AttestMethod = (typeof ATTEST_METHODS)[number]
-export const ROLES = ["card_holder", "dealer"] as const
+export const ROLES = ["card_holder", "dealer", "official"] as const
 export type Role = (typeof ROLES)[number]
 /** A dealer licence verifies the shop's dealer; a ration card verifies a card holder. */
-export const roleForCard = (type: CardType): Role => (type === "FPS" ? "dealer" : "card_holder")
+export const roleForCard = (type: CardType): Role => (type === "FPS" ? "dealer" : type === "GOV" ? "official" : "card_holder")
 
 // ------------------------------------------------------------------ test ration cards
 /** A synthetic ration card: no name, no card number, no family details. `serial` is random, `sig` is the issuer's. */
@@ -257,6 +260,8 @@ export async function registerVerifier(registry: Writer, verifier: string) {
 
 /** Verified dealers: device -> attestation (its shop is the shop it may answer for). */
 export const verifiedDealers = (verifiers: readonly Verifier[], attestations: readonly Attestation[]) => verifiedDevices(verifiers, attestations, "dealer")
+/** Verified officials: device -> attestation (its shop's district is the official's jurisdiction). */
+export const verifiedOfficials = (verifiers: readonly Verifier[], attestations: readonly Attestation[]) => verifiedDevices(verifiers, attestations, "official")
 
 /** Verifier: publish one attestation. Readonly; owned by the verifier, so a mistaken one can be deleted. */
 export async function attestDevice(verifier: Writer, a: { device: string; state: string; shopId: string; cardTag: Hex; method: AttestMethod; role?: Role; synthetic: boolean; now?: Date }) {

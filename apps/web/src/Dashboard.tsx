@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import {
   answerStats,
+  needsAttention,
+  stateOfficialActions,
+  strongestAction,
+  validOfficialActions,
+  type OfficialRecord,
   dedupeReports,
   latestFollowups,
   stateFollowups,
@@ -32,7 +37,8 @@ import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts } from "./extras"
 import { ErrorBox, Loading, loadShops, ShortfallBar } from "./ui"
-import { useDealers, useVerified } from "./verified"
+import { useDealers, useOfficials, useVerified } from "./verified"
+import { AttentionList, offKey, useShopDistricts } from "./officialUI"
 
 const STATES = ["BR", "UP", "JH"]
 
@@ -53,6 +59,19 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   const [onlyVerified, setOnlyVerified] = useState(false)
   const verified = useVerified()
   const dealers = useDealers()
+  const officials = useOfficials()
+  const districts = useShopDistricts()
+  const [offActs, setOffActs] = useState<OfficialRecord[] | null>(null)
+  useEffect(() => {
+    let live = true
+    setOffActs(null)
+    stateOfficialActions(reader, state)
+      .then((r) => live && setOffActs(r.items))
+      .catch(() => live && setOffActs([]))
+    return () => {
+      live = false
+    }
+  }, [state])
   const [answers, setAnswers] = useState<{ rs: Response[]; fs: Followup[] } | null>(null)
   useEffect(() => {
     let live = true
@@ -155,6 +174,12 @@ export function Dashboard({ initialState }: { initialState?: string }) {
     for (const shop of new Set(counted.map((r) => r.shopId))) m.set(shop, answerStats(counted.filter((r) => r.shopId === shop), valid, fus))
     return m
   }, [reports, answers, dealers, corrections])
+  const actionsByShop = useMemo(() => (offActs && officials && districts ? validOfficialActions(offActs, officials, districts) : new Map<string, OfficialRecord[]>()), [offActs, officials, districts])
+  const attention = useMemo(() => {
+    if (!reports || !answers || !dealers || !verified) return null
+    const all = [...reports.values()]
+    return needsAttention(shopStats(all, [...witnesses.values()], withdrawnKeys(all, corrections)), answersByShop, verifiedByShop, actionsByShop)
+  }, [reports, witnesses, corrections, answers, dealers, verified, answersByShop, verifiedByShop, actionsByShop])
 
   return (
     <>
@@ -193,6 +218,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
           <input type="checkbox" checked={onlyVerified} onChange={(e) => setOnlyVerified(e.currentTarget.checked)} /> {t("onlyVerified")}
         </label>
       </section>
+      {attention && <AttentionList items={attention} labels={labels} />}
       {err ? (
         <ErrorBox error={err} />
       ) : !reports ? (
@@ -213,6 +239,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
                   <IssueCounts counts={s.issueCounts} />
+                  {strongestAction(actionsByShop.get(s.shopId)) && <span class="tag warn">⚖ {t(offKey(strongestAction(actionsByShop.get(s.shopId))!.action))}</span>}
                   {(answersByShop.get(s.shopId)?.answered ?? 0) > 0 && (
                     <span class="tag">{t("answeredRow", { a: answersByShop.get(s.shopId)!.answered, n: answersByShop.get(s.shopId)!.reports, f: answersByShop.get(s.shopId)!.fixed })}</span>
                   )}

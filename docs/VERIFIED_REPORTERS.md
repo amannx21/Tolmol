@@ -4,7 +4,9 @@
 > publishes a `tolmol.attestation`; reports from verified phones show "✓ verified card holder" (`arkiv/schema.md`,
 > `apps/relayer/src/verifier.ts`, `packages/tolmol-sdk/src/verify.ts`). Its cards are **synthetic test cards**, and the
 > verifier can link a phone to its card (threat model T26). The same flow verifies a shop's **dealer** with a test dealer
-> licence (card type `FPS`), who can then answer reports (`tolmol.response`, see `arkiv/schema.md`). Everything below (camps, the anonymous Semaphore design,
+> licence (card type `FPS`), who can then answer reports (`tolmol.response`), and an **official** with a test official ID
+> (card type `GOV`), who can record actions on the shops of their district (`tolmol.action`). Step 3 of the government
+> adoption table below ("answer on the record") is therefore built in demo form. Everything below (camps, the anonymous Semaphore design,
 > Aadhaar QR, DigiLocker, government adoption) is **design and future scope, not built**. Written 2026-10-14.
 
 ## The problem

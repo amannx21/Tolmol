@@ -22,6 +22,8 @@ describe("verifier matches the SDK's card format", () => {
     const signed = { ...c, sig: await issuer.signMessage({ message: sdk.cardMessage(c) }) }
     expect(v.decodeCard(sdk.encodeCard(signed))?.type).toBe("FPS")
     expect(sdk.roleForCard("FPS")).toBe("dealer")
+    expect(sdk.roleForCard("GOV")).toBe("official")
+    expect(v.decodeCard(sdk.encodeCard({ ...signed, type: "GOV" }))?.type).toBe("GOV")
   })
   it("rejects malformed cards", () => {
     expect(v.decodeCard("x")).toBeNull()

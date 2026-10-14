@@ -9,6 +9,7 @@ import {
   listVerifiers,
   verifiedDealers,
   verifiedDevices,
+  verifiedOfficials,
   type Attestation,
   type TestCard,
   type Verifier,
@@ -35,6 +36,8 @@ function load(fresh: boolean) {
 export const loadVerified = (fresh = false) => load(fresh).then(([vs, as]) => verifiedDevices(vs, as))
 /** lower-cased device -> attestation, for every verified shop dealer (its shopId is the shop it answers for). */
 export const loadDealers = (fresh = false) => load(fresh).then(([vs, as]) => verifiedDealers(vs, as))
+/** lower-cased device -> attestation, for every verified official (jurisdiction: the district of its shop). */
+export const loadOfficials = (fresh = false) => load(fresh).then(([vs, as]) => verifiedOfficials(vs, as))
 
 function useLoaded(f: () => Promise<Map<string, Attestation>>): Map<string, Attestation> | null {
   const [m, setM] = useState<Map<string, Attestation> | null>(null)
@@ -49,6 +52,7 @@ function useLoaded(f: () => Promise<Map<string, Attestation>>): Map<string, Atte
 }
 export const useVerified = () => useLoaded(() => loadVerified())
 export const useDealers = () => useLoaded(() => loadDealers())
+export const useOfficials = () => useLoaded(() => loadOfficials())
 
 export function VerifiedBadge({ a }: { a: Attestation | undefined }) {
   const { t } = useLang()
@@ -83,10 +87,13 @@ export function PhoneVerification() {
   const { t } = useLang()
   const m = useVerified()
   const dealers = useDealers()
+  const officials = useOfficials()
   const me = device().account.address.toLowerCase()
   const a = m?.get(me)
   const d = dealers?.get(me)
-  if (!m || !dealers) return null
+  const o = officials?.get(me)
+  if (!m || !dealers || !officials) return null
+  if (o) return <p class="small ok">{t("phoneIsOfficial", { shop: o.shopId })} <a href={`#/dashboard?state=${o.state}`}>⚖ →</a></p>
   if (d) return <p class="small ok">{t("phoneIsDealer", { shop: d.shopId })} <a href={`#/shop/${d.shopId}`}>{d.shopId} →</a></p>
   return a ? (
     <p class="small ok">{t("phoneVerified", { shop: a.shopId })}</p>
@@ -112,27 +119,28 @@ export function CardPage({ c }: { c: string }) {
     } else setState(r.error === "card_used" ? "used" : "failed")
   }
   const isDealer = card.type === "FPS"
+  const isOfficial = card.type === "GOV"
   return (
     <section class="card">
-      <h2>{t(isDealer ? "dealerLicenceTitle" : "cardTitle")}</h2>
-      <p class="notice small">{isDealer ? t("dealerLicenceHelp", { shop: card.shopId }) : t("cardSynthetic")}</p>
+      <h2>{t(isOfficial ? "officialIdTitle" : isDealer ? "dealerLicenceTitle" : "cardTitle")}</h2>
+      <p class="notice small">{isOfficial ? t("officialIdHelp", { shop: card.shopId }) : isDealer ? t("dealerLicenceHelp", { shop: card.shopId }) : t("cardSynthetic")}</p>
       <dl class="facts">
         <dt>{t("state")}</dt>
         <dd>{STATE_NAMES[card.state]?.[lang] ?? card.state}</dd>
         <dt>{t("shop")}</dt>
         <dd class="mono">{card.shopId}</dd>
         <dt>{t("cardTypeLabel")}</dt>
-        <dd>{isDealer ? t("dealerLicenceTitle") : t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
+        <dd>{isOfficial ? t("officialIdTitle") : isDealer ? t("dealerLicenceTitle") : t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
       </dl>
       <p class="small">{t("verifyPrivacy", { shop: card.shopId })}</p>
       {state === "done" || state === "already" ? (
         <p class="ok" role="status">
-          {isDealer && state === "done" ? t("dealerDone", { shop: card.shopId }) : t(state === "done" ? "verifyDone" : "verifyAlready")}{" "}
-          <a href={isDealer ? `#/shop/${card.shopId}` : `#/report?shop=${card.shopId}`}>{isDealer ? card.shopId : t("ctaReport")} →</a>
+          {isOfficial && state === "done" ? t("officialDone", { shop: card.shopId }) : isDealer && state === "done" ? t("dealerDone", { shop: card.shopId }) : t(state === "done" ? "verifyDone" : "verifyAlready")}{" "}
+          <a href={isDealer || isOfficial ? `#/shop/${card.shopId}` : `#/report?shop=${card.shopId}`}>{isDealer || isOfficial ? card.shopId : t("ctaReport")} →</a>
         </p>
       ) : (
         <button class="big-action" onClick={go} disabled={state === "busy"}>
-          {state === "busy" ? t("verifying") : t(isDealer ? "verifyAsDealer" : "verifyWithCard")}
+          {state === "busy" ? t("verifying") : t(isOfficial ? "verifyAsOfficial" : isDealer ? "verifyAsDealer" : "verifyWithCard")}
         </button>
       )}
       {state === "used" && <p class="error" role="alert">{t("verifyUsed")} <a href="#/test-cards">{t("testCardsTitle")}</a></p>}
@@ -153,10 +161,11 @@ export function TestCardsPage() {
   const { t } = useLang()
   const [cards, setCards] = useState<{ text: string; card: TestCard }[] | null>(null)
   const [dealers, setDealers] = useState<{ text: string; card: TestCard }[]>([])
+  const [officials, setOfficials] = useState<{ text: string; card: TestCard }[]>([])
   const [err, setErr] = useState(false)
   useEffect(() => {
     fetch("test-cards.json")
-      .then((r) => r.json() as Promise<{ cards: string[]; dealers?: string[] }>)
+      .then((r) => r.json() as Promise<{ cards: string[]; dealers?: string[]; officials?: string[] }>)
       .then((j) => {
         const dec = (list: string[]) => list.flatMap((text) => {
           const card = decodeCard(text)
@@ -164,6 +173,7 @@ export function TestCardsPage() {
         })
         setCards(dec(j.cards))
         setDealers(dec(j.dealers ?? []))
+        setOfficials(dec(j.officials ?? []))
       })
       .catch(() => setErr(true))
   }, [])
@@ -198,6 +208,26 @@ export function TestCardsPage() {
                 <Qr url={`${base}#/card?c=${text}`} />
                 <div>
                   <strong>D{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("dealerLicenceTitle")}
+                  <br />
+                  <a class="button secondary" href={`#/card?c=${text}`}>
+                    {t("useCard")}
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {officials.length > 0 && (
+        <>
+          <h3>{t("testOfficialsTitle")}</h3>
+          <p class="small">{t("testOfficialsHelp")}</p>
+          <ul class="cards">
+            {officials.map(({ text, card }, i) => (
+              <li>
+                <Qr url={`${base}#/card?c=${text}`} />
+                <div>
+                  <strong>G{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("officialIdTitle")}
                   <br />
                   <a class="button secondary" href={`#/card?c=${text}`}>
                     {t("useCard")}

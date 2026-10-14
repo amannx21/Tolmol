@@ -132,6 +132,10 @@ synthetic.
       reports · fixed (confirmed by reporters) 3". Open one of those reports to see the shop's answer and the
       reporter's "fixed ✓". To act as a dealer, use a test dealer licence on #/test-cards, then open a report of that
       shop: the answer buttons appear (fixed choices, no text box).
+   11. Officials: open https://amannx21.github.io/Tolmol/#/dashboard?state=BR. "Needs official attention" lists shops with
+      the reasons, and SYN-BR-0042 shows "Latest official action: Show-cause notice issued to the dealer". Its shop page
+      shows the three recorded actions. With a test official ID (#/test-cards), the action buttons appear on shop pages
+      of that district only.
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.

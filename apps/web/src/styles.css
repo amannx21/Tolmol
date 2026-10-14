@@ -765,3 +765,15 @@ ol.rank .tag {
   display: inline-block;
   margin: 2px 6px 2px 0;
 }
+
+/* ---------------- officials ---------------- */
+details.attention summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+details.attention ol.rank li > a > div {
+  margin-top: 4px;
+}
+section.official h3 {
+  margin-top: 0;
+}

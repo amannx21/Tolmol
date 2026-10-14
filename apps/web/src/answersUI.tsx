@@ -58,9 +58,9 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
         return
       }
       await fn()
-      setMsg({ ok: true, text: done })
-      setPick(null)
       await load()
+      setPick(null)
+      setMsg({ ok: true, text: done })
     } catch {
       setMsg({ ok: false, text: t("errGeneric") })
     } finally {

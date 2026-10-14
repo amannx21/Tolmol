@@ -90,6 +90,14 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    ✗"**. Shop pages show a score card (answered, fixed as confirmed by reporters, not fixed, disputed), and the
    dashboard shows it per shop. A shop improves its standing only by fixing things its reporters confirm, never by
    editing or hiding reports.
+11. **Officials act on the record.** The dashboard has a public **"Needs official attention"** list, worked out from the
+   evidence with fixed rules anyone can check (20%+ short over 3+ reports, money charged for free grain, reporters
+   saying "not fixed", reports the shop ignored, confirmations, verified card holders). A verified official of the
+   district (test official ID in the demo) can record what the department did, on the shop's page: inspection
+   ordered, inspected (shortage found / no issue), show-cause notice, licence suspended or cancelled, case registered
+   under the Essential Commodities Act, grain restored. These follow the TPDS (Control) Order 2015, clauses 10(7),
+   11(1) and 13. Actions are sealed, so nobody, the department included, can quietly remove them. A shop leaves the
+   list only when its numbers improve, so recording an action cannot whitewash a shop, and inaction stays visible.
 
 **Two modes, chosen on first visit and switchable anytime:**
 
@@ -144,6 +152,7 @@ Every feature below changes something the user sees. Permalinks to exact lines: 
 | `createdBy()` | Shops are trusted only from the registry wallet; dedupe checks use the device as creator | Fake shops never appear in the picker; one report per device per shop-month-grain | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `$creator` in the UX | Every report and witness shows its device address with an explorer link | Authorship anyone can verify, that no one can forge | [`ReportView.tsx`](apps/web/src/ReportView.tsx) |
 | `$creator` as the trust rule | A withdrawal (`tolmol.correction`) counts only if its creator wrote the report | A dealer cannot "withdraw" a card holder's complaint | [`rules.ts`](packages/tolmol-sdk/src/rules.ts) |
+| `$creator` + district for official actions | A `tolmol.action` counts only from a device verified as an official whose ID's shop is in the same district (from the registry); sealed in one batch | Strict action is on the record and attributable; nobody can fake it or delete it | [`official.ts`](packages/tolmol-sdk/src/official.ts) |
 | `$creator` on both sides of an answer | A shop's answer (`tolmol.response`) counts only from a device verified as THAT shop's dealer; "fixed / not fixed" (`tolmol.followup`) only from the report's own device. Both sealed (readonly + transfer to `0x…dEaD`) | Neither the dealer nor the reporter can fake the other side or take back what they said | [`answers.ts`](packages/tolmol-sdk/src/answers.ts) |
 | `createdBy()` chain of trust | Registry names verifiers (`tolmol.verifier`); a device is verified only by an attestation from a named verifier; one device per card | The "✓ verified card holder" badge cannot be forged by writing the same fields | [`verify.ts`](packages/tolmol-sdk/src/verify.ts), [`verifier.ts`](apps/relayer/src/verifier.ts) |
 | Cursor pagination + pinned block | Every walk is `.limit(200).atBlock(head)` with `next()` | Consistent pages; dashboards beyond 200 reports | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
@@ -217,6 +226,7 @@ creator and transaction, so the evidence can be re-checked even after entities e
 | `0xA7EF19b057E28BcB7048a202992423Da937Df140` | Witness B in tests |
 | `0x357A30b18BF4020F243186d76dBdD44b830119e2` | Relayer: sends test-GLM drips only, never creates entities |
 | `0x1C58335A9C5c5a3440f8018984cf9069b7C9408B` | Card verifier: creates `tolmol.attestation` entities (named by the registry's `tolmol.verifier`) |
+| `0x20e2B6010a4a9128EAEDea408B29A4AC5a44a410` | Demo official for Gaya district (verified with a private test official ID); recorded 3 actions on SYN-BR-0042 |
 | `0xFdbFff21C655c698a69205D2eb5Ec73a2F2d2dE6` | Demo dealer of SYN-BR-0042 (verified with a private test licence); answers reports |
 | `0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f` | TEST card issuer: signs the synthetic test ration cards; never writes to Arkiv |
 | 10 seed device wallets | Synthetic beneficiaries; listed in [`arkiv/wallets.md`](arkiv/wallets.md) and `docs/seed-manifest.json` |
