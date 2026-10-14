@@ -41,6 +41,8 @@ This page lists who might attack that promise, what stops them, and what is stil
 | T15 | De-anonymising reporters | No personal fields exist, and household size is never stored. **But** wallets are linkable across reports, and the gas funder of a device is visible on chain. Timing at one small shop may narrow down who reported | **Partly mitigated. Open** |
 | T16 | Device key loss (cleared browser) | The device simply gets a new identity. Old reports stay valid. There is nothing to recover, by design | Accepted |
 | T17 | Data expires before it is used | Reports live 90 days, extended to 180 days (capped at 365) once 2 devices confirm. Anyone can extend further (permissionless extension). Exports keep keys and transactions after expiry | **Mitigated** |
+| T19 | Offline queue tampered with on a shared phone | The queue holds only shop, month, grain and grams, and is signed by that phone's key when sent. Someone with the phone could also just file a report; nothing personal is exposed | Accepted |
+| T20 | RTI letter leaks the applicant's identity | Name and address are blanks filled in on paper; the letter includes shop evidence but no device address | **Mitigated** |
 | T18 | Secrets leaked into the repo or Arkiv | Keys only in `.env` / browser storage. Pre-commit hook compares staged files to the real keys. CI runs gitleaks. No key material is ever an attribute or payload | **Mitigated** |
 
 ## What Tolmol does not solve

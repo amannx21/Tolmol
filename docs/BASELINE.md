@@ -25,6 +25,12 @@ None. The only commit before this work is GitHub's auto-generated `LICENSE` (MIT
 | **2026-10-13 08:47:24** | **First Arkiv entity written.** Block 515746 timestamp |
 | 2026-10-13 08:47:28.017 | Query read-back returned the entity. Script exited 0 |
 
+| 2026-10-13 ~09:10 | Phase 0 done: rules digest, checklist, schema draft, limit and permission tests (commit `11bcd07`) |
+| 2026-10-13 ~09:45 | Phase 1 to 3 code: SDK, tests, web app, relayer (commits `806d038`, `d084737`) |
+| 2026-10-13 ~10:05 | Synthetic dataset seeded: 25 shops, 166 reports, 168 witnesses, 62 extensions |
+| 2026-10-13 ~10:30 | Web app live on GitHub Pages; relayer live on Vercel (`4bf1748`) |
+| 2026-10-14 ~11:10 | Should-haves: RTI draft, QR, PWA + offline queue, trust filter (`3977642`) |
+
 ## Time to first Arkiv entity
 
 **24 min 15 s** from the build session start (08:23:09 UTC) to the block time of the first

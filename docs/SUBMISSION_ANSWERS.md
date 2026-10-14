@@ -24,8 +24,10 @@ Tolmol lets a card holder record what they were entitled to and what they receiv
 on their own phone. Others at the same shop confirm it from their own phones. Each record is created read-only
 and handed to an address nobody controls in the same transaction, so nobody (not the dealer, an official, us,
 or even the reporter) can edit or delete it. Journalists, social-audit groups and RTI filers can rank the worst
-shops, see a shop as it was at any past block, and download evidence with an explorer link per row. No names,
-phone numbers, Aadhaar or card numbers are ever stored, and all demo data is synthetic.
+shops, see a shop as it was at any past block, and download evidence with an explorer link per row. A "Draft my
+RTI" button turns a shop's evidence into a Right to Information application (English or Hindi), and the app
+installs on a phone, opens offline and queues reports until there is signal. No names, phone numbers, Aadhaar or
+card numbers are ever stored, and all demo data is synthetic.
 
 ### Challenges I ran into *
 

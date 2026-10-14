@@ -201,6 +201,8 @@ watcher as a fallback.
 | Photos of receipts, weighing scales or shops | Too large (the public RPC caps requests at 262,144 bytes), and photos identify people and places |
 | Household size and card type | They would make reports easier to link to a household. The device uses them only to compute `entitled_g` |
 | Device private keys | Kept in the browser's local storage on that device only, never sent anywhere |
+| Reports waiting for a connection | The offline queue holds shop, month, grain and grams in the browser's local storage until there is signal; only then are they signed and written |
+| Name and address on an RTI application | The "Draft my RTI" letter leaves them as blanks to fill in by hand; they never reach Tolmol or Arkiv |
 | Rate-limit counters and IP addresses for the gas top-up | Operational data about real people. Kept in the relayer's short-lived store, never on chain |
 | Aggregates (dashboard rankings, percentages per district) | Derived data. Anyone can recompute it from the raw entities, so storing it would only add a second, trustable copy |
 | Real shop registries and beneficiary lists | Out of scope by design. Tolmol uses a synthetic registry |

@@ -53,6 +53,13 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
 3. **Check and export.** Anyone (journalist, NGO, social-audit group, RTI filer) can see the worst shops in a
    district, open a shop's timeline, view it **as it was at any past block**, and download CSV/JSON evidence where
    every row has an entity key, creator address, block number and explorer link.
+4. **Act on it.** "Draft my RTI" writes a Right to Information application (English or Hindi) to the District
+   Supply Office for the shop's stock and distribution registers, citing Sections 6(1), 6(2), 7(1) and 7(5) of
+   the RTI Act 2005, with the on-chain evidence as an annex. Name and address are blanks filled in by hand.
+   Each shop page also has a printable QR code, so card holders at the shop can open it and confirm reports.
+
+Works on a low-end phone: installable (web manifest), the app shell loads offline, and a report made with no
+signal is kept on the phone and signed and sent automatically when the connection returns.
 
 ## Why Arkiv (and what breaks without it)
 
@@ -164,7 +171,8 @@ above without the `shop_id` filter and read `creator`.
 **Best Indian Use Case (Why India?).** Users: PDS beneficiaries (81.35 crore people), social-audit groups, local
 journalists and RTI filers. The problem is specific to India's fair-price shops: under-weighing and failed
 authentication leave card holders with nothing but their word. Tolmol works on a low-end Android browser, in Hindi
-and English, with a numeric-only form and a 128 KB (gzipped) app. Honest limits: it needs a little test gas
+and English, with a numeric-only form, a 141 KB (gzipped) installable app that opens offline and queues reports
+until there is signal, and a "Draft my RTI" letter that turns the evidence into an official information request. Honest limits: it needs a little test gas
 (our relayer covers it), and the demo uses synthetic shops.
 
 **Censorship Resistance.** Who is harmed if this data is censored? The card holder whose complaint vanishes,
@@ -205,6 +213,8 @@ No Tolmol database, no Tolmol read API. Details: [`docs/ARCHITECTURE.md`](docs/A
   per viewer, so this is per person, but heavy use from one network can hit it.
 - No proof that a device belongs to a real card holder at that shop (see the threat model).
 - Hindi strings were drafted with an AI assistant and need native review.
+- The trust filter ("count only confirmed reports") is a view, not proof: confirmations can also come from sybil devices.
+- The relayer keeps per-IP limits in instance memory on Vercel; the on-chain fresh-wallet checks are the hard limit.
 - Expired entities leave queries; their transactions and our exports remain.
 
 ## Built during the hackathon
