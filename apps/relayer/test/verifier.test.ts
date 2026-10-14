@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
-import * as sdk from "tolmol-sdk"
+import * as sdk from "../../../packages/tolmol-sdk/src/index.js"
 import { makeHandler, MemoryStore } from "../src/handler.js"
 import * as v from "../src/verifier.js"
 
