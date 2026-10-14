@@ -38,6 +38,9 @@ export const RESPONSE_ACTIONS = [
   "auth_help", // help when fingerprint / OTP fails (alternative authentication)
   "quality_replaced", // bad grain replaced
   "portability_served", // card holders from other places are served (One Nation One Ration Card)
+  "no_tied_sale", // nobody has to buy other items to get their ration
+  "card_returned", // ration cards are returned after every sale (cl. 10(3))
+  "respectful_service", // card holders who ask or complain will not be scolded or turned away
   "disputed", // the shop disputes this report
 ] as const
 export type ResponseAction = (typeof RESPONSE_ACTIONS)[number]
@@ -51,6 +54,16 @@ export const ACTIONS_FOR_ISSUE: Record<IssueName, ResponseAction[]> = {
   bad_quality: ["quality_replaced"],
   portability_refused: ["portability_served"],
   no_receipt: ["receipt_given"],
+  slip_mismatch: ["full_quantity"],
+  no_weighing: ["scale_checked"],
+  tied_sale: ["no_tied_sale"],
+  card_kept: ["card_returned"],
+  no_board: ["board_updated"],
+  told_lapsed: ["stock_arrived", "full_quantity"],
+  many_trips: ["open_as_displayed", "auth_help"],
+  wrong_grain: ["full_quantity"],
+  threatened: ["respectful_service"],
+  member_left_out: [], // a department matter: the dealer cannot add a member to a card
 }
 
 /** Suggested answers for a report: issue-specific first, then the general shortfall answers, then the rest. */

@@ -1,6 +1,6 @@
 import type { AttributeInputs } from "@arkiv-network/sdk"
 import { bool, i32, key, str, u64 } from "@arkiv-network/sdk/attr"
-import { ALL_ISSUES_MASK, PROJECT, SCHEMA_VERSION, TYPE } from "./constants.js"
+import { ALL_ISSUES_MASK, ISSUES2_MASK, ISSUES_LOW_BITS, ISSUES_LOW_MASK, PROJECT, SCHEMA_VERSION, TYPE } from "./constants.js"
 import {
   DISTRICT_RE,
   isItem,
@@ -66,7 +66,8 @@ export function reportAttributes(
     received_g: i32(input.receivedG),
     shortfall_g: i32(input.entitledG - input.receivedG),
     shortfall_bp: i32(shortfallBp(input.entitledG, input.receivedG)),
-    issues: i32(input.issues ?? 0),
+    issues: i32((input.issues ?? 0) & ISSUES_LOW_MASK),
+    ...((input.issues ?? 0) >> ISSUES_LOW_BITS ? { issues2: i32((input.issues ?? 0) >> ISSUES_LOW_BITS) } : {}),
     reported_at: u64(dayStartMs(opts.reportedAtMs)),
     synthetic: bool(opts.synthetic),
   }
@@ -182,8 +183,12 @@ export function parseReport(e: RawEntity): Report | null {
   }
   if (sg !== entitledG - receivedG || sbp !== bp) return null
   // Optional (added after the first reports): absent means no extra issues.
-  const issues = e.attributes?.issues === undefined ? 0 : n32(e, "issues")
-  if (issues === undefined || issues < 0 || (issues & ~ALL_ISSUES_MASK) !== 0) return null
+  const low = e.attributes?.issues === undefined ? 0 : n32(e, "issues")
+  const high = e.attributes?.issues2 === undefined ? 0 : n32(e, "issues2")
+  if (low === undefined || low < 0 || (low & ~ISSUES_LOW_MASK) !== 0) return null
+  if (high === undefined || high < 0 || (high & ~ISSUES2_MASK) !== 0) return null
+  const issues = low | (high << ISSUES_LOW_BITS)
+  if ((issues & ~ALL_ISSUES_MASK) !== 0) return null
   return {
     ...c,
     owner: e.owner,

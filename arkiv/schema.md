@@ -89,7 +89,8 @@ write an entity with `type = tolmol.shop`, but it will not show up in the shop p
 | `received_g` | i32 | `21000` | 0 <= x <= `entitled_g` |
 | `shortfall_g` | i32 | `4000` | `entitled_g - received_g` |
 | `shortfall_bp` | i32 | `1600` | `floor(shortfall_g * 10000 / entitled_g)` |
-| `issues` | i32 | `65` | optional bitmask of what else went wrong (table below). Absent = 0 |
+| `issues` | i32 | `65` | optional bitmask of what else went wrong, first 7 flags (table below). Absent = 0 |
+| `issues2` | i32 | `5` | optional, since 2026-10-15, written only when non-zero: the further flags, shifted down by 7 (table below). Readers that only know `issues` still count the report |
 | `reported_at` | u64 | `1791849600000` | start of the UTC day, ms. Display only. Ordering uses blocks |
 | `synthetic` | bool | `true` | true for all seed and demo data |
 
@@ -111,9 +112,22 @@ Fixed choices, tapped as big buttons in both modes. A number, never text, so not
 | 4 | 16 | `bad_quality` | Bad grain (stones, insects, wet) |
 | 5 | 32 | `portability_refused` | Card from another place refused (One Nation One Ration Card) |
 | 6 | 64 | `no_receipt` | No receipt or slip given |
+| 7 | 128 (`issues2` 1) | `slip_mismatch` | The machine slip shows more grain than I got |
+| 8 | 256 (`issues2` 2) | `no_weighing` | Grain was not weighed in front of me |
+| 9 | 512 (`issues2` 4) | `tied_sale` | Made to buy other things (dal, salt, oil, soap) to get my ration |
+| 10 | 1024 (`issues2` 8) | `card_kept` | The dealer kept my ration card |
+| 11 | 2048 (`issues2` 16) | `no_board` | No board showing stock, price and timings |
+| 12 | 4096 (`issues2` 32) | `told_lapsed` | Told my ration "lapsed" or did not come this month |
+| 13 | 8192 (`issues2` 64) | `many_trips` | Had to come 3 or more times |
+| 14 | 16384 (`issues2` 128) | `wrong_grain` | Given a different grain, or none of one grain |
+| 15 | 32768 (`issues2` 256) | `threatened` | Scolded or threatened for asking |
+| 16 | 65536 (`issues2` 512) | `member_left_out` | A family member's share was left out |
 
-Readers drop a report whose `issues` is negative or has a bit outside these seven. Dashboards and shop pages show
-how many counted reports flagged each issue. Why these matter: `docs/SOURCES.md` sections 6 to 9.
+The report screens ask these as four short questions (grain; money or forced purchases; getting the ration; how the
+dealer and shop treated you), one screen each in Easy mode and as headed groups in Full mode. Readers drop a report
+whose `issues` or `issues2` is negative or has an unknown bit. Dashboards and shop pages show how many counted reports
+flagged each issue; `slip_mismatch`, `tied_sale` (with `charged_money`) and `threatened` also count as evidence for the
+"needs official attention" list. Why these matter: `docs/SOURCES.md` sections 6 to 9 and 13.
 
 ## `tolmol.witness`
 

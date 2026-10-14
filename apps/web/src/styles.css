@@ -777,3 +777,33 @@ details.attention ol.rank li > a > div {
 section.official h3 {
   margin-top: 0;
 }
+
+/* ---------------- grouped issue questions ---------------- */
+.issue-groups .issue-group {
+  margin-bottom: 14px;
+}
+.issue-groups .issue-group legend {
+  font-weight: 600;
+}
+
+/* ---------------- role hub and my activity ---------------- */
+.role-hub .role-card {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 2px var(--brand) inset;
+}
+ul.me-reports li {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+ul.me-reports .tag {
+  display: inline-block;
+  margin: 4px 6px 0 0;
+}
+
+details.more-options {
+  margin: 12px 0;
+}
+details.more-options summary {
+  cursor: pointer;
+  font-weight: 600;
+}

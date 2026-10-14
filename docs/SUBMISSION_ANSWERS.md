@@ -136,6 +136,7 @@ synthetic.
       the reasons, and SYN-BR-0042 shows "Latest official action: Show-cause notice issued to the dealer". Its shop page
       shows the three recorded actions. With a test official ID (#/test-cards), the action buttons appear on shop pages
       of that district only.
+   12. The whole story in six steps: https://amannx21.github.io/Tolmol/#/tour
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.

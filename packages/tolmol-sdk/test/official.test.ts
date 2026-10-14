@@ -50,7 +50,7 @@ describe("official actions", () => {
       new Map(),
     )
     expect(list.map((x) => x.shopId)).toEqual(["SYN-BR-0042", "SYN-BR-0002"])
-    expect(list[0]!.reasons).toEqual(["high_shortfall", "confirmed", "not_fixed", "unanswered", "verified"])
+    expect(list[0]!.reasons).toEqual(["high_shortfall", "not_fixed", "confirmed", "unanswered", "verified"])
     expect(list[1]!.reasons).toEqual(["charged_money"])
   })
 })

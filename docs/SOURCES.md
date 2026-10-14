@@ -164,6 +164,26 @@ Clause 10(9) requires a new licence within a month of a cancellation; clause 11(
 to the shop level, and clause 12(2) asks every local authority to conduct periodic social audits.
 Used for: the fixed list of official actions (`OFFICIAL_ACTIONS` in `packages/tolmol-sdk/src/official.ts`).
 
+## 13. What card holders actually face at the shop (reporting)
+
+**Siraj Dutta, "The inefficiency of Aadhaar authentication and others: lessons from the mess in the Jharkhand PDS",
+Scroll.in, 17 Jul 2022.** https://scroll.in/article/1027232/the-inefficiency-of-aadhaar-authentication-and-others-lessons-from-the-mess-in-the-jharkhand-pds
+
+In one village "cardholders received just 35% of the grain in February and 33% in March even though the full amount
+was registered" in the point-of-sale machine; dealers told people their ration had "lapsed".
+Used for: the questions "the machine slip shows more grain than I got" and "told my ration lapsed".
+
+**"FP shop dealers forcing consumers to buy goods", The Hans India, 20 Aug 2017.**
+https://www.thehansindia.com/posts/index/Telangana/2017-08-20/FP-shop-dealers-forcing-consumers-to-buy-goods/320315
+
+Card holders were "forced to buy all the products which are sold there like dal, salt, oil" before getting their rice.
+Used for: the question "made to buy other things to get my ration".
+
+The questions "the dealer kept my ration card" and "no board showing stock, price and timings" follow the dealer's
+duties in the TPDS (Control) Order 2015, clauses 10(3) and 10(4)(ii) (§10 above). "Had to come 3 or more times",
+"not weighed in front of me", "a different grain" and "a family member's share left out" are everyday complaints we
+chose ourselves; we cite no statistic for them.
+
 ## What we do not claim
 
 - We do not claim any specific dealer or shop short-weighs. All shops in Tolmol are synthetic.

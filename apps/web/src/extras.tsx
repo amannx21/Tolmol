@@ -6,6 +6,7 @@ import { useState } from "preact/hooks"
 import { str } from "@arkiv-network/sdk/attr"
 import { eq, or } from "@arkiv-network/sdk/query"
 import {
+  ISSUE_GROUPS,
   ISSUE_NAMES,
   ISSUES,
   issueList,
@@ -34,23 +35,41 @@ const ICON: Record<IssueName, string> = {
   bad_quality: "🪨",
   portability_refused: "🧳",
   no_receipt: "🧾",
+  slip_mismatch: "🧮",
+  no_weighing: "⚖️",
+  tied_sale: "🛒",
+  card_kept: "🪪",
+  no_board: "📋",
+  told_lapsed: "📅",
+  many_trips: "🔁",
+  wrong_grain: "🌾",
+  threatened: "⚠️",
+  member_left_out: "👪",
 }
 const issueKey = (n: IssueName) => `issue_${n}` as Key
 
 /** Toggle buttons for "what else went wrong". `big` = Easy mode. */
-export function IssuePicker({ value, onChange, big = false }: { value: number; onChange: (v: number) => void; big?: boolean }) {
+export function IssuePicker({ value, onChange, big = false, only }: { value: number; onChange: (v: number) => void; big?: boolean; only?: IssueName[] }) {
   const { t } = useLang()
+  const chip = (n: IssueName) => {
+    const on = (value & ISSUES[n]) !== 0
+    return (
+      <button type="button" class={`${big ? "big-choice" : "chip"} ${on ? "selected" : ""}`} aria-pressed={on} onClick={() => onChange(value ^ ISSUES[n])}>
+        <span class="icon" aria-hidden="true">{ICON[n]}</span> {on ? "✓ " : ""}
+        {t(issueKey(n))}
+      </button>
+    )
+  }
+  // One group (Easy mode asks one question per screen), or all groups with their question as a heading (Full mode).
+  if (only) return <div class={big ? "bigcol" : "issue-grid"}>{only.map(chip)}</div>
   return (
-    <div class={big ? "bigcol" : "issue-grid"}>
-      {ISSUE_NAMES.map((n) => {
-        const on = (value & ISSUES[n]) !== 0
-        return (
-          <button type="button" class={`${big ? "big-choice" : "chip"} ${on ? "selected" : ""}`} aria-pressed={on} onClick={() => onChange(value ^ ISSUES[n])}>
-            <span class="icon" aria-hidden="true">{ICON[n]}</span> {on ? "✓ " : ""}
-            {t(issueKey(n))}
-          </button>
-        )
-      })}
+    <div class="issue-groups">
+      {ISSUE_GROUPS.map((g) => (
+        <fieldset class="plain issue-group">
+          <legend>{t(`issueGroup_${g.id}` as Key)}</legend>
+          <div class={big ? "bigcol" : "issue-grid"}>{g.issues.map(chip)}</div>
+        </fieldset>
+      ))}
     </div>
   )
 }

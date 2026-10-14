@@ -22,11 +22,36 @@ export const ISSUES = {
   bad_quality: 16, // stones, insects, wet or spoilt grain
   portability_refused: 32, // One Nation One Ration Card holder from elsewhere turned away
   no_receipt: 64, // no receipt / ePoS slip given
+  // Added 2026-10-15 (stored in a second attribute, `issues2`, so readers that only know `issues` still count the report).
+  // Each is a problem card holders report in practice; see docs/SOURCES.md §13.
+  slip_mismatch: 128, // the machine slip / record shows more grain than was handed over
+  no_weighing: 256, // grain not weighed in front of the card holder
+  tied_sale: 512, // made to buy other items (dal, salt, oil, soap) to get the ration
+  card_kept: 1024, // dealer kept the ration card (TPDS Control Order 2015 cl. 10(3) forbids it)
+  no_board: 2048, // no board with entitlement, price, timings and stock (cl. 10(4)(ii))
+  told_lapsed: 4096, // told the ration "lapsed" or "did not come" this month
+  many_trips: 8192, // had to come 3 or more times (network, authentication, shop shut)
+  wrong_grain: 16384, // given a different grain, or none of one grain
+  threatened: 32768, // scolded or threatened for asking or complaining
+  member_left_out: 65536, // a family member's share was left out
 } as const
 export type IssueName = keyof typeof ISSUES
 export const ISSUE_NAMES = Object.keys(ISSUES) as IssueName[]
 export const ALL_ISSUES_MASK = Object.values(ISSUES).reduce((a, b) => a | b, 0)
 export const issueList = (mask: number): IssueName[] => ISSUE_NAMES.filter((n) => (mask & ISSUES[n]) !== 0)
+
+/** The first 7 flags live in `issues`; the rest, shifted down by 7, in `issues2` (written only when non-zero). */
+export const ISSUES_LOW_BITS = 7
+export const ISSUES_LOW_MASK = (1 << ISSUES_LOW_BITS) - 1
+export const ISSUES2_MASK = ALL_ISSUES_MASK >> ISSUES_LOW_BITS
+
+/** Questions grouped the way a card holder thinks about them (used by the report screens). */
+export const ISSUE_GROUPS: { id: "grain" | "money" | "access" | "conduct"; issues: IssueName[] }[] = [
+  { id: "grain", issues: ["thumb_no_grain", "slip_mismatch", "no_weighing", "wrong_grain", "member_left_out", "bad_quality"] },
+  { id: "money", issues: ["charged_money", "tied_sale", "no_receipt"] },
+  { id: "access", issues: ["auth_failed", "shop_closed", "many_trips", "told_lapsed", "portability_refused"] },
+  { id: "conduct", issues: ["card_kept", "threatened", "no_board"] },
+]
 
 
 /** Reports and witnesses are handed to this address in the same batch that creates them, so nobody can delete them. */

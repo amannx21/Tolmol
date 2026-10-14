@@ -201,6 +201,16 @@ This file is updated as we build. Entries only describe things we actually hit o
 - **Fix suggestion:** surface 429 + `Retry-After` as a typed `QuotaExceededError` in the SDK (no
   silent retry for a 13-minute window), and document the anonymous budget (10,000 cost units per
   window) next to the access-key page.
+- **Seen again on 2026-10-15 (~13:00 UTC), with the headers:** an end-to-end browser regression of the app (five
+  synthetic phones, every page) emptied the budget, after which the node answered
+  `HTTP 429`, `ratelimit: limit=10000, remaining=0, reset=1033`, `retry-after: 1033`, body `"ANON_COST_LIMITED"`.
+  A retry about 14 minutes after the first 429 still failed, and only then did we read the headers, which said
+  `reset=1033` (17 more minutes); after waiting that long, reads worked again. With budget left, the same header
+  instead shows a second, shorter limit on requests (`ratelimit: limit=600, remaining=557, reset=15`), so one
+  network can also be throttled by a burst of parallel page loads. Two limits share one header name, which is easy
+  to misread. The node already sends a precise `RateLimit` header (and exposes it through
+  `access-control-expose-headers`), but the SDK reports only "HTTP request failed". *Fix suggestion:* read
+  `RateLimit`'s `remaining` / `reset` into the typed error, so apps can show "N reads left" before hitting zero.
 
 ## Paths tested that worked
 

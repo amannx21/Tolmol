@@ -23,7 +23,7 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   "tolmol.report": {
     ...COMMON, type: oneOf("tolmol.report"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912),
     item: oneOf("rice", "wheat", "millet", "total"), entitled_g: isInt(1, 100_000), received_g: isInt(0, 100_000), shortfall_g: isInt(0, 100_000),
-    shortfall_bp: isInt(0, 10_000), issues: isInt(0, 127),
+    shortfall_bp: isInt(0, 10_000), issues: isInt(0, 127), issues2: isInt(1, 1023),
   },
   "tolmol.witness": { ...COMMON, type: oneOf("tolmol.witness"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), item: oneOf("rice", "wheat", "millet", "total") },
   "tolmol.correction": { ...COMMON, type: oneOf("tolmol.correction"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), action: oneOf("withdraw") },
@@ -36,7 +36,7 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   },
   // Shops answer (fixed choices only) and reporters confirm; no free text on either side.
   "tolmol.response": { ...COMMON, type: oneOf("tolmol.response"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH),
-    action: oneOf("full_quantity", "stock_arrived", "scale_checked", "open_as_displayed", "board_updated", "receipt_given", "money_returned", "auth_help", "quality_replaced", "portability_served", "disputed") },
+    action: oneOf("full_quantity", "stock_arrived", "scale_checked", "open_as_displayed", "board_updated", "receipt_given", "money_returned", "auth_help", "quality_replaced", "portability_served", "no_tied_sale", "card_returned", "respectful_service", "disputed") },
   // Official actions on a shop, from a fixed list (TPDS Control Order 2015 cl. 10(7), 11(1), 13).
   "tolmol.action": { ...COMMON, type: oneOf("tolmol.action"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT),
     action: oneOf("inspection_ordered", "inspected_shortage_found", "inspected_no_issue", "show_cause_notice", "licence_suspended", "licence_cancelled", "case_registered", "grain_restored") },

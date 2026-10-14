@@ -347,7 +347,7 @@
               }
             }
           ],
-          "description": "Optional bitmask: 1 charged_money, 2 auth_failed, 4 thumb_no_grain, 8 shop_closed, 16 bad_quality, 32 portability_refused, 64 no_receipt. Absent = 0."
+          "description": "Optional bitmask of the first 7 issue flags: 1 charged_money, 2 auth_failed, 4 thumb_no_grain, 8 shop_closed, 16 bad_quality, 32 portability_refused, 64 no_receipt. Absent = 0."
         },
         "reported_at": {
           "$ref": "#/$defs/u64",
@@ -355,6 +355,22 @@
         },
         "synthetic": {
           "$ref": "#/$defs/bool"
+        },
+        "issues2": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 1023
+                }
+              }
+            }
+          ],
+          "description": "Optional (since 2026-10-15), written only when non-zero: the further issue flags, shifted down by 7: 1 slip_mismatch, 2 no_weighing, 4 tied_sale, 8 card_kept, 16 no_board, 32 told_lapsed, 64 many_trips, 128 wrong_grain, 256 threatened, 512 member_left_out. Readers that only know `issues` still count the report."
         }
       }
     },
@@ -735,6 +751,9 @@
                     "auth_help",
                     "quality_replaced",
                     "portability_served",
+                    "no_tied_sale",
+                    "card_returned",
+                    "respectful_service",
                     "disputed"
                   ]
                 }
