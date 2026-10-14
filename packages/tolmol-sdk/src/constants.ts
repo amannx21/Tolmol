@@ -14,7 +14,8 @@ export const BURN_ADDRESS = "0x000000000000000000000000000000000000dEaD" as cons
 /** The registry wallet that publishes the synthetic shop list. The app trusts shops only from this creator. */
 export const DEFAULT_REGISTRY = "0x6DBf6A36E27d814c58A05312913DCEEfc0dAe221" as const
 
-export const ITEMS = ["rice", "wheat", "millet"] as const
+/** "total" = all grain together, which is how families usually think about their entitlement (Easy mode). */
+export const ITEMS = ["rice", "wheat", "millet", "total"] as const
 export type Item = (typeof ITEMS)[number]
 
 /** Tiramisu produces a block every 2 seconds. */

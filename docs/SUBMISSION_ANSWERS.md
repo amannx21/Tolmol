@@ -26,7 +26,9 @@ and handed to an address nobody controls in the same transaction, so nobody (not
 or even the reporter) can edit or delete it. Journalists, social-audit groups and RTI filers can rank the worst
 shops, see a shop as it was at any past block, and download evidence with an explorer link per row. A "Draft my
 RTI" button turns a shop's evidence into a Right to Information application (English or Hindi), and the app
-installs on a phone, opens offline and queues reports until there is signal. No names, phone numbers, Aadhaar or
+installs on a phone, opens offline and queues reports until there is signal. An Easy mode (one question per
+screen, big buttons, Hindi read-aloud, no typing, no blockchain words) serves people who are not used to apps,
+and a Full mode serves helpers, journalists and auditors. No names, phone numbers, Aadhaar or
 card numbers are ever stored, and all demo data is synthetic.
 
 ### Challenges I ran into *

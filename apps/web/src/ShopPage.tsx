@@ -284,7 +284,7 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
       <section class="card">
         <h3>{t("qrTitle")}</h3>
         <p class="small">{t("qrHelp")}</p>
-        <ShopQr url={`${location.origin}${location.pathname}#/shop/${shopId}`} />
+        <ShopQr url={`${location.origin}${location.pathname}#/report?shop=${shopId}`} />
         <button class="secondary" onClick={() => window.print()}>
           {t("print")}
         </button>

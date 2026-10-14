@@ -14,12 +14,16 @@ import {
   type Report,
   type Witness,
 } from "tolmol-sdk"
-import { device, reader, short } from "./arkiv"
+import { device, ensureGas, reader, short } from "./arkiv"
+import { Say, useKg } from "./Easy"
+import { usePrefs } from "./prefs"
 import { useLang } from "./i18n"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const { t } = useLang()
+  const [prefs] = usePrefs()
+  const kg = useKg()
   const [data, setData] = useState<{ report: Report | null; witnesses: Witness[]; head: bigint } | null>(null)
   const [err, setErr] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
@@ -68,20 +72,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
     }
   }
 
-  return (
+  const fullView = (
     <>
-      {isNew && (
-        <section class="card success" role="status">
-          <h2>✓ {t("sent")}</h2>
-          <p class="small">{t("shareForWitness")}</p>
-          <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
-          {"share" in navigator && (
-            <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
-              Share
-            </button>
-          )}
-        </section>
-      )}
       <section class="card">
         <h2>{t("reportTitle")}</h2>
         <p>
@@ -147,6 +139,78 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
       </section>
+    </>
+  )
+
+  if (prefs.mode === "full") {
+    return (
+      <>
+      {isNew && (
+        <section class="card success" role="status">
+          <h2>✓ {t("sent")}</h2>
+          <p class="small">{t("shareForWitness")}</p>
+          <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+          {"share" in navigator && (
+            <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
+              Share
+            </button>
+          )}
+        </section>
+      )}
+        {fullView}
+      </>
+    )
+  }
+
+  // Easy mode: the claim in big numbers, how many others confirmed it, and one big button.
+  const summary = `${t("summaryShould")} ${kg(r.entitledG)}. ${t("summaryGot")} ${kg(r.receivedG)}. ${t("summaryLess")} ${kg(r.shortfallG)}.`
+  const confirmEasy = async () => {
+    setBusy(true)
+    setMsg(null)
+    if (!(await ensureGas())) {
+      setMsg({ ok: false, text: t("gasFailed") })
+      setBusy(false)
+      return
+    }
+    await confirm()
+  }
+  return (
+    <>
+      {isNew && (
+        <section class="card success" role="status">
+          <h2>✓ {t("sent")}</h2>
+          <p class="small">{t("shareForWitness")}</p>
+          <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
+          {"share" in navigator && (
+            <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
+              Share
+            </button>
+          )}
+        </section>
+      )}
+      <section class="card easy">
+        <h2>
+          {r.shopId} · {r.month} · {t(r.item)}
+        </h2>
+        <Say text={summary} />
+        <div class="summary">
+          <div><span>{t("summaryShould")}</span><strong>{kg(r.entitledG)}</strong></div>
+          <div><span>{t("summaryGot")}</span><strong>{kg(r.receivedG)}</strong></div>
+          <div class={r.shortfallG > 0 ? "bad" : "ok"}><span>{t("summaryLess")}</span><strong>{kg(r.shortfallG)}</strong></div>
+        </div>
+        <p class="lead">{t("confirmedBy", { n: valid.length })}</p>
+        {!mine && !iWitnessed && (
+          <button class="big-action" onClick={confirmEasy} disabled={busy}>
+            {busy ? t("corroborating") : t("confirmEasy")}
+          </button>
+        )}
+        {mine && <p class="small muted">{t("ownReport")}</p>}
+        {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
+      </section>
+      <details class="card auditors">
+        <summary>{t("detailsAuditors")}</summary>
+        {fullView}
+      </details>
     </>
   )
 }

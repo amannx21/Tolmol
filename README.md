@@ -58,8 +58,21 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    the RTI Act 2005, with the on-chain evidence as an annex. Name and address are blanks filled in by hand.
    Each shop page also has a printable QR code, so card holders at the shop can open it and confirm reports.
 
+**Two modes, chosen on first visit and switchable anytime:**
+
+- **Easy (आसान)** is for card holders who are not used to apps. It asks one question per screen with big buttons:
+  shop (remembered after the first time), month, card type, family size, then the amount received set with
+  large +/− buttons, so there is no typing. It reads each question aloud in Hindi with the phone's own voice.
+  Test gas is fetched silently, and there are no blockchain words. After saving, a WhatsApp button asks
+  neighbours to confirm, and confirming is one big "मुझे भी कम मिला ✓" button.
+- **Full (पूरा)** is for helpers, journalists and auditors: dashboard, per-grain form, explorer links, history
+  and exports. In Easy mode the same details sit behind "जाँच के लिए पूरा विवरण" (details for auditors).
+
+Both modes write exactly the same Arkiv entities through the same validated SDK calls.
+
 Works on a low-end phone: installable (web manifest), the app shell loads offline, and a report made with no
-signal is kept on the phone and signed and sent automatically when the connection returns.
+signal is kept on the phone and signed and sent automatically when the connection returns. The shop QR code is
+meant for WhatsApp, NGO posters or panchayat boards, not the dealer's wall, where it would just be torn down.
 
 ## Why Arkiv (and what breaks without it)
 

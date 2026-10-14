@@ -160,6 +160,9 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   return (
     <section class="card">
       <h2>{t("ctaReport")}</h2>
+      <p class="small">
+        <a href={`#/report?v=easy${shopId ? `&shop=${shopId}` : ""}`}>{t("easyWay")} →</a>
+      </p>
       <label>
         {t("state")}
         <select value={state} onChange={(e) => (setState(e.currentTarget.value), setDistrict(""), setShopId(""))}>

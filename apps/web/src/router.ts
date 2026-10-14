@@ -3,7 +3,7 @@ import { useEffect, useState } from "preact/hooks"
 /** Hash routes work on any static host with no server rewrites: #/report, #/shop/SYN-BR-0042, #/r/0xabc… */
 export type Route =
   | { name: "home" }
-  | { name: "report"; shopId?: string }
+  | { name: "report"; shopId?: string; view?: "easy" | "full" }
   | { name: "dashboard"; state?: string }
   | { name: "shop"; shopId: string; month?: string; atBlock?: string }
   | { name: "r"; key: string }
@@ -15,7 +15,7 @@ export function parse(hash: string): Route {
   const parts = path.split("/").filter(Boolean).map(decodeURIComponent)
   switch (parts[0]) {
     case "report":
-      return { name: "report", shopId: q.get("shop") ?? undefined }
+      return { name: "report", shopId: q.get("shop") ?? undefined, view: q.get("v") === "full" ? "full" : q.get("v") === "easy" ? "easy" : undefined }
     case "dashboard":
       return { name: "dashboard", state: q.get("state") ?? undefined }
     case "shop":

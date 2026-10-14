@@ -67,7 +67,7 @@ write an entity with `type = tolmol.shop`, but it will not show up in the shop p
 | `district` | str | `gaya` | copied from the shop |
 | `month` | str | `2026-10` | `YYYY-MM`, for equality filters |
 | `month_num` | i32 | `202610` | the same month as a number, for range filters |
-| `item` | str | `rice` | one of `rice`, `wheat`, `millet` |
+| `item` | str | `rice` | one of `rice`, `wheat`, `millet`, or `total` (all grain together, used by Easy mode) |
 | `entitled_g` | i32 | `25000` | 0 < x <= 100000 |
 | `received_g` | i32 | `21000` | 0 <= x <= `entitled_g` |
 | `shortfall_g` | i32 | `4000` | `entitled_g - received_g` |

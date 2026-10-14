@@ -3,10 +3,13 @@ import { useState } from "preact/hooks"
 import { explorerAddressUrl, explorerEntityUrl, listShops, quotaError, type Shop } from "tolmol-sdk"
 import { device, MIN_WRITE_WEI, reader, requestGas, short, useBalance } from "./arkiv"
 import { useLang } from "./i18n"
+import { usePrefs } from "./prefs"
+import { stopSpeaking } from "./speak"
 import type { Route } from "./router"
 
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
   const { t, toggle } = useLang()
+  const [prefs, setPrefs] = usePrefs()
   const nav: [Route["name"], string, string][] = [
     ["home", "#/", t("navHome")],
     ["report", "#/report", t("navReport")],
@@ -19,10 +22,32 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
         <a class="brand" href="#/">
           <span class="logo" aria-hidden="true">⚖</span> {t("appName")}
         </a>
-        <button class="lang" onClick={toggle} aria-label="Switch language / भाषा बदलें">
-          {t("language")}
-        </button>
+        <div class="top-actions">
+          <button
+            class="lang"
+            onClick={() => setPrefs({ mode: prefs.mode === "easy" ? "full" : "easy", chosen: true })}
+            aria-label={`${t("switchMode")}: ${prefs.mode === "easy" ? t("modeFull") : t("modeEasy")}`}
+          >
+            {prefs.mode === "easy" ? t("modeFull") : t("modeEasy")}
+          </button>
+          <button class="lang" onClick={toggle} aria-label="Switch language / भाषा बदलें">
+            {t("language")}
+          </button>
+        </div>
       </header>
+      {prefs.mode === "easy" && (
+        <div class="voicebar">
+          <button
+            class="voice"
+            onClick={() => {
+              if (prefs.voice) stopSpeaking()
+              setPrefs({ voice: !prefs.voice })
+            }}
+          >
+            {prefs.voice ? t("voiceOn") : t("voiceOff")}
+          </button>
+        </div>
+      )}
       <nav class="tabs" aria-label="Main">
         {nav.map(([name, href, label]) => (
           <a href={href} aria-current={route.name === name ? "page" : undefined}>

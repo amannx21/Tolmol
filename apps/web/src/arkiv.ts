@@ -72,4 +72,27 @@ export async function requestGas(address: `0x${string}`): Promise<{ ok: boolean;
   }
 }
 
+/**
+ * Makes sure this device can pay for a write: if its test-GLM balance is low, asks the relayer once and waits
+ * (up to ~25 s) for the drip to land. Used by Easy mode so people never see the word "gas".
+ */
+export async function ensureGas(): Promise<boolean> {
+  const { account } = device()
+  const bal = async () => {
+    try {
+      return await reader.getBalance({ address: account.address })
+    } catch {
+      return 0n
+    }
+  }
+  if ((await bal()) >= MIN_WRITE_WEI) return true
+  const r = await requestGas(account.address)
+  if (!r.ok) return false
+  for (let i = 0; i < 12; i++) {
+    await new Promise((res) => setTimeout(res, 2000))
+    if ((await bal()) >= MIN_WRITE_WEI) return true
+  }
+  return false
+}
+
 export const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`

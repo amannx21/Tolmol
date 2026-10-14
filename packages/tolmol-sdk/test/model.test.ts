@@ -61,6 +61,9 @@ describe("validateReportInput", () => {
     expect(() => validateReportInput({ ...ok, receivedG: 2.5 }, NOW)).toThrow(/receivedG/)
     expect(() => validateReportInput({ ...ok, receivedG: "21000" }, NOW)).toThrow(/receivedG/)
   })
+  it("accepts all-grain totals (Easy mode)", () => {
+    expect(validateReportInput({ ...ok, item: "total", entitledG: 20_000, receivedG: 16_000 }, NOW).item).toBe("total")
+  })
   it("rejects unknown items", () => {
     expect(() => validateReportInput({ ...ok, item: "sugar" }, NOW)).toThrow(/item/)
   })

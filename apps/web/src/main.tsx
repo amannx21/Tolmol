@@ -1,5 +1,7 @@
 import { render } from "preact"
 import { Dashboard } from "./Dashboard"
+import { EasyHome, EasyReport, Welcome } from "./Easy"
+import { usePrefs } from "./prefs"
 import { About, Home } from "./pages"
 import { ReportForm } from "./ReportForm"
 import { ReportView } from "./ReportView"
@@ -22,10 +24,12 @@ function QueueBanner() {
 
 function App() {
   const route = useRoute()
+  const [prefs] = usePrefs()
+  const easy = prefs.mode === "easy"
   let page
   switch (route.name) {
     case "report":
-      page = <ReportForm initialShop={route.shopId} />
+      page = (route.view ?? (easy ? "easy" : "full")) === "easy" ? <EasyReport initialShop={route.shopId} /> : <ReportForm initialShop={route.shopId} />
       break
     case "dashboard":
       page = <Dashboard initialState={route.state} />
@@ -40,7 +44,8 @@ function App() {
       page = <About />
       break
     default:
-      page = <Home />
+      // First visit: ask language and Easy/Full before anything else. Shared links skip this and open directly.
+      page = !prefs.chosen ? <Welcome /> : easy ? <EasyHome /> : <Home />
   }
   return (
     <Layout route={route}>
