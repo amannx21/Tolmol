@@ -67,14 +67,26 @@ export function IssueList({ mask }: { mask: number }) {
 }
 
 /** Small per-shop summary: "₹ 5 · 🔒 2 …" for issues reported at least once. */
-export function IssueCounts({ counts }: { counts: Record<IssueName, number> }) {
+/** Issue counts: compact icons in lists, icon + words where there is room (phones have no hover tooltips). */
+export function IssueCounts({ counts, labels = false }: { counts: Record<IssueName, number>; labels?: boolean }) {
   const { t } = useLang()
   const seen = ISSUE_NAMES.filter((n) => counts[n] > 0)
   if (!seen.length) return null
+  if (labels) {
+    return (
+      <ul class="issues">
+        {seen.map((n) => (
+          <li>
+            {ICON[n]} {t(issueKey(n))}: <strong>{counts[n]}</strong>
+          </li>
+        ))}
+      </ul>
+    )
+  }
   return (
     <p class="small issue-counts">
       {seen.map((n) => (
-        <span title={t(issueKey(n))}>
+        <span title={t(issueKey(n))} aria-label={`${t(issueKey(n))}: ${counts[n]}`}>
           {ICON[n]} {counts[n]}
         </span>
       ))}

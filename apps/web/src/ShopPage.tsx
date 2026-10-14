@@ -161,7 +161,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         ) : (
           <p class="muted">{t("empty")}</p>
         )}
-        {stats && <IssueCounts counts={stats.issueCounts} />}
+        {stats && <IssueCounts counts={stats.issueCounts} labels />}
         <div class="row wrap">
           <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
             <option value="">{t("allMonths")}</option>
