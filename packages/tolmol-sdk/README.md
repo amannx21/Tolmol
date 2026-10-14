@@ -65,6 +65,7 @@ npx tolmol-sdk dashboard --state BR
 | Evidence | `evidenceRows`, `toCsv`, `toJson` |
 | Live | `watchTolmol` (WebSocket entity events, no `fromBlock`) |
 | Parsing | `parseReport`, `parseWitness`, `parseCorrection`, `parseShop`, `validateReportInput` |
+| Verified card holders (test cards) | `decodeCard`, `verifyCard`, `cardTag`, `listVerifiers`, `stateAttestations`, `deviceAttestations`, `verifiedDevices`, `attestDevice`, `registerVerifier` (see `docs/VERIFIED_REPORTERS.md`; the test issuer is synthetic, not a government) |
 
 ## Privacy
 
