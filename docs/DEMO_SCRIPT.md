@@ -13,9 +13,9 @@ Open beforehand: A on the live app's Dashboard (Bihar), B on the Home page, a te
 | 1:05-1:20 | A: open the shared report link, get gas, tap "I also got less at this shop this month"; then A's dashboard row flashes | "A second card holder confirms it from their own phone. The dashboard updated by itself: Arkiv pushed the event over WebSocket." |
 | 1:20-2:00 | README "Why Arkiv" table | "On Postgres, we or anyone who leans on us could delete this. With our own API we decide what to serve. IPFS can't answer 'all shortfalls at this shop in October' without an indexer. On Arkiv the query layer is the network, authorship is set by the protocol, and readonly plus the burn transfer means no one can delete. What we keep off chain: names, phones, Aadhaar, photos, free text." |
 | 2:00-2:25 | Terminal: `npm run tolmol -- query --shop SYN-BR-0042`, then `--at-block <block before the new report>` | "If our website is gone, anyone can still read the evidence with the CLI or curl. And this is the shop as it was at an earlier block: proof of what was on record when." |
-| 2:25-2:35 | A: shop page, "Draft my RTI" | "And a card holder can turn this into a Right to Information application in Hindi, with the evidence attached." |
+| 2:25-2:35 | B: the "What you can do now" panel after the report (1967, DGRO complaint, RTI) | "After a report, the app says what to do next: call the 1967 food helpline, or print a complaint to the district grievance officer or an RTI, in Hindi, with the evidence attached. No name is ever stored; those are blanks on paper." |
 | 2:35-2:50 | `arkiv/friction.md` headings | "We logged 13 issues with repro steps, like the RPC's 262 KB request limit that shows up as 'execution error', and the anonymous query budget that looks like a hang." |
-| 2:50-3:00 | README track table | "Best Indian Use Case first; also Censorship Resistance, Security and Open Source. MIT, documented schema, synthetic data. Thank you." |
+| 2:50-3:00 | README track section | "Best Indian Use Case first; also all four CROPS pillars. MIT, a documented data contract, a privacy audit anyone can run, synthetic data. Thank you." |
 
 Checklist before recording: relayer has GLM; both browser profiles are fresh (or B has gas); the dashboard is on
 Bihar; terminal font large; no `.env` or key visible anywhere on screen.

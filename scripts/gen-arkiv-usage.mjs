@@ -8,9 +8,9 @@ const REPO = "https://github.com/amannx21/Tolmol"
 
 // [feature, why, file, first-line regex, number of lines to include]
 const FEATURES = [
-  ["Typed attributes (report)", "Everything a reader filters on is a typed, indexed attribute: integer grams, basis points, u64 time. Payload is empty: no free text.", "packages/tolmol-sdk/src/attributes.ts", /export function reportAttributes/, 23],
+  ["Typed attributes (report)", "Everything a reader filters on is a typed, indexed attribute: integer grams, basis points, u64 time. Payload is empty: no free text. Issues are a 7-bit i32, time is rounded to the day.", "packages/tolmol-sdk/src/attributes.ts", /export function reportAttributes/, 25],
   ["Typed attributes (witness, key reference)", "A witness points at its report with a `key` attribute, Arkiv's foreign key.", "packages/tolmol-sdk/src/attributes.ts", /export function witnessAttributes/, 17],
-  ["Strict parsing of what others wrote", "Anyone can write our attributes, so every type and derived number is re-checked on read.", "packages/tolmol-sdk/src/attributes.ts", /export function parseReport/, 44],
+  ["Strict parsing of what others wrote", "Anyone can write our attributes, so every type and derived number is re-checked on read.", "packages/tolmol-sdk/src/attributes.ts", /export function parseReport/, 50],
   ["Pinned, paginated walks (cursor + atBlock)", "All pages of one query are read at one block, 200 per page, with next().", "packages/tolmol-sdk/src/queries.ts", /async function walk</, 29],
   ["createdBy(): trusted registry", "Only shops created by the registry wallet appear in the picker.", "packages/tolmol-sdk/src/queries.ts", /export function listShops/, 10],
   ["Compound + range query (dashboard)", "state AND month_num range AND optional shortfall_bp threshold.", "packages/tolmol-sdk/src/queries.ts", /export function dashboardReports/, 15],
@@ -18,8 +18,12 @@ const FEATURES = [
   ["Creation flags", "readonly: nobody edits; permissionlessExtension: anyone can keep evidence alive.", "packages/tolmol-sdk/src/writes.ts", /const FLAGS =/, 1],
   ["Atomic batch: create + ownership transfer to 0x…dEaD", "Nobody, not even the reporter, can delete a report. predictEntityKeys lets the same batch reference the new key.", "packages/tolmol-sdk/src/writes.ts", /const \[predicted\] = await reader.predictEntityKeys\(\{ owner: me, count: 1 \}\)\n {2}if/, 23],
   ["Lifetime Extension as a lease renewed by corroboration", "The 2nd distinct witness extends the report and its witnesses in the same batch as the witness create.", "packages/tolmol-sdk/src/writes.ts", /const extensions = target/, 25],
-  ["Extension target rule", "max(current, head + 180 days), capped at created + 365 days, never shorter.", "packages/tolmol-sdk/src/rules.ts", /export function extensionTarget/, 13],
-  ["Entity Expiration per type", "Shop 180 days, report 90 days, corroborated 180, cap 365.", "packages/tolmol-sdk/src/constants.ts", /export const LIFETIME_DAYS/, 9],
+  ["Extension target rule", "max(current, head + 180 days), capped at created + 365 days, never shorter.", "packages/tolmol-sdk/src/rules.ts", /export function extensionTarget/, 11],
+  ["Entity Expiration per type", "Shop 180 days, report 90 days by default, corroborated 180, cap 365.", "packages/tolmol-sdk/src/constants.ts", /export const LIFETIME_DAYS/, 8],
+  ["Expiry the user controls", "The reporter picks 30, 90 or 180 days and whether others may extend (the permissionlessExtension flag).", "packages/tolmol-sdk/src/writes.ts", /expires: ExpirationTime.fromDays\(lifetimeDays\)/, 2],
+  ["Creation flags read back", "Reads select creationFlags, so a witness never tries to extend a report whose reporter opted out.", "packages/tolmol-sdk/src/queries.ts", /const META = /, 1],
+  ["Withdrawal as a sealed entity", "A reporter's mistake is withdrawn by a new readonly entity, burned in the same batch; the report itself stays.", "packages/tolmol-sdk/src/writes.ts", /export async function withdrawReport/, 26],
+  ["$creator: withdrawals only from the reporter", "A tolmol.correction counts only when its $creator wrote the report.", "packages/tolmol-sdk/src/rules.ts", /export function withdrawnKeys/, 8],
   ["$creator: different-witness rule and dedupe", "Witness must be a different creator; one per creator; earliest by block then key.", "packages/tolmol-sdk/src/rules.ts", /export function dedupeReports/, 28],
   ["WebSocket entity events", "watchEntityEvents on a webSocket() transport, no fromBlock: pushed, not polled. Only burn transfers are fetched.", "packages/tolmol-sdk/src/live.ts", /export function watchTolmol/, 50],
   ["WebSocket client", "The live reader uses viem's webSocket transport with reconnect and keep-alive.", "packages/tolmol-sdk/src/clients.ts", /export function wsReader/, 3],

@@ -1,17 +1,19 @@
 # Rules digest: Arkiv Global Tour Stop
 
 Source: https://github.com/Arkiv-Network/global-tour-stop-pre-devcon at commit
-`7eb4e1cafe65892e7f52b2b33fe362357327aa90` (2026-10-07), read on 2026-10-13.
+`7eb4e1cafe65892e7f52b2b33fe362357327aa90` (2026-10-07), read on 2026-10-13, and re-checked on
+2026-10-14 at `4f912d1fa595` (2026-10-13, "freeze challenge rules and make repository authoritative").
+That commit changes only the precedence and draft notes below; `docs/scoring-rubric.md` is unchanged since 7 Oct.
 Files read in full: README.md, RULES.md, AGENTS.md, CLAUDE.md, docs/scoring-rubric.md,
 docs/submission-checklist.md. The Devfolio page (https://arkiv.devfolio.co/overview) was
 also read on 2026-10-13. It matches the repo on dates, tracks, prizes, gates, network and SDK.
 
-**Precedence.** RULES.md says the Devfolio page is the official source, and the repo
-follows it. If they differ, Devfolio wins.
+**Precedence (changed 2026-10-13).** RULES.md now says the repository is the only canonical source of the
+rules, rubric and checklist: if the Devfolio page differs, the repository applies. (Before that commit it said the
+opposite.) The two still agree on dates, tracks, prizes and criteria (Devfolio re-read on 2026-10-14).
 
-**Draft banner.** README.md and RULES.md still carry a "Draft, frozen on 9 October" note.
-The last repo commit is 7 October, so the text we read is the frozen version. Any later
-change can only arrive as a dated clarification, announced on Devfolio and Discord.
+**Frozen.** README.md and RULES.md now say the rules are frozen since 9 October 2026 and only dated
+clarifications may be added.
 
 ## Dates (London time, BST = UTC+1)
 
@@ -77,7 +79,12 @@ What each pillar we enter asks for:
 
 - **Censorship Resistance:** someone outside the team can read and query the data from Arkiv without the team's backend.
 - **Open Source:** another team can build on the dataset or tool without permission, from a documented data contract.
+- **Privacy:** what is visible on the explorer exposes no personal data; few attributes, encrypted or hashed
+  payloads, expiry the user controls. (We entered Privacy on 2026-10-14.)
 - **Security:** the app shows or filters entities by on-chain `$creator`, not by a field anyone can write.
+
+"Why this pillar?" is scored separately for each CROPS track entered (track total = that pillar's score plus the
+three shared criteria). A team can win at most one prize; Best Indian Use Case is allocated first.
 
 Features the rubric names under "How you use Arkiv": typed attributes vs payload, compound
 queries with ranges, `createdBy()`/`ownedBy()`, cursor pagination, per-type Entity Expiration,

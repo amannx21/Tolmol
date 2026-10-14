@@ -317,3 +317,16 @@ This file is updated as we build. Entries only describe things we actually hit o
   selected only `key` or full attributes with `limit 200`. `eth_blockNumber` carried no `arkiv-cost`. The SDK's
   `predictEntityKeys` uses `eth_call` (`entityNonce`), not `arkiv_query`. We designed the app's reads around this
   (see F13 and `schema.md`, "Live updates").
+- **Reading creation flags in a query (chain).** 2026-10-14 ~12:15 UTC, SDK 0.8.1. A query on
+  `project = "tolmol" AND type = "tolmol.report" AND shop_id = "SYN-BR-0042"` with
+  `select({ key: true, creationFlags: true })` returned `{ readonly: true, permissionlessExtension: true, raw: 3 }`
+  for each entity. *Expected:* the flags are selectable like any other system field (`SELECTION_KEYS` lists
+  `creationFlags`). *Actual:* as expected. Tolmol uses this so a witness never tries to extend a report whose
+  reporter opted out of permissionless extension (that batch would revert as a whole).
+- **Privacy audit over every Tolmol entity (chain).** 2026-10-14 at block 565380, `node --import tsx
+  scripts/privacy-audit.ts` (read-only, anonymous). It walked every `project = "tolmol"` entity with cursor
+  pagination pinned at one block (25 shops, 178 reports, 174 witnesses, 1 correction, plus 4 synthetic
+  `tolmol.test`/`tolmol.smoke` entities from these experiments) and checked each attribute against
+  `docs/data-contract.schema.json`. Result: **PASS**, no unknown attributes, no out-of-format values, every
+  report, witness and correction payload empty. 382 entities came back in 2 pages of up to 200, so the audit
+  costs 2 queries (200 units of the anonymous budget, F13).

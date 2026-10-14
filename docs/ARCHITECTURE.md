@@ -29,9 +29,11 @@ flowchart LR
 
 | Part | Where | Holds secrets? | Talks to |
 |---|---|---|---|
-| `apps/web` | Static files on GitHub Pages (or any static host) | The device key, in that browser only | Arkiv public RPC directly, the relayer |
+| `apps/web` | Static files on GitHub Pages, mirrored on Vercel (https://tolmol-web-kappa.vercel.app); any static host works | The device key, in that browser only | Arkiv RPC directly (the public one, or any endpoint set in Settings), the relayer |
+| `apps/web/public/mirror.html` | One self-contained file, served with the app or saved anywhere | No | Any Arkiv RPC, with plain `fetch` |
 | `packages/tolmol-sdk` | npm workspace package, used by the app, the seed script and the CLI | No | Arkiv RPC |
 | `apps/relayer` | Vercel serverless function, https://tolmol-relayer.vercel.app, auto-deployed from `main` with Vercel root directory `apps/relayer` (also runs on Cloudflare Workers / Node) | Relayer key (test GLM only) | Arkiv RPC |
+| `scripts/privacy-audit.ts`, `examples/minimal-reader.mjs` | Anyone's machine, read-only | No | Arkiv RPC |
 | `scripts/seed.ts` | Developer machine | Seed keys in `.env` and `.seed-wallets.json` (git-ignored) | Arkiv RPC |
 | Arkiv Tiramisu | Arkiv network | n/a | n/a |
 

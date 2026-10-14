@@ -4,11 +4,13 @@
 queryable evidence that no dealer, official or app host can quietly erase.**
 
 Built on [Arkiv](https://arkiv.network), the Web3 database, for the Arkiv Global Tour Stop (9 to 18 Oct 2026).
-Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Security, Open Source.
+Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Open Source, Privacy, Security.
 
 | | |
 |---|---|
 | Live app | **https://amannx21.github.io/Tolmol/** (no login, works on a phone, English + हिन्दी) |
+| Mirror (second host) | https://tolmol-web-kappa.vercel.app (same build, deployed from `main` on Vercel) |
+| One-file reader | [`mirror.html`](https://amannx21.github.io/Tolmol/mirror.html): no framework, no build, any Arkiv RPC; save it and open it anywhere |
 | Gas-drip relayer | https://tolmol-relayer.vercel.app/health (Vercel; sends test GLM to fresh device wallets only) |
 | Demo video (3 min) | **[FILL]** |
 | Network | Arkiv **Tiramisu** testnet, chain ID `7738577` · [explorer](https://tiramisu.explorer.arkiv.network) |
@@ -47,16 +49,30 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
 
 1. **Report.** A card holder picks their (synthetic) shop, month and grain, and enters what they were entitled
    to and what they received. Their phone signs it with an anonymous device key. No name, phone, Aadhaar or card
-   number is asked for or stored, and there is no free-text box.
+   number is asked for or stored, and there is no free-text box. In Full mode the reporter also chooses how long
+   the report stays on Arkiv (30, 90 or 180 days) and whether neighbours may extend it.
 2. **Corroborate.** Another card holder at the same shop taps "I also got less at this shop this month" on their
-   own phone. Two confirmations automatically extend the report's life.
+   own phone. Two confirmations automatically extend the report's life (unless the reporter chose a fixed one).
 3. **Check and export.** Anyone (journalist, NGO, social-audit group, RTI filer) can see the worst shops in a
    district, open a shop's timeline, view it **as it was at any past block**, and download CSV/JSON evidence where
    every row has an entity key, creator address, block number and explorer link.
 4. **Act on it.** "Draft my RTI" writes a Right to Information application (English or Hindi) to the District
    Supply Office for the shop's stock and distribution registers, citing Sections 6(1), 6(2), 7(1) and 7(5) of
    the RTI Act 2005, with the on-chain evidence as an annex. Name and address are blanks filled in by hand.
-   Each shop page also has a printable QR code, so card holders at the shop can open it and confirm reports.
+   **"Complaint to the DGRO"** writes a complaint to the District Grievance Redressal Officer under Section 15 of
+   the National Food Security Act, with the shop's shortfall and issue counts. Each shop page also has a QR code to
+   share, so card holders at the shop can open it and confirm reports.
+5. **Say what else went wrong.** Optional big buttons: asked to pay money, fingerprint/OTP failed, thumb taken but
+   grain not given, shop closed, bad grain, card from another state refused (One Nation One Ration Card), no
+   receipt. Stored as one 7-bit number, never as text. Shop pages and the dashboard count them.
+6. **Know what to do next.** After a report: call the free food helpline **1967**, print the DGRO complaint or the
+   RTI. If a card from another state was refused, it adds that under One Nation One Ration Card the ration can be
+   taken at any ration shop in India.
+7. **Fix a mistake without deleting anything.** A reporter can **withdraw** their own report. The withdrawal is a
+   new sealed entity; the report stays readable, tagged "withdrawn by its reporter", and drops out of totals. Only
+   the device that wrote a report can withdraw it.
+8. **Check the evidence.** The **Verify** page takes an exported CSV and checks every row against Arkiv, so an
+   official handed an evidence file can tell whether it was edited.
 
 **Two modes, chosen on first visit and switchable anytime:**
 
@@ -96,8 +112,9 @@ What Tolmol relies on, and gets only from Arkiv:
   not) on record at a given time.
 
 **Kept off Arkiv on purpose:** names, phone numbers, Aadhaar, ration card numbers, addresses (hashing does not
-help, they are guessable), free text, photos of receipts or scales, household size, device private keys, relayer
-rate-limit data and IPs, and aggregates (anyone can recompute them). Details in [`arkiv/schema.md`](arkiv/schema.md#what-stays-off-arkiv-on-purpose).
+help, they are guessable), free text, photos of receipts or scales, household size, the exact time of a report
+(rounded to the day), device private keys, relayer rate-limit data and IPs, and aggregates (anyone can recompute
+them). Details in [`arkiv/schema.md`](arkiv/schema.md#what-stays-off-arkiv-on-purpose).
 
 ## How we use Arkiv
 
@@ -105,15 +122,16 @@ Every feature below changes something the user sees. Permalinks to exact lines: 
 
 | Arkiv feature | How Tolmol uses it | Why | Code |
 |---|---|---|---|
-| Typed attributes vs payload | 15 typed attributes per report (i32 grams, i32 basis points, u64 time, str IDs); **empty payload** | Everything a reader filters on is indexed; there is nothing else to store, and no field for free text | [`attributes.ts`](packages/tolmol-sdk/src/attributes.ts) |
+| Typed attributes vs payload | 16 typed attributes per report (i32 grams, i32 basis points, i32 issue bitmask, u64 day, str IDs); **empty payload** | Everything a reader filters on is indexed; there is nothing else to store, and no field for free text | [`attributes.ts`](packages/tolmol-sdk/src/attributes.ts) |
 | Compound queries + ranges | `state = BR AND month_num >= 202608 AND month_num <= 202610 [AND shortfall_bp >= x]` | Dashboard ranking by district and month range | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `createdBy()` | Shops are trusted only from the registry wallet; dedupe checks use the device as creator | Fake shops never appear in the picker; one report per device per shop-month-grain | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `$creator` in the UX | Every report and witness shows its device address with an explorer link | Authorship anyone can verify, that no one can forge | [`ReportView.tsx`](apps/web/src/ReportView.tsx) |
+| `$creator` as the trust rule | A withdrawal (`tolmol.correction`) counts only if its creator wrote the report | A dealer cannot "withdraw" a card holder's complaint | [`rules.ts`](packages/tolmol-sdk/src/rules.ts) |
 | Cursor pagination + pinned block | Every walk is `.limit(200).atBlock(head)` with `next()` | Consistent pages; dashboards beyond 200 reports | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `atBlock` historical reads | "Show as it was at block N" on every shop page and in exports | Evidence of what was public at a point in time | [`ShopPage.tsx`](apps/web/src/ShopPage.tsx) |
-| Creation flags | Reports and witnesses: `readonly` + `permissionlessExtension` | Nobody can edit; any community member can keep evidence alive | [`writes.ts`](packages/tolmol-sdk/src/writes.ts) |
+| Creation flags | Reports and witnesses: `readonly` + `permissionlessExtension` (the reporter can switch extension off); flags are read back with `select({ creationFlags })` | Nobody can edit; the community can keep evidence alive unless the reporter wants it to expire on time | [`writes.ts`](packages/tolmol-sdk/src/writes.ts), [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | Ownership transfer | Each report is handed to `0x…dEaD` in its creating batch | Removes the owner's delete right: nobody can delete it | [`writes.ts`](packages/tolmol-sdk/src/writes.ts) |
-| Entity Expiration per type | Shops 180 days, reports 90 days, witnesses = report deadline | Lifetimes follow how long evidence is useful (complaint, RTI) | [`constants.ts`](packages/tolmol-sdk/src/constants.ts) |
+| Entity Expiration per type | Shops 180 days; reports **30, 90 or 180 days, chosen by the reporter**; witnesses = report deadline; withdrawals = report creation + 365 days | Expiry the user controls; lifetimes follow how long evidence is useful (complaint, RTI) | [`constants.ts`](packages/tolmol-sdk/src/constants.ts), [`ReportForm.tsx`](apps/web/src/ReportForm.tsx) |
 | Lifetime Extension | The 2nd confirmation extends the report and its witnesses to +180 days (cap 365) | A lease renewed by community activity | [`writes.ts`](packages/tolmol-sdk/src/writes.ts), [`rules.ts`](packages/tolmol-sdk/src/rules.ts) |
 | Atomic batches | Report = create + transfer; witness = create + transfer + N extensions | Either all of it lands or none: no window where a report is deletable | [`writes.ts`](packages/tolmol-sdk/src/writes.ts) |
 | `predictEntityKeys` | Predicts the new key so the same batch can transfer it | Needed to reference an entity created in the same batch | [`writes.ts`](packages/tolmol-sdk/src/writes.ts) |
@@ -131,6 +149,10 @@ curl -s https://rpc.tiramisu.db-chain.testnet.arkiv.network \
 
 Every returned entity has `owner = 0x…dEaD`, a device `creator`, and the attributes in `arkiv/schema.md`.
 
+Or open [`mirror.html`](https://amannx21.github.io/Tolmol/mirror.html) (one file, plain `fetch`, works with any
+Arkiv RPC; it applies the rules in `arkiv/schema.md`), or run `node examples/minimal-reader.mjs SYN-BR-0042`,
+which uses only `@arkiv-network/sdk` and prints raw totals for you to build on.
+
 Or with the read-only CLI from a clone (no keys, no website):
 
 ```bash
@@ -146,7 +168,8 @@ npm run tolmol -- dashboard --state BR                        # worst shops in B
 ```bash
 git clone https://github.com/amannx21/Tolmol && cd Tolmol
 npm ci
-npm test                         # 40+ unit tests, no network
+npm test                         # 54 unit tests, no network
+node --import tsx scripts/privacy-audit.ts   # every Tolmol entity on Tiramisu vs the data contract (read-only)
 npm run dev -w tolmol-web        # http://localhost:5173 (reads Tiramisu directly)
 ```
 
@@ -192,18 +215,36 @@ until there is signal, and a "Draft my RTI" letter that turns the evidence into 
 and the auditor who never sees the pattern. We cannot delete or edit a report, and neither can our host: the
 data is on Arkiv, readable with the curl above, the SDK or the CLI, even if the website is down.
 
-**Security.** Authorship by `$creator` everywhere: registry-only shops, per-device dedupe, a witness must be a
-different device, derived numbers recomputed by every reader, a rate-limited relayer that never signs data, no
-secrets or personal data on chain. See the threat model below for what is still open.
+The site itself is on two hosts, any Arkiv RPC can be set in Settings, and `mirror.html` is a single file anyone
+can keep and open offline.
 
-**Open Source.** MIT. A documented data contract ([`arkiv/schema.md`](arkiv/schema.md)), a reusable
-[`tolmol-sdk`](packages/tolmol-sdk) package, and contribution notes. Another scheme (mid-day meals, MGNREGA
-wages) could reuse the same pattern: synthetic registry, device-signed claims, corroboration as lease renewal.
+**Privacy.** Who is exposed if this data leaks? A card holder who complains about the dealer they depend on every
+month. So the explorer shows nothing personal: no name, phone, Aadhaar, card number, address, household size or
+free text (not even hashed); 16 small attributes; empty payloads; the time rounded to the day. The user controls
+expiry: 30, 90 or 180 days, and whether neighbours may extend it. A device can start a new identity so later
+reports are not linked to earlier ones. Letters keep name and card number as paper blanks. Anyone can run
+`scripts/privacy-audit.ts`, which checks every Tolmol entity on Tiramisu against
+[`docs/data-contract.schema.json`](docs/data-contract.schema.json). Open: wallets under one identity are linkable,
+and block times are public (threat model T15).
+
+**Security.** Who is misled if this data is forged? Officials and journalists who act on it. Authorship by
+`$creator` everywhere: registry-only shops, per-device dedupe, a witness must be a different device, a withdrawal
+counts only from the report's own creator, derived numbers recomputed by every reader, a Verify page for exported
+evidence, a rate-limited relayer that never signs data, no secrets or personal data on chain. See the threat model
+below for what is still open.
+
+**Open Source.** MIT. A documented data contract ([`arkiv/schema.md`](arkiv/schema.md), and as JSON Schema in
+[`docs/data-contract.schema.json`](docs/data-contract.schema.json)), a reusable [`tolmol-sdk`](packages/tolmol-sdk)
+package, a read-only CLI, a [minimal reader](examples/minimal-reader.mjs) with no Tolmol code, and contribution
+notes. Every shop and dashboard page prints the exact queries it ran ("How this is computed"). Another scheme
+(mid-day meals, MGNREGA wages) could reuse the same pattern: synthetic registry, device-signed claims,
+corroboration as lease renewal.
 
 ## Threat model (summary)
 
-Mitigated: operator deletion or edits, website takedown, forged authorship, fake shops, forged derived numbers,
-duplicate and self-witness inflation, relayer abuse, leaked secrets. **Open:** sybil wallets (partly limited by
+Mitigated: operator deletion or edits, website takedown, a blocked RPC, forged authorship, fake shops, forged
+derived numbers, duplicate and self-witness inflation, withdrawals by anyone but the reporter, edited evidence
+files, relayer abuse, leaked secrets. **Open:** sybil wallets (partly limited by
 gas and relayer caps), collusion, dishonest reporters, and linkability of one device's reports. Full table:
 [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
