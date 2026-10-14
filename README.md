@@ -271,7 +271,8 @@ No Tolmol database, no Tolmol read API. Details: [`docs/ARCHITECTURE.md`](docs/A
 - Testnet only. Gas comes from the faucet or our relayer.
 - Anonymous Arkiv reads are capped at about 100 queries per IP per ~13 minutes (friction F13). The app reads
   per viewer, so this is per person, but heavy use from one network can hit it.
-- No proof that a device belongs to a real card holder at that shop (see the threat model).
+- No proof that a device belongs to a real card holder at that shop (see the threat model). Design for an optional,
+  anonymous "verified card holder" badge, built on Arkiv entities with no identity data: [`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md) (not built).
 - Hindi strings were drafted with an AI assistant and need native review.
 - The trust filter ("count only confirmed reports") is a view, not proof: confirmations can also come from sybil devices.
 - The relayer keeps per-IP limits in instance memory on Vercel; the on-chain fresh-wallet checks are the hard limit.

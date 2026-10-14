@@ -53,8 +53,9 @@ This page lists who might attack that promise, what stops them, and what is stil
 ## What Tolmol does not solve
 
 - **Truth.** Tolmol records claims and corroborations. It cannot weigh grain.
-- **Identity.** There is no proof that a device belongs to a real card holder at that shop. Adding one,
-  for example an anonymous credential issued at the shop, would need government or NGO participation.
+- **Identity.** There is no proof that a device belongs to a real card holder at that shop. The design for an
+  optional, anonymous "verified card holder" badge (checked in person at a social-audit camp, proved with Semaphore,
+  stored only on Arkiv, with no identity data) is in [`VERIFIED_REPORTERS.md`](VERIFIED_REPORTERS.md). Not built yet.
 - **Gas.** Real users need test (or real) GLM. On testnet our relayer covers this; a production deployment
   would need a sponsored-gas design that does not make the sponsor the creator of reports.
 - **Retention after expiry.** Expired entities leave queries. Their transactions remain on the explorer, and

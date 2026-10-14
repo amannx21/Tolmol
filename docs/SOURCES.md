@@ -81,6 +81,9 @@ https://dfpd.gov.in/WriteReadData/Other/nfsa_1.pdf (opened 2026-10-14)
 
 Section 15(1) creates a District Grievance Redressal Officer (DGRO) in every district, and 15(6) lets a complainant
 who is not satisfied appeal to the State Food Commission.
+> Section 28(1): "Every local authority, or any other authority or body, as may be authorised by the State
+> Government, shall conduct or cause to be conducted, periodic social audits on the functioning of fair price shops"
+
 Used for: the "Complaint to the DGRO" letter on each shop page (`apps/web/src/rti.ts`, `draftComplaint`), and the
 "What you can do next" panel shown after a report.
 
