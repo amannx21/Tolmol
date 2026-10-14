@@ -26,6 +26,7 @@ export type RawEntity = {
   owner?: Hex
   createdAt?: bigint
   expiresAt?: bigint
+  creationFlags?: { permissionlessExtension?: boolean } | undefined
   attributes?: Readonly<Record<string, { type: string; value: unknown } | undefined>>
   payload?: Uint8Array
   toJson?: () => unknown
@@ -201,6 +202,8 @@ export function parseReport(e: RawEntity): Report | null {
     synthetic: b(e, "synthetic") === true,
     createdAt: e.createdAt,
     expiresAt: e.expiresAt,
+    // The reporter may opt out of community extension. Unknown flags (older callers) count as extendable.
+    extendable: e.creationFlags?.permissionlessExtension !== false,
   }
 }
 

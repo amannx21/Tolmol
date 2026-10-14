@@ -41,6 +41,8 @@ export type Report = Omit<ReportInput, "issues"> & {
   owner: `0x${string}`
   createdAt: bigint
   expiresAt: bigint
+  /** False when the reporter chose not to let others extend it (no permissionlessExtension flag). */
+  extendable: boolean
 }
 
 export type Correction = {

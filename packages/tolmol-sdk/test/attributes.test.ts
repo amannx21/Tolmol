@@ -24,6 +24,11 @@ describe("report attributes round-trip", () => {
     expect(r?.shortfallBp).toBe(1600)
     expect(r?.shortfallG).toBe(4000)
     expect(r?.monthNum).toBe(202610)
+    expect(r?.extendable).toBe(true)
+  })
+  it("reads the reporter's extension choice from the creation flags", () => {
+    expect(parseReport({ ...asEntity(attrs), creationFlags: { permissionlessExtension: false } })?.extendable).toBe(false)
+    expect(parseReport({ ...asEntity(attrs), creationFlags: { permissionlessExtension: true } })?.extendable).toBe(true)
   })
   it("drops entities whose derived fields were forged", () => {
     expect(parseReport(asEntity({ ...attrs, shortfall_bp: { type: "i32", value: 9000 } }))).toBeNull()

@@ -151,6 +151,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <dt>{t("expires")}</dt>
           <dd>
             {daysLeft(r.expiresAt, data.head)} {t("days")}
+            {!r.extendable && <span class="small muted"> · {t("notExtendable")}</span>}
           </dd>
           <dt>Arkiv</dt>
           <dd>

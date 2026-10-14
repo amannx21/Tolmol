@@ -11,7 +11,7 @@ const B = "0xbBbB000000000000000000000000000000000002" as const
 const k = (n: number) => `0x${n.toString(16).padStart(64, "0")}` as `0x${string}`
 const ok = { shopId: "SYN-BR-0042", month: "2026-10", item: "rice" as const, entitledG: 25_000, receivedG: 21_000 }
 const report = (over: Partial<Report> = {}): Report => ({
-  ...ok, key: k(1), state: "BR", district: "gaya", monthNum: 202610, shortfallG: 4_000, shortfallBp: 1600, issues: 0,
+  ...ok, key: k(1), state: "BR", district: "gaya", monthNum: 202610, shortfallG: 4_000, shortfallBp: 1600, issues: 0, extendable: true,
   reportedAt: 1n, synthetic: true, creator: A, owner: "0x000000000000000000000000000000000000dEaD", createdAt: 100n, expiresAt: 999n, ...over,
 })
 const correction = (over: Partial<Correction> = {}): Correction => ({

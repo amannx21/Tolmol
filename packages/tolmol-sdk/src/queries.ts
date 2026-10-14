@@ -17,7 +17,7 @@ export type ReadOptions = {
 
 export type ReadResult<T> = { items: T[]; atBlock: bigint; dropped: number }
 
-const META = { key: true, creator: true, owner: true, createdAt: true, expiresAt: true, attributes: true } as const
+const META = { key: true, creator: true, owner: true, createdAt: true, expiresAt: true, creationFlags: true, attributes: true } as const
 
 /**
  * Walks every page of one query at a single pinned block, so pages never shift under us.

@@ -46,13 +46,14 @@ export const witnessCount = (report: Report, witnesses: readonly Witness[]) => v
  * The deadline a corroborating witness should extend a report to, or null for "no extension".
  * Extension happens once the report will have MIN_WITNESSES_TO_EXTEND distinct witnesses (including the new one).
  * Target: max(current, head + 180 days), capped at createdAt + 365 days. Never shortens.
+ * Null when the reporter opted out of community extension: the witness is still recorded, nothing is extended.
  */
 export function extensionTarget(
-  report: Pick<Report, "createdAt" | "expiresAt">,
+  report: Pick<Report, "createdAt" | "expiresAt"> & { extendable?: boolean },
   witnessesAfterThisOne: number,
   head: bigint,
 ): bigint | null {
-  if (witnessesAfterThisOne < MIN_WITNESSES_TO_EXTEND) return null
+  if (report.extendable === false || witnessesAfterThisOne < MIN_WITNESSES_TO_EXTEND) return null
   const cap = report.createdAt + BigInt(LIFETIME_DAYS.cap) * BLOCKS_PER_DAY
   const want = head + BigInt(LIFETIME_DAYS.corroborated) * BLOCKS_PER_DAY
   const target = want < cap ? want : cap

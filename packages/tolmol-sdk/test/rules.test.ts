@@ -12,7 +12,7 @@ const k = (n: number) => `0x${n.toString(16).padStart(64, "0")}` as `0x${string}
 function report(over: Partial<Report> = {}): Report {
   return {
     key: k(1), shopId: "SYN-BR-0042", month: "2026-10", item: "rice", entitledG: 25_000, receivedG: 21_000,
-    state: "BR", district: "gaya", monthNum: 202610, shortfallG: 4_000, shortfallBp: 1600, issues: 0, reportedAt: 1n,
+    state: "BR", district: "gaya", monthNum: 202610, shortfallG: 4_000, shortfallBp: 1600, issues: 0, extendable: true, reportedAt: 1n,
     synthetic: true, creator: A, owner: "0x000000000000000000000000000000000000dEaD", createdAt: 100n, expiresAt: 100n + 90n * BLOCKS_PER_DAY,
     ...over,
   }
@@ -91,6 +91,9 @@ describe("extensionTarget", () => {
   it("never shortens and returns null when already at or past the target", () => {
     const long = report({ createdAt: 1_000n, expiresAt: 1_000n + 365n * BLOCKS_PER_DAY })
     expect(extensionTarget(long, 5, 2_000n)).toBeNull()
+  })
+  it("never extends a report whose reporter opted out", () => {
+    expect(extensionTarget({ createdAt: 1_000n, expiresAt: 5_000n, extendable: false }, 3, 2_000n)).toBeNull()
   })
 })
 
