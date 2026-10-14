@@ -1843,6 +1843,69 @@
       "creator": "0xf125a4CeC04AA7632559c2d2928de4DD237E8A9B",
       "txHash": "0x7d3e69e0adcbefd350c9e4f088c611aa82e8715cae81df54ecb4c80289cddc77",
       "block": "517826"
+    },
+    {
+      "shopId": "SYN-BR-0042",
+      "item": "total",
+      "issues": 65,
+      "key": "0x8f7ca3467dcc8fecc876b48ffcff96d9e83533b8e358eb401e447cd6cf241b82",
+      "creator": "0x6bF3F6864F5C6Cda1118ab6f7845Ff45D75040cb",
+      "txHash": "0x6db7c28b61485b790ccd9df58be7a7801389072ad0185c09c63ab02c18516054",
+      "note": "issue-tagged demo report (seed-issues.ts)"
+    },
+    {
+      "shopId": "SYN-BR-0042",
+      "item": "total",
+      "issues": 2,
+      "key": "0xdbe19ad65226d9e5fcfed0a4ba63694ce8999e538829c69da1bd9c2ab4b4c397",
+      "creator": "0xf985803904E79A5E601bD5F8773F65A4051bF801",
+      "txHash": "0x0598e160a8839370e7b5711d30bce42942e0aa51f7dde19fefecd25d42f345b3",
+      "note": "issue-tagged demo report (seed-issues.ts)"
+    },
+    {
+      "shopId": "SYN-BR-0042",
+      "item": "total",
+      "issues": 20,
+      "key": "0x69a02123e6d3d47c07021dc46bb8f61f1c00b9aa74dacfcf183c5e64b8f352b9",
+      "creator": "0xd5D24b2A40bE856E74a08ada8314b59F4957B679",
+      "txHash": "0xe0a7b78cb066cea1440d0d64299b817ee234dd60d04083d1968d7ecfe12fbcec",
+      "note": "issue-tagged demo report (seed-issues.ts)"
+    },
+    {
+      "shopId": "SYN-BR-0003",
+      "item": "total",
+      "issues": 8,
+      "key": "0xc701bfc4ca4c17e5c547a15149c6ec5ef1298f2b6fc2dbf96120f0b32b785e95",
+      "creator": "0xDa3aB4811c8ff2B3e42ddA415163CCaAbF4FFb91",
+      "txHash": "0x8fbed5e42f4e902fe5f8363ba04fbb435e05b45ce7cfd4a53d3bb301ea583779",
+      "note": "issue-tagged demo report (seed-issues.ts)"
+    },
+    {
+      "shopId": "SYN-BR-0007",
+      "item": "total",
+      "issues": 1,
+      "key": "0xa494d1680e606e3a9f46dbb0ad230c9c33e7a5f9d1b1d57539ed20d607313074",
+      "creator": "0x61B3f6Bfa03A5CA049BdbD45b1901E4CF0C53c0F",
+      "txHash": "0xf87f9dd53e47dd4c41ee2f46659e1d673d3cfd20f3574d7e9df90d1fb74f9b37",
+      "note": "issue-tagged demo report (seed-issues.ts)"
+    },
+    {
+      "shopId": "SYN-UP-0002",
+      "item": "total",
+      "issues": 32,
+      "key": "0x562f2be70aa0146f52a52b8e354243d85136ad68c4f9be79dae1d38fe219edf8",
+      "creator": "0x6134D1300E6824faedE5a9a5C994621F82516c3b",
+      "txHash": "0x8ef1e9e36fb9799299e84a1d226c4ceb9deb40b3fa5f0148bcc6f6a6ed814658",
+      "note": "issue-tagged demo report (seed-issues.ts)"
+    },
+    {
+      "shopId": "SYN-JH-0003",
+      "item": "total",
+      "issues": 80,
+      "key": "0xc30a4f775c4c60f9e4460ad6175880aab9bbfa1b5e8526a30474ce4e147a3c12",
+      "creator": "0x6bF3F6864F5C6Cda1118ab6f7845Ff45D75040cb",
+      "txHash": "0x3190f16dbb5a81751a3992565f572870a6d6512ef0f6a731cf06e76b9dc5e09e",
+      "note": "issue-tagged demo report (seed-issues.ts)"
     }
   ],
   "witnesses": [

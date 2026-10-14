@@ -6,8 +6,11 @@ import {
   DuplicateError,
   explorerAddressUrl,
   formatBp,
-  getReport,
+  parseReport,
+  reportCorrections,
   reportWitnesses,
+  withdrawReport,
+  type RawEntity,
   SelfWitnessError,
   validWitnesses,
   type Report,
@@ -17,6 +20,7 @@ import { device, ensureGas, reader, short } from "./arkiv"
 import { Say } from "./Easy"
 import { usePrefs } from "./prefs"
 import { useFmt, useLang } from "./i18n"
+import { IssueList, NextSteps, PrivacyPanel } from "./extras"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
@@ -24,7 +28,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const [prefs] = usePrefs()
   const f = useFmt()
   const kg = f.kg
-  const [data, setData] = useState<{ report: Report | null; witnesses: Witness[]; head: bigint } | null>(null)
+  const [data, setData] = useState<{ report: Report | null; raw: RawEntity | null; witnesses: Witness[]; withdrawnBy: boolean; head: bigint } | null>(null)
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false)
   const [err, setErr] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
@@ -34,9 +39,15 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const load = async () => {
     try {
       const head = await reader.getBlockNumber({ cacheTime: 0 })
-      const report = await getReport(reader, reportKey)
-      const witnesses = report ? (await reportWitnesses(reader, reportKey, { atBlock: head })).items : []
-      setData({ report, witnesses, head })
+      // One read gives both the validated report and the raw entity for the "what is public" panel.
+      const raw = (await reader.getEntity(reportKey).catch(() => null)) as RawEntity | null
+      const report = raw ? parseReport(raw) : null
+      const [witnesses, corrections] = report
+        ? await Promise.all([reportWitnesses(reader, reportKey, { atBlock: head }), reportCorrections(reader, reportKey, { atBlock: head })])
+        : [{ items: [] as Witness[] }, { items: [] }]
+      // A withdrawal counts only if the report's own creator filed it.
+      const withdrawnBy = !!report && corrections.items.some((c) => c.creator.toLowerCase() === report.creator.toLowerCase())
+      setData({ report, raw, witnesses: witnesses.items, withdrawnBy, head })
     } catch (e) {
       setErr(e)
     }
@@ -55,6 +66,43 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const mine = r.creator.toLowerCase() === me.toLowerCase()
   const iWitnessed = data.witnesses.some((w) => w.creator.toLowerCase() === me.toLowerCase())
   const link = `${location.origin}${location.pathname}#/r/${r.key}`
+
+  const withdraw = async () => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      if (!(await ensureGas())) {
+        setMsg({ ok: false, text: t("gasFailed") })
+        return
+      }
+      await withdrawReport(reader, device().writer, r.key, { synthetic: true })
+      setMsg({ ok: true, text: t("withdrawDone") })
+      setConfirmWithdraw(false)
+      await load()
+    } catch {
+      setMsg({ ok: false, text: t("errGeneric") })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const withdrawBox =
+    mine && !data.withdrawnBy ? (
+      <div class="withdraw">
+        {confirmWithdraw ? (
+          <>
+            <p class="small">{t("withdrawConfirm")}</p>
+            <button class="secondary" onClick={withdraw} disabled={busy}>
+              {t("withdrawYes")}
+            </button>
+          </>
+        ) : (
+          <button class="link-back" onClick={() => setConfirmWithdraw(true)}>
+            {t("withdraw")}
+          </button>
+        )}
+      </div>
+    ) : null
 
   const confirm = async () => {
     setBusy(true)
@@ -76,6 +124,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
     <>
       <section class="card">
         <h2>{t("reportTitle")}</h2>
+        {data.withdrawnBy && <p class="tag big-tag">{t("withdrawn")}</p>}
         <p>
           <a href={`#/shop/${r.shopId}?month=${r.month}`}>{r.shopId}</a> · {f.month(r.month)} · {t(r.item)}
         </p>
@@ -109,6 +158,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             {r.owner.toLowerCase() === BURN_ADDRESS.toLowerCase() && <span class="small muted"> · {t("undeletable")}</span>}
           </dd>
         </dl>
+        <IssueList mask={r.issues} />
+        {withdrawBox}
       </section>
       <section class="card">
         <h3>
@@ -139,6 +190,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
       </section>
+      {data.raw && <PrivacyPanel raw={data.raw} />}
     </>
   )
 
@@ -158,6 +210,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         </section>
       )}
         {fullView}
+        {mine && <NextSteps shopId={r.shopId} mask={r.issues} />}
       </>
     )
   }
@@ -198,6 +251,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <div><span>{t("summaryGot")}</span><strong>{kg(r.receivedG)}</strong></div>
           <div class={r.shortfallG > 0 ? "bad" : "ok"}><span>{t("summaryLess")}</span><strong>{kg(r.shortfallG)}</strong></div>
         </div>
+        {data.withdrawnBy && <p class="tag big-tag">{t("withdrawn")}</p>}
+        <IssueList mask={r.issues} />
         <p class="lead">{t("confirmedBy", { n: valid.length })}</p>
         {!mine && !iWitnessed && (
           <button class="big-action" onClick={confirmEasy} disabled={busy}>
@@ -205,8 +260,10 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           </button>
         )}
         {mine && <p class="small muted">{t("ownReport")}</p>}
+        {withdrawBox}
         {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
       </section>
+      {mine && <NextSteps shopId={r.shopId} mask={r.issues} />}
       <details class="card auditors">
         <summary>{t("detailsAuditors")}</summary>
         {fullView}

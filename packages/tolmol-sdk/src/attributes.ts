@@ -50,6 +50,7 @@ export function reportAttributes(
   shop: Pick<Shop, "state" | "district">,
   opts: { synthetic: boolean; reportedAtMs: bigint },
 ): AttributeInputs {
+  if (!STATE_RE.test(shop.state) || !DISTRICT_RE.test(shop.district)) throw new Error("invalid state or district for this shop")
   return {
     project: str(PROJECT),
     type: str(TYPE.report),
@@ -169,7 +170,7 @@ export function parseReport(e: RawEntity): Report | null {
   const sbp = n32(e, "shortfall_bp")
   const reportedAt = n64(e, "reported_at")
   if (!shopId || !SHOP_ID_RE.test(shopId) || !month || !MONTH_RE.test(month) || !isItem(item)) return null
-  if (!state || !district || monthNum !== monthToNum(month)) return null
+  if (!state || !STATE_RE.test(state) || !district || !DISTRICT_RE.test(district) || monthNum !== monthToNum(month)) return null
   if (entitledG === undefined || receivedG === undefined || sg === undefined || sbp === undefined || reportedAt === undefined) return null
   // Recompute derived fields instead of trusting them.
   let bp: number

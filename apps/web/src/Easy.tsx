@@ -8,6 +8,7 @@ import { setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { speak } from "./speak"
+import { IssueList, IssuePicker, NextSteps } from "./extras"
 import { ErrorBox, Loading, loadShops } from "./ui"
 
 /** Speaks `text` whenever it changes, if read-aloud is on, and offers a Listen button. */
@@ -102,7 +103,7 @@ function Stepper({ grams, onChange, min = 0, max = 100_000 }: { grams: number; o
 }
 
 // ---------------------------------------------------------------- report wizard
-type Step = "shop" | "month" | "card" | "members" | "entitled" | "received" | "review" | "done"
+type Step = "shop" | "month" | "card" | "members" | "entitled" | "received" | "issues" | "review" | "done"
 
 export function EasyReport({ initialShop }: { initialShop?: string }) {
   const { t, lang } = useLang()
@@ -120,6 +121,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   const [members, setMembers] = useState(4)
   const [entitledG, setEntitledG] = useState(20_000)
   const [receivedG, setReceivedG] = useState(20_000)
+  const [issues, setIssues] = useState(0)
   const [busy, setBusy] = useState<null | "preparing" | "sending">(null)
   const [error, setError] = useState<string | null>(null)
   const [queued, setQueued] = useState(false)
@@ -304,7 +306,22 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         <h2>{t("qReceived")}</h2>
         <Say text={t("qReceived")} />
         <Stepper grams={receivedG} onChange={setReceivedG} max={entitledG} />
-        <button class="big-action" onClick={() => next("review")}>{t("next")} →</button>
+        <button class="big-action" onClick={() => next("issues")}>{t("next")} →</button>
+      </section>
+    )
+  }
+
+  if (step === "issues") {
+    return (
+      <section class="card easy">
+        <BackBtn />
+        <h2>{t("issuesTitle")}</h2>
+        <Say text={`${t("issuesTitle")} ${t("issuesHelp")}`} />
+        <p class="small">{t("issuesHelp")}</p>
+        <IssuePicker value={issues} onChange={setIssues} big />
+        <button class="big-action" onClick={() => next("review")}>
+          {issues ? `${t("next")} →` : `${t("issuesNone")} →`}
+        </button>
       </section>
     )
   }
@@ -313,7 +330,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
     const summary = `${t("summaryShould")} ${kg(entitledG)}. ${t("summaryGot")} ${kg(receivedG)}. ${t("summaryLess")} ${kg(shortfall)}.`
     const save = async () => {
       setError(null)
-      const input = { shopId: shop.shopId, month, item: "total" as const, entitledG, receivedG }
+      const input = { shopId: shop.shopId, month, item: "total" as const, entitledG, receivedG, issues }
       if (!navigator.onLine) {
         enqueueReport(input, shop)
         setQueued(true)
@@ -350,6 +367,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
           <div class={shortfall > 0 ? "bad" : "ok"}><span>{t("summaryLess")}</span><strong>{kg(shortfall)}</strong></div>
         </div>
         {shortfall === 0 && <p class="small">{t("noShortfall")}</p>}
+        <IssueList mask={issues} />
         <p class="notice">{t("permanentWarning")}</p>
         {queued ? (
           <p class="ok" role="status">{t("queued")}</p>
@@ -381,6 +399,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         )}
         <a class="big-action secondary" href={`#/shop/${shop.shopId}`}>{t("seeMyShop")}</a>
         <a class="link-back" href={`#/r/${doneKey}`}>{t("detailsAuditors")} →</a>
+        <NextSteps shopId={shop.shopId} mask={issues} />
       </section>
     )
   }

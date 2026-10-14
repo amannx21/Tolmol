@@ -4,9 +4,32 @@ import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from 
 import { httpReader, writerFor, wsReader, type Reader, type Writer } from "tolmol-sdk"
 
 /** Shared read-only clients. Reads go straight from the browser to the public Arkiv RPC: no Tolmol backend. */
-export const reader: Reader = httpReader()
+// --- Arkiv server: the public Tiramisu RPC by default; the user can point the app at any other Arkiv server
+// (censorship resistance: blocking one endpoint does not hide the data). Stored on this device only.
+const RPC_KEY = "tolmol.rpc.v1"
+function savedRpc(): { http?: string; ws?: string } {
+  try {
+    const v = JSON.parse(localStorage.getItem(RPC_KEY) ?? "{}") as { http?: unknown; ws?: unknown }
+    const ok = (u: unknown, proto: RegExp) => (typeof u === "string" && proto.test(u) ? u : undefined)
+    return { http: ok(v.http, /^https?:\/\//), ws: ok(v.ws, /^wss?:\/\//) }
+  } catch {
+    return {}
+  }
+}
+export const rpcSetting = savedRpc()
+/** Saves a custom server (or clears it with null) and reloads, so every client uses it. */
+export function setRpc(http: string | null, wsUrl: string | null) {
+  try {
+    if (!http) localStorage.removeItem(RPC_KEY)
+    else localStorage.setItem(RPC_KEY, JSON.stringify({ http, ws: wsUrl || undefined }))
+  } catch {
+    /* ignore */
+  }
+  location.reload()
+}
+export const reader: Reader = httpReader(rpcSetting.http)
 let ws: Reader | undefined
-export const liveReader = () => (ws ??= wsReader())
+export const liveReader = () => (ws ??= wsReader(rpcSetting.ws))
 
 // --- Device identity: an anonymous keypair generated on this device. It is not a login and is never sent anywhere.
 const STORAGE_KEY = "tolmol.device.v1"
@@ -30,9 +53,24 @@ export function device(): { account: PrivateKeyAccount; writer: Writer } {
       }
     }
     account = privateKeyToAccount(pk as `0x${string}`)
-    writer = writerFor(account)
+    writer = writerFor(account, rpcSetting.http)
   }
   return { account, writer: writer! }
+}
+
+/**
+ * Privacy: start a fresh anonymous identity. The old key is kept on this phone only (so its reports can still be
+ * withdrawn from here), but new reports are signed by a new key and are not linked to the old ones on chain.
+ */
+export function newIdentity() {
+  try {
+    const old = localStorage.getItem(STORAGE_KEY)
+    if (old) localStorage.setItem(`tolmol.device.retired.${Date.now()}`, old)
+    localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    /* ignore */
+  }
+  location.reload()
 }
 
 export function useBalance(address: `0x${string}`) {

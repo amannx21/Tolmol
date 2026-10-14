@@ -8,6 +8,7 @@ import { ReportView } from "./ReportView"
 import { startQueue, useQueueCount } from "./queue"
 import { useRoute } from "./router"
 import { ShopPage } from "./ShopPage"
+import { VerifyPage } from "./extras"
 import { useLang } from "./i18n"
 import { Layout } from "./ui"
 import "./styles.css"
@@ -35,13 +36,16 @@ function App() {
       page = <Dashboard initialState={route.state} />
       break
     case "shop":
-      page = <ShopPage shopId={route.shopId} month={route.month} atBlock={route.atBlock} />
+      page = <ShopPage shopId={route.shopId} month={route.month} atBlock={route.atBlock} letter={route.letter} />
       break
     case "r":
       page = <ReportView reportKey={route.key as `0x${string}`} />
       break
     case "about":
       page = <About />
+      break
+    case "verify":
+      page = <VerifyPage />
       break
     default:
       // First visit: ask language and Easy/Full before anything else. Shared links skip this and open directly.

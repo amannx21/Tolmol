@@ -4,7 +4,7 @@
 //
 // Legal basis (Right to Information Act, 2005): s.6(1) request in English, Hindi or the official language;
 // s.6(2) no reasons needed; s.7(1) reply within 30 days; s.7(5) no fee for persons below the poverty line.
-import { dedupeReports, explorerEntityUrl, formatBp, formatKg, shopStats, validWitnesses, type Report, type Shop, type Witness } from "tolmol-sdk"
+import { dedupeReports, explorerEntityUrl, formatBp, formatKg, issueList, shopStats, validWitnesses, type Report, type Shop, type Witness } from "tolmol-sdk"
 import { districtName, monthName, type Lang } from "./i18n"
 
 export type RtiInput = {
@@ -15,6 +15,8 @@ export type RtiInput = {
   witnesses: Witness[]
   atBlock: bigint
   pageUrl: string
+  /** Keys of reports their own reporter withdrew; left out of the evidence. */
+  withdrawn?: ReadonlySet<string>
 }
 
 const ITEM_EN: Record<string, string> = { rice: "rice", wheat: "wheat", millet: "coarse grain", total: "all grain" }
@@ -23,8 +25,8 @@ const STATE_EN: Record<string, string> = { BR: "Bihar", UP: "Uttar Pradesh", JH:
 const STATE_HI: Record<string, string> = { BR: "बिहार", UP: "उत्तर प्रदेश", JH: "झारखंड" }
 
 export function draftRti(input: RtiInput, lang: Lang): string {
-  const kept = dedupeReports(input.reports)
-  const stats = shopStats(input.reports, input.witnesses)[0]
+  const kept = dedupeReports(input.reports, input.withdrawn)
+  const stats = shopStats(input.reports, input.witnesses, input.withdrawn)[0]
   const months = input.months.length ? input.months.map((m) => monthName(m, lang)).join(", ") : "—"
   const district = input.shop?.district ? districtName(input.shop.district, lang) : "[district]"
   const kg = (g: number) => (lang === "hi" ? formatKg(g).replace(" kg", " किलो") : formatKg(g))
@@ -100,4 +102,87 @@ ${summary}
 ${evidence}
 Full record: ${input.pageUrl}
 ${synthetic ? "\nNote: this demo shop is SYNTHETIC. For a real application, write your real shop's number.\n" : ""}`
+}
+
+const ISSUE_TEXT: Record<Lang, Record<string, string>> = {
+  en: {
+    charged_money: "money was demanded for grain that is free",
+    auth_failed: "authentication failed and no grain was given",
+    thumb_no_grain: "the thumbprint was taken but the full grain was not given",
+    shop_closed: "the shop was closed on distribution day",
+    bad_quality: "the grain was of bad quality",
+    portability_refused: "a ration card from another place was refused",
+    no_receipt: "no receipt was given",
+  },
+  hi: {
+    charged_money: "मुफ़्त अनाज के लिए पैसे माँगे गए",
+    auth_failed: "प्रमाणीकरण नहीं हुआ और अनाज नहीं दिया गया",
+    thumb_no_grain: "अंगूठा लगवाया गया पर पूरा अनाज नहीं दिया गया",
+    shop_closed: "वितरण के दिन दुकान बंद थी",
+    bad_quality: "अनाज ख़राब गुणवत्ता का था",
+    portability_refused: "दूसरी जगह का राशन कार्ड नहीं माना गया",
+    no_receipt: "रसीद नहीं दी गई",
+  },
+}
+
+/**
+ * A complaint to the District Grievance Redressal Officer (National Food Security Act 2013, s.15(5): the DGRO hears
+ * complaints about non-distribution of entitled foodgrains). Personal details are blanks to fill in by hand.
+ */
+export function draftComplaint(input: RtiInput, lang: Lang): string {
+  const kept = dedupeReports(input.reports, input.withdrawn)
+  const stats = shopStats(input.reports, input.witnesses, input.withdrawn)[0]
+  const district = input.shop?.district ? districtName(input.shop.district, lang) : "[district]"
+  const months = input.months.length ? input.months.map((m) => monthName(m, lang)).join(", ") : "—"
+  const kg = (g: number) => (lang === "hi" ? formatKg(g).replace(" kg", " किलो") : formatKg(g))
+  const issues = new Set(kept.flatMap((r) => issueList(r.issues)))
+  const issueLines = [...issues].map((i) => `- ${ISSUE_TEXT[lang][i]}`).join("\n")
+  const keys = kept.slice(0, 20).map((r) => `- ${explorerEntityUrl(r.key)}`).join("\n")
+  const synthetic = input.shopId.startsWith("SYN-")
+  if (lang === "hi") {
+    return `सेवा में,
+ज़िला शिकायत निवारण अधिकारी,
+${district}
+
+विषय: उचित मूल्य दुकान ${input.shopId} पर हक़ का अनाज न मिलने की शिकायत (राष्ट्रीय खाद्य सुरक्षा अधिनियम 2013, धारा 15)
+
+महोदय/महोदया,
+
+${months} में उचित मूल्य दुकान ${input.shopId} से मुझे और दूसरे कार्डधारकों को हक़ से कम अनाज मिला।
+${stats ? `तोलमोल पर दर्ज सार्वजनिक रिकॉर्ड के अनुसार ${stats.reporters} डिवाइसों से ${stats.reports} रिपोर्टें हैं; कुल कमी ${kg(stats.totalShortfallG)} (${formatBp(stats.shortfallBp)}) है, और ${stats.corroborated} रिपोर्टों की दूसरे कार्डधारकों ने पुष्टि की है।` : ""}
+${issueLines ? `इसके अलावा:\n${issueLines}` : ""}
+
+कृपया शिकायत की जाँच करें, दुकान का स्टॉक और वितरण रिकॉर्ड देखें, और मेरा बकाया अनाज दिलवाएँ।
+
+नाम: ______________________   राशन कार्ड संख्या: ______________________
+पता: ______________________________   मोबाइल: ______________
+दिनांक: ____________   हस्ताक्षर: ____________
+
+सबूत (Arkiv Tiramisu, ब्लॉक ${input.atBlock}; हर रिकॉर्ड को कोई भी जाँच सकता है):
+${keys}
+पूरा रिकॉर्ड: ${input.pageUrl}
+${synthetic ? "\nनोट: यह डेमो दुकान नकली (सिंथेटिक) है। असली शिकायत में अपनी असली दुकान का नंबर लिखें।\n" : ""}`
+  }
+  return `To,
+The District Grievance Redressal Officer,
+${district}
+
+Subject: Complaint about entitled foodgrains not given at Fair Price Shop ${input.shopId} (National Food Security Act 2013, Section 15)
+
+Sir/Madam,
+
+In ${months}, I and other card holders received less than our entitlement at Fair Price Shop ${input.shopId}.
+${stats ? `The public record on Tolmol shows ${stats.reports} reports from ${stats.reporters} devices, a total shortfall of ${kg(stats.totalShortfallG)} (${formatBp(stats.shortfallBp)}), and ${stats.corroborated} reports confirmed by other card holders.` : ""}
+${issueLines ? `In addition:\n${issueLines}` : ""}
+
+Please inquire into this complaint, examine the shop's stock and distribution registers, and arrange for the grain due to me.
+
+Name: ______________________   Ration card number: ______________________
+Address: ______________________________   Mobile: ______________
+Date: ____________   Signature: ____________
+
+Evidence (Arkiv Tiramisu, block ${input.atBlock}; anyone can verify each record):
+${keys}
+Full record: ${input.pageUrl}
+${synthetic ? "\nNote: this demo shop is SYNTHETIC. In a real complaint, write your real shop's number.\n" : ""}`
 }

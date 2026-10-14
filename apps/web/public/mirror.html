@@ -1,0 +1,129 @@
+<!doctype html>
+<!--
+  Tolmol one-file reader. Save this file and open it in any browser: it reads Tolmol records straight from
+  an Arkiv server (JSON-RPC, no libraries, no Tolmol server). It still works if every Tolmol website is gone.
+  Same counting rules as the app: one report per device per shop/month/grain (earliest block wins, then lowest key),
+  confirmations only from other devices, withdrawals only from the report's own creator. MIT licence.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tolmol reader (one file)</title>
+<style>
+  :root { --bg:#f6f5f0; --card:#fff; --ink:#1d2320; --muted:#5d6762; --line:#dcdcd2; --brand:#0f5132; --bad:#b3261e; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#121614; --card:#1b211e; --ink:#e8ece9; --muted:#a3ada8; --line:#2f3833; --brand:#4caf7a; --bad:#ef6b62; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, "Noto Sans", "Noto Sans Devanagari", sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; margin:12px 0; }
+  label { display:block; font-weight:600; font-size:.9rem; margin:6px 0; }
+  input { width:100%; box-sizing:border-box; padding:10px; min-height:44px; font:inherit; color:var(--ink); background:var(--bg); border:1px solid var(--line); border-radius:8px; }
+  button { min-height:44px; padding:8px 16px; font:inherit; font-weight:600; color:#fff; background:var(--brand); border:0; border-radius:8px; cursor:pointer; margin-top:8px; }
+  table { width:100%; border-collapse:collapse; font-size:.9rem; }
+  td, th { text-align:left; padding:6px 4px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .muted { color:var(--muted); } .small { font-size:.85rem; } .bad { color:var(--bad); } .mono { font-family:ui-monospace, Consolas, monospace; font-size:.85em; word-break:break-all; }
+  .dim { opacity:.55; } .big { font-size:1.6rem; font-weight:700; }
+  .lang { float:right; background:transparent; color:var(--brand); border:1px solid var(--brand); margin:0; }
+</style>
+</head>
+<body>
+<main>
+  <button class="lang" id="lang">हिन्दी</button>
+  <h1 id="t-title">Tolmol reader</h1>
+  <p class="small muted" id="t-intro">One file, no server: reads ration-shortfall records straight from Arkiv. Demo data is synthetic.</p>
+  <div class="card">
+    <label for="rpc" id="t-rpc">Arkiv server (any Tiramisu RPC)</label>
+    <input id="rpc" class="mono" value="https://rpc.tiramisu.db-chain.testnet.arkiv.network" />
+    <label for="shop" id="t-shop">Shop ID</label>
+    <input id="shop" class="mono" value="SYN-BR-0042" />
+    <label for="block" id="t-block">Read as it was at block (optional)</label>
+    <input id="block" class="mono" inputmode="numeric" placeholder="latest" />
+    <button id="go">Read</button>
+  </div>
+  <div id="out"></div>
+  <p class="small muted" id="t-foot">Source: github.com/amannx21/Tolmol · Data format: arkiv/schema.md · Network: Arkiv Tiramisu (chain 7738577)</p>
+</main>
+<script>
+"use strict"
+const T = {
+  en: { title:"Tolmol reader", intro:"One file, no server: reads ration-shortfall records straight from Arkiv. Demo data is synthetic.", rpc:"Arkiv server (any Tiramisu RPC)", shop:"Shop ID", block:"Read as it was at block (optional)", go:"Read", reading:"Reading from Arkiv…", shortfall:"Shortfall", reports:"Reports (counted)", devices:"Devices", confirmed:"Confirmed by other devices", month:"Month", grain:"Grain", got:"Got / entitled", conf:"Conf.", status:"Status", counted:"counted", dup:"duplicate", withdrawn:"withdrawn by reporter", none:"No reports for this shop.", readAt:"Read at block", err:"Could not read", foot:"Source: github.com/amannx21/Tolmol · Data format: arkiv/schema.md · Network: Arkiv Tiramisu (chain 7738577)", other:"हिन्दी" },
+  hi: { title:"तोलमोल रीडर", intro:"एक फ़ाइल, कोई सर्वर नहीं: राशन में कमी के रिकॉर्ड सीधे Arkiv से पढ़ता है। डेमो डेटा नकली है।", rpc:"Arkiv सर्वर (कोई भी Tiramisu RPC)", shop:"दुकान नंबर", block:"इस ब्लॉक पर जैसा था वैसा पढ़ें (ज़रूरी नहीं)", go:"पढ़ें", reading:"Arkiv से पढ़ा जा रहा है…", shortfall:"कमी", reports:"रिपोर्टें (गिनी गईं)", devices:"डिवाइस", confirmed:"दूसरे डिवाइसों से पुष्ट", month:"महीना", grain:"अनाज", got:"मिला / हक़", conf:"पुष्टि", status:"स्थिति", counted:"गिनी गई", dup:"दोहराई गई", withdrawn:"रिपोर्ट करने वाले ने वापस ली", none:"इस दुकान की कोई रिपोर्ट नहीं।", readAt:"इस ब्लॉक पर पढ़ा गया", err:"पढ़ा नहीं जा सका", foot:"सोर्स: github.com/amannx21/Tolmol · डेटा स्वरूप: arkiv/schema.md · नेटवर्क: Arkiv Tiramisu (chain 7738577)", other:"English" },
+}
+const ITEM = { en:{rice:"rice",wheat:"wheat",millet:"millet",total:"all grain"}, hi:{rice:"चावल",wheat:"गेहूँ",millet:"मोटा अनाज",total:"कुल अनाज"} }
+let lang = (navigator.language || "").startsWith("hi") ? "hi" : "en"
+const $ = (id) => document.getElementById(id)
+function applyLang() {
+  const t = T[lang]
+  for (const k of ["title","intro","rpc","shop","block","foot"]) $("t-" + k).textContent = t[k]
+  $("go").textContent = t.go; $("lang").textContent = t.other; document.documentElement.lang = lang
+}
+$("lang").onclick = () => { lang = lang === "en" ? "hi" : "en"; applyLang(); if (last) render(last) }
+applyLang()
+
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]))
+const big = (h) => BigInt(h)
+const kg = (g) => { const w = Math.floor(g / 1000), f = String(g % 1000).padStart(3, "0").replace(/0+$/, ""); return (f ? w + "." + f : String(w)) + (lang === "hi" ? " किलो" : " kg") }
+const bp = (b) => { const t = Math.floor(b / 10); return Math.floor(t / 10) + "." + (t % 10) + "%" }
+const attrsOf = (e) => Object.fromEntries((e.attributes || []).map((a) => [a.name, a]))
+const val = (A, n, type) => (A[n] && A[n].type === type ? A[n].value : undefined)
+
+async function query(rpc, q, atBlock) {
+  const out = []; let cursor
+  for (let page = 0; page < 25; page++) {
+    const opts = { limit: "0xc8", select: { key: true, creator: true, createdAt: true, expiresAt: true, attributes: true } }
+    if (atBlock) opts.atBlock = "0x" + atBlock.toString(16)
+    if (cursor) opts.cursor = cursor
+    const res = await fetch(rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "arkiv_query", params: [q, opts] }) })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok || body.error) throw new Error((body.error && (body.error.message || body.error)) || ("HTTP " + res.status))
+    out.push(...body.result.data); atBlock = big(body.result.blockNumber)
+    if (!body.result.cursor) return { rows: out, atBlock }
+    cursor = body.result.cursor
+  }
+  return { rows: out, atBlock }
+}
+
+let last = null
+$("go").onclick = async () => {
+  const rpc = $("rpc").value.trim(), shop = $("shop").value.trim().toUpperCase(), blk = $("block").value.trim()
+  if (!/^SYN-[A-Z]{2}-\d{4}$/.test(shop)) { $("out").innerHTML = '<p class="bad">SYN-XX-0000</p>'; return }
+  $("out").innerHTML = '<p class="muted">' + T[lang].reading + "</p>"
+  try {
+    const at = /^\d+$/.test(blk) ? BigInt(blk) : undefined
+    const base = "project = str('tolmol') AND shop_id = str('" + shop + "') AND type = str("
+    const reps = await query(rpc, base + "'tolmol.report')", at)
+    const wits = await query(rpc, base + "'tolmol.witness')", reps.atBlock)
+    const corr = await query(rpc, base + "'tolmol.correction')", reps.atBlock)
+    last = { shop, reps, wits, corr }
+    render(last)
+  } catch (e) { $("out").innerHTML = '<p class="bad">' + T[lang].err + ": " + esc(e.message) + "</p>" }
+}
+
+function render({ shop, reps, wits, corr }) {
+  const t = T[lang], lc = (s) => String(s).toLowerCase()
+  const reports = reps.rows.map((e) => { const A = attrsOf(e); return { key: lc(e.key), creator: lc(e.creator), createdAt: big(e.createdAt), month: val(A,"month","str"), item: val(A,"item","str"), entitled: val(A,"entitled_g","i32"), received: val(A,"received_g","i32") } })
+    .filter((r) => r.month && r.item && Number.isInteger(r.entitled) && Number.isInteger(r.received) && r.entitled > 0 && r.received >= 0 && r.received <= r.entitled)
+  const creatorOf = new Map(reports.map((r) => [r.key, r.creator]))
+  const withdrawn = new Set(corr.rows.map((e) => { const A = attrsOf(e); return [lc(val(A,"report_key","key") || ""), lc(e.creator), val(A,"action","str")] })
+    .filter(([k, c, a]) => a === "withdraw" && creatorOf.get(k) === c).map(([k]) => k))
+  const earlier = (a, b) => a.createdAt !== b.createdAt ? a.createdAt < b.createdAt : a.key < b.key
+  const best = new Map()
+  for (const r of reports) { if (withdrawn.has(r.key)) continue; const id = r.creator + "|" + r.month + "|" + r.item; const c = best.get(id); if (!c || earlier(r, c)) best.set(id, r) }
+  const kept = new Set([...best.values()].map((r) => r.key))
+  const witBy = new Map()
+  for (const e of wits.rows) { const k = lc(val(attrsOf(e), "report_key", "key") || ""); if (!witBy.has(k)) witBy.set(k, new Set()); witBy.get(k).add(lc(e.creator)) }
+  const conf = (r) => { const s = new Set(witBy.get(r.key) || []); s.delete(r.creator); return s.size }
+  let E = 0, S = 0, confirmed = 0; const devices = new Set()
+  for (const r of best.values()) { E += r.entitled; S += r.entitled - r.received; devices.add(r.creator); if (conf(r) > 0) confirmed++ }
+  if (!reports.length) { $("out").innerHTML = '<div class="card"><p>' + t.none + "</p></div>"; return }
+  const rows = reports.sort((a, b) => (a.month < b.month ? 1 : a.month > b.month ? -1 : 0)).map((r) => {
+    const status = withdrawn.has(r.key) ? t.withdrawn : kept.has(r.key) ? t.counted : t.dup
+    return "<tr class='" + (kept.has(r.key) ? "" : "dim") + "'><td>" + esc(r.month) + "</td><td>" + esc((ITEM[lang][r.item]) || r.item) + "</td><td>" + kg(r.received) + " / " + kg(r.entitled) + " (" + bp(Math.floor((r.entitled - r.received) * 10000 / r.entitled)) + ")</td><td>" + conf(r) + "</td><td>" + esc(status) + "</td><td class='mono'><a href='https://tiramisu.explorer.arkiv.network/entity/" + esc(r.key) + "' target='_blank' rel='noopener'>" + esc(r.key.slice(0, 10)) + "…</a></td></tr>"
+  }).join("")
+  $("out").innerHTML = "<div class='card'><h2 class='mono'>" + esc(shop) + "</h2><p><span class='big'>" + (E ? bp(Math.floor(S * 10000 / E)) : "0.0%") + "</span> " + t.shortfall + " · " + best.size + " " + t.reports + " · " + devices.size + " " + t.devices + " · " + confirmed + " " + t.confirmed + "</p>" +
+    "<table><thead><tr><th>" + t.month + "</th><th>" + t.grain + "</th><th>" + t.got + "</th><th>" + t.conf + "</th><th>" + t.status + "</th><th></th></tr></thead><tbody>" + rows + "</tbody></table>" +
+    "<p class='small muted mono'>" + t.readAt + " " + reps.atBlock + "</p></div>"
+}
+</script>
+</body>
+</html>

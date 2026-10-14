@@ -5,7 +5,8 @@ export type Route =
   | { name: "home" }
   | { name: "report"; shopId?: string; view?: "easy" | "full" }
   | { name: "dashboard"; state?: string }
-  | { name: "shop"; shopId: string; month?: string; atBlock?: string }
+  | { name: "shop"; shopId: string; month?: string; atBlock?: string; letter?: "rti" | "complaint" }
+  | { name: "verify" }
   | { name: "r"; key: string }
   | { name: "about" }
 
@@ -19,13 +20,18 @@ export function parse(hash: string): Route {
     case "dashboard":
       return { name: "dashboard", state: q.get("state") ?? undefined }
     case "shop":
-      if (parts[1]) return { name: "shop", shopId: parts[1], month: q.get("month") ?? undefined, atBlock: q.get("block") ?? undefined }
+      if (parts[1]) {
+        const letter = q.get("letter")
+        return { name: "shop", shopId: parts[1], month: q.get("month") ?? undefined, atBlock: q.get("block") ?? undefined, letter: letter === "rti" || letter === "complaint" ? letter : undefined }
+      }
       break
     case "r":
       if (parts[1] && /^0x[0-9a-fA-F]{64}$/.test(parts[1])) return { name: "r", key: parts[1] }
       break
     case "about":
       return { name: "about" }
+    case "verify":
+      return { name: "verify" }
   }
   return { name: "home" }
 }

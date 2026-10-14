@@ -16,6 +16,7 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
     ["dashboard", "#/dashboard", t("navDashboard")],
     ["about", "#/about", t("navAbout")],
   ]
+  if (prefs.mode === "full") nav.splice(3, 0, ["verify", "#/verify", t("navVerify")])
   return (
     <>
       <header class="top">

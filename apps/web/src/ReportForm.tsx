@@ -7,6 +7,7 @@ import {
   ITEMS,
   kgToGrams,
   NFSA,
+  REPORT_LIFETIME_CHOICES,
   shortfallBp,
   submitReport,
   validateReportInput,
@@ -16,6 +17,7 @@ import {
 } from "tolmol-sdk"
 import { device, reader } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
+import { IssueList, IssuePicker } from "./extras"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { DeviceCard, ErrorBox, Loading, loadShops } from "./ui"
@@ -36,6 +38,9 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   const [step, setStep] = useState<"form" | "confirm" | "sending">("form")
   const [error, setError] = useState<string | null>(null)
   const [queued, setQueued] = useState(false)
+  const [issues, setIssues] = useState(0)
+  const [lifetimeDays, setLifetimeDays] = useState(90)
+  const [allowExtension, setAllowExtension] = useState(true)
 
   useEffect(() => {
     loadShops()
@@ -82,7 +87,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
     if (!shop || !parsed) return
     setStep("sending")
     setError(null)
-    const input = { shopId: shop.shopId, month, item, entitledG: parsed.e, receivedG: parsed.r }
+    const input = { shopId: shop.shopId, month, item, entitledG: parsed.e, receivedG: parsed.r, issues }
     if (!navigator.onLine) {
       enqueueReport(input, shop)
       setQueued(true)
@@ -91,7 +96,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
     }
     try {
       const { writer } = device()
-      const res = await submitReport(reader, writer, { shopId: shop.shopId, month, item, entitledG: parsed.e, receivedG: parsed.r }, shop, { synthetic: true })
+      const res = await submitReport(reader, writer, input, shop, { synthetic: true, lifetimeDays, allowExtension })
       go(`#/r/${res.entityKey}?new=1`)
     } catch (e) {
       setStep("confirm")
@@ -121,6 +126,8 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           <dd>{f.month(month)}</dd>
           <dt>{t("item")}</dt>
           <dd>{t(item)}</dd>
+          <dt>{t("lifetimeTitle")}</dt>
+          <dd>{t("lifetimeDays", { n: lifetimeDays })}{allowExtension ? ` · ${t("allowExtend")}` : ""}</dd>
           <dt>{t("entitledKg")}</dt>
           <dd>{parsed && f.kg(parsed.e)}</dd>
           <dt>{t("receivedKg")}</dt>
@@ -132,6 +139,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
             </strong>
           </dd>
         </dl>
+        <IssueList mask={issues} />
         <p class="notice">{t("permanentWarning")}</p>
         {queued && (
           <p class="ok" role="status">
@@ -226,6 +234,23 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           {t("shortfall")}: <strong>{f.kg(parsed.e - parsed.r)}</strong> ({formatBp(parsed.bp)})
         </p>
       )}
+      <fieldset class="plain">
+        <legend>{t("issuesTitle")}</legend>
+        <IssuePicker value={issues} onChange={setIssues} />
+      </fieldset>
+      <fieldset class="plain">
+        <legend>{t("lifetimeTitle")}</legend>
+        <div class="row wrap">
+          {REPORT_LIFETIME_CHOICES.map((d) => (
+            <label class="inline">
+              <input type="radio" name="lifetime" checked={lifetimeDays === d} onChange={() => setLifetimeDays(d)} /> {t("lifetimeDays", { n: d })}
+            </label>
+          ))}
+        </div>
+        <label class="inline check">
+          <input type="checkbox" checked={allowExtension} onChange={(e) => setAllowExtension(e.currentTarget.checked)} /> {t("allowExtend")}
+        </label>
+      </fieldset>
       <details class="helper">
         <summary>{t("helperTitle")}</summary>
         <p class="small">{t("helperText")}</p>

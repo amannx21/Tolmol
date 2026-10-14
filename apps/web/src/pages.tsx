@@ -1,4 +1,6 @@
 import { useFmt, useLang } from "./i18n"
+import { Settings } from "./extras"
+import { usePrefs } from "./prefs"
 import { DeviceCard } from "./ui"
 
 export function Home() {
@@ -41,6 +43,7 @@ const RAW_QUERY = `curl -s https://rpc.tiramisu.db-chain.testnet.arkiv.network \
 
 export function About() {
   const { t } = useLang()
+  const [prefs] = usePrefs()
   return (
     <>
       <section class="card prose">
@@ -72,6 +75,7 @@ export function About() {
         </p>
       </section>
       <DeviceCard />
+      {prefs.mode === "full" && <Settings />}
     </>
   )
 }

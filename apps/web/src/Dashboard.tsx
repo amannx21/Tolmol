@@ -4,11 +4,15 @@ import {
   currentMonth,
   dashboardReports,
   dashboardWitnesses,
+  describeDashboardQueries,
   formatBp,
   monthToNum,
   shopStats,
+  stateCorrections,
   validWitnesses,
   watchTolmol,
+  withdrawnKeys,
+  type Correction,
   type LiveStatus,
   type Report,
   type Witness,
@@ -16,6 +20,7 @@ import {
 import { liveReader, reader } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
+import { IssueCounts } from "./extras"
 import { ErrorBox, Loading, loadShops, ShortfallBar } from "./ui"
 
 const STATES = ["BR", "UP", "JH"]
@@ -33,6 +38,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   const [flash, setFlash] = useState<Set<string>>(new Set())
   const [err, setErr] = useState<unknown>(null)
   const [onlyConfirmed, setOnlyConfirmed] = useState(false)
+  const [corrections, setCorrections] = useState<Correction[]>([])
   const scope = useRef({ state, from: monthToNum(fromMonth), to: monthToNum(toMonth) })
   scope.current = { state, from: monthToNum(fromMonth), to: monthToNum(toMonth) }
 
@@ -44,12 +50,14 @@ export function Dashboard({ initialState }: { initialState?: string }) {
       const head = await reader.getBlockNumber({ cacheTime: 0 })
       const months: string[] = []
       for (let m = fromMonth; monthToNum(m) <= monthToNum(toMonth); m = addMonths(m, 1)) months.push(m)
-      const [rs, ws, shops] = await Promise.all([
+      const [rs, ws, shops, corr] = await Promise.all([
         dashboardReports(reader, { state, fromMonth, toMonth }, { atBlock: head }),
         dashboardWitnesses(reader, { state, months }, { atBlock: head }),
         loadShops(),
+        stateCorrections(reader, state, { atBlock: head }),
       ])
       setLabels(new Map(shops.map((s) => [s.shopId, lang === "hi" ? s.labelHi : s.labelEn])))
+      setCorrections(corr.items)
       setWitnesses(new Map(ws.items.map((w) => [w.key.toLowerCase(), w])))
       setReports(new Map(rs.items.map((r) => [r.key.toLowerCase(), r])))
     })().catch(setErr)
@@ -88,8 +96,8 @@ export function Dashboard({ initialState }: { initialState?: string }) {
     if (!reports) return []
     const ws = [...witnesses.values()]
     const rs = [...reports.values()].filter((r) => !onlyConfirmed || validWitnesses(r, ws).length > 0)
-    return shopStats(rs, ws)
-  }, [reports, witnesses, onlyConfirmed])
+    return shopStats(rs, ws, withdrawnKeys(rs, corrections))
+  }, [reports, witnesses, onlyConfirmed, corrections])
 
   return (
     <>
@@ -141,6 +149,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                     <strong>{formatBp(s.shortfallBp)}</strong>
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
+                  <IssueCounts counts={s.issueCounts} />
                   <div class="small muted">
                     {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {f.kg(s.totalShortfallG)} {t("shortfall")} · {f.district(s.district)}
                   </div>
@@ -150,6 +159,11 @@ export function Dashboard({ initialState }: { initialState?: string }) {
           </ol>
         </section>
       )}
+      <details class="card">
+        <summary>{t("howComputed")}</summary>
+        <p class="small">{t("howComputedHelp")}</p>
+        <pre class="code">{describeDashboardQueries(state, fromMonth, toMonth).join("\n")}</pre>
+      </details>
     </>
   )
 }

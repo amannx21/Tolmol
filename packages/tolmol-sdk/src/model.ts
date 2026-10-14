@@ -4,7 +4,7 @@ import { ALL_ISSUES_MASK, ITEMS, MAX_ENTITLED_G, type Item } from "./constants.j
 export const SHOP_ID_RE = /^SYN-[A-Z]{2}-\d{4}$/
 export const MONTH_RE = /^(\d{4})-(0[1-9]|1[0-2])$/
 export const STATE_RE = /^[A-Z]{2}$/
-export const DISTRICT_RE = /^[a-z][a-z-]{1,40}$/
+export const DISTRICT_RE = /^[a-z][a-z0-9-]{1,40}$/
 
 export type Shop = {
   key: `0x${string}`

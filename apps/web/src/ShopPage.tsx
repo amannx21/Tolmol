@@ -6,12 +6,15 @@ import {
   evidenceRows,
   explorerAddressUrl,
   formatBp,
+  describeShopQueries,
+  shopCorrections,
   shopReports,
   shopStats,
   shopWitnesses,
   toCsv,
   toJson,
   validWitnesses,
+  withdrawnKeys,
   type Report,
   type Shop,
   type Witness,
@@ -19,7 +22,8 @@ import {
 import { reader, short } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
-import { draftRti } from "./rti"
+import { IssueCounts } from "./extras"
+import { draftComplaint, draftRti, type RtiInput } from "./rti"
 import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
 
 /** A QR code (inline SVG) for this shop's public page, to print and stick up near the shop. */
@@ -33,7 +37,7 @@ function ShopQr({ url }: { url: string }) {
   return <div class="qr" role="img" aria-label={url} dangerouslySetInnerHTML={{ __html: svg }} />
 }
 
-type Data = { shop: Shop | undefined; reports: Report[]; witnesses: Witness[]; atBlock: bigint; head: bigint }
+type Data = { shop: Shop | undefined; reports: Report[]; witnesses: Witness[]; withdrawn: Set<string>; atBlock: bigint; head: bigint }
 
 function download(name: string, text: string, type: string) {
   const url = URL.createObjectURL(new Blob([text], { type }))
@@ -42,7 +46,7 @@ function download(name: string, text: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: string; atBlock?: string }) {
+export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; month?: string; atBlock?: string; letter?: "rti" | "complaint" }) {
   const { t, lang } = useLang()
   const f = useFmt()
   const [rtiText, setRtiText] = useState<string | null>(null)
@@ -56,21 +60,22 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
     ;(async () => {
       const head = await reader.getBlockNumber({ cacheTime: 0 })
       const at = atBlock && /^\d+$/.test(atBlock) && BigInt(atBlock) <= head ? BigInt(atBlock) : head
-      const [shops, reps, wits] = await Promise.all([
+      const [shops, reps, wits, corr] = await Promise.all([
         loadShops(),
         shopReports(reader, shopId, month, { atBlock: at }),
         shopWitnesses(reader, shopId, month, { atBlock: at }),
+        shopCorrections(reader, shopId, month, { atBlock: at }),
       ])
-      setData({ shop: shops.find((s) => s.shopId === shopId), reports: reps.items, witnesses: wits.items, atBlock: at, head })
+      setData({ shop: shops.find((s) => s.shopId === shopId), reports: reps.items, witnesses: wits.items, withdrawn: withdrawnKeys(reps.items, corr.items), atBlock: at, head })
     })().catch(setErr)
   }, [shopId, month, atBlock])
 
   if (err) return <ErrorBox error={err} />
   if (!data) return <Loading />
 
-  const kept = dedupeReports(data.reports)
+  const kept = dedupeReports(data.reports, data.withdrawn)
   const keptKeys = new Set(kept.map((r) => r.key.toLowerCase()))
-  const stats = shopStats(data.reports, data.witnesses)[0]
+  const stats = shopStats(data.reports, data.witnesses, data.withdrawn)[0]
   const byMonth = new Map<string, { e: number; s: number; n: number }>()
   for (const r of kept) {
     const m = byMonth.get(r.month) ?? { e: 0, s: 0, n: 0 }
@@ -90,8 +95,26 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
     return `#/shop/${shopId}${s ? `?${s}` : ""}`
   }
 
+  const letterInput = (): RtiInput => ({
+    shop: data.shop,
+    shopId,
+    months: month ? [month] : [...new Set(kept.map((r) => r.month))].sort(),
+    reports: data.reports,
+    witnesses: data.witnesses,
+    withdrawn: data.withdrawn,
+    atBlock: data.atBlock,
+    pageUrl: `${location.origin}${location.pathname}#/shop/${shopId}${month ? `?month=${month}` : ""}`,
+  })
+  if (letter && rtiText === null) {
+    // Opened from "What you can do now": draft the requested letter straight away.
+    setTimeout(() => {
+      setRtiText(letter === "complaint" ? draftComplaint(letterInput(), lang) : draftRti(letterInput(), lang))
+      document.getElementById("letters")?.scrollIntoView({ behavior: "smooth" })
+    }, 0)
+  }
+
   const exportAs = (fmt: "csv" | "json") => {
-    const rows = evidenceRows(data.reports, data.witnesses, data.atBlock)
+    const rows = evidenceRows(data.reports, data.witnesses, data.atBlock, data.withdrawn)
     const base = `tolmol-${shopId}-${month ?? "all"}-block${data.atBlock}`
     if (fmt === "csv") download(`${base}.csv`, toCsv(rows), "text/csv")
     else
@@ -138,6 +161,7 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
         ) : (
           <p class="muted">{t("empty")}</p>
         )}
+        {stats && <IssueCounts counts={stats.issueCounts} />}
         <div class="row wrap">
           <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
             <option value="">{t("allMonths")}</option>
@@ -193,7 +217,7 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
                     <a href={`#/r/${r.key}`}>
                       {f.kg(r.shortfallG)} · {formatBp(r.shortfallBp)}
                     </a>
-                    {!counted && <span class="tag">{t("duplicateIgnored")}</span>}
+                    {data.withdrawn.has(r.key.toLowerCase()) ? <span class="tag">{t("withdrawn")}</span> : !counted && <span class="tag">{t("duplicateIgnored")}</span>}
                   </td>
                   <td>{w}</td>
                   <td>
@@ -247,39 +271,31 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
         </p>
       </section>
 
-      <section class="card">
+      <section class="card" id="letters">
         <h3>{t("rtiTitle")}</h3>
         <p class="small">{t("rtiHelp")}</p>
         <div class="row wrap">
-          <button
-            class="secondary"
-            onClick={() =>
-              setRtiText(
-                draftRti(
-                  {
-                    shop: data.shop,
-                    shopId,
-                    months: month ? [month] : [...new Set(kept.map((r) => r.month))].sort(),
-                    reports: data.reports,
-                    witnesses: data.witnesses,
-                    atBlock: data.atBlock,
-                    pageUrl: `${location.origin}${location.pathname}#/shop/${shopId}${month ? `?month=${month}` : ""}`,
-                  },
-                  lang,
-                ),
-              )
-            }
-          >
+          <button class="secondary" onClick={() => setRtiText(draftRti(letterInput(), lang))}>
             {t("rtiDraft")}
           </button>
+          <button class="secondary" onClick={() => setRtiText(draftComplaint(letterInput(), lang))}>
+            {t("draftComplaint")}
+          </button>
           {rtiText && (
-            <button class="secondary" onClick={() => download(`rti-${shopId}-${month ?? "all"}-${lang}.txt`, rtiText, "text/plain;charset=utf-8")}>
+            <button class="secondary" onClick={() => download(`tolmol-letter-${shopId}-${month ?? "all"}-${lang}.txt`, rtiText, "text/plain;charset=utf-8")}>
               {t("rtiDownload")}
             </button>
           )}
         </div>
-        {rtiText && <textarea class="rti" readOnly rows={14} value={rtiText} aria-label={t("rtiTitle")} />}
+        {rtiText && <textarea class="rti" readOnly rows={16} value={rtiText} aria-label={t("rtiTitle")} />}
       </section>
+
+      <details class="card">
+        <summary>{t("howComputed")}</summary>
+        <p class="small">{t("howComputedHelp")}</p>
+        <pre class="code">{describeShopQueries(shopId, month).join("\n")}</pre>
+        <p class="small mono">atBlock = {data.atBlock.toString()}</p>
+      </details>
 
       <section class="card">
         <h3>{t("qrTitle")}</h3>
