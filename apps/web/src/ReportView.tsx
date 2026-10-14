@@ -6,7 +6,6 @@ import {
   DuplicateError,
   explorerAddressUrl,
   formatBp,
-  formatKg,
   getReport,
   reportWitnesses,
   SelfWitnessError,
@@ -15,15 +14,16 @@ import {
   type Witness,
 } from "tolmol-sdk"
 import { device, ensureGas, reader, short } from "./arkiv"
-import { Say, useKg } from "./Easy"
+import { Say } from "./Easy"
 import { usePrefs } from "./prefs"
-import { useLang } from "./i18n"
+import { useFmt, useLang } from "./i18n"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const { t } = useLang()
   const [prefs] = usePrefs()
-  const kg = useKg()
+  const f = useFmt()
+  const kg = f.kg
   const [data, setData] = useState<{ report: Report | null; witnesses: Witness[]; head: bigint } | null>(null)
   const [err, setErr] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
@@ -65,7 +65,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
       await load()
     } catch (e) {
       const text =
-        e instanceof SelfWitnessError ? t("ownReport") : e instanceof DuplicateError ? t("alreadyWitnessed") : String((e as Error).message).split("\n")[0]!
+        e instanceof SelfWitnessError ? t("ownReport") : e instanceof DuplicateError ? t("alreadyWitnessed") : t("errGeneric")
       setMsg({ ok: false, text })
     } finally {
       setBusy(false)
@@ -77,17 +77,17 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
       <section class="card">
         <h2>{t("reportTitle")}</h2>
         <p>
-          <a href={`#/shop/${r.shopId}?month=${r.month}`}>{r.shopId}</a> · {r.month} · {t(r.item)}
+          <a href={`#/shop/${r.shopId}?month=${r.month}`}>{r.shopId}</a> · {f.month(r.month)} · {t(r.item)}
         </p>
         <dl class="facts">
           <dt>{t("entitledKg")}</dt>
-          <dd>{formatKg(r.entitledG)}</dd>
+          <dd>{kg(r.entitledG)}</dd>
           <dt>{t("receivedKg")}</dt>
-          <dd>{formatKg(r.receivedG)}</dd>
+          <dd>{kg(r.receivedG)}</dd>
           <dt>{t("shortfall")}</dt>
           <dd>
             <strong>
-              {formatKg(r.shortfallG)} ({formatBp(r.shortfallBp)})
+              {kg(r.shortfallG)} ({formatBp(r.shortfallBp)})
             </strong>
           </dd>
           <dt>{t("reporter")}</dt>
@@ -106,7 +106,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <dt>Arkiv</dt>
           <dd>
             <Explorer k={r.key} />
-            {r.owner.toLowerCase() === BURN_ADDRESS.toLowerCase() && <span class="small muted"> · owner 0x…dEaD (undeletable)</span>}
+            {r.owner.toLowerCase() === BURN_ADDRESS.toLowerCase() && <span class="small muted"> · {t("undeletable")}</span>}
           </dd>
         </dl>
       </section>
@@ -152,7 +152,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
           {"share" in navigator && (
             <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
-              Share
+              {t("share")}
             </button>
           )}
         </section>
@@ -183,14 +183,14 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
           {"share" in navigator && (
             <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
-              Share
+              {t("share")}
             </button>
           )}
         </section>
       )}
       <section class="card easy">
         <h2>
-          {r.shopId} · {r.month} · {t(r.item)}
+          {r.shopId} · {f.month(r.month)} · {t(r.item)}
         </h2>
         <Say text={summary} />
         <div class="summary">

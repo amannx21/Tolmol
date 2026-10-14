@@ -60,8 +60,8 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
       </p>
       <main>{children}</main>
       <footer class="foot">
-        <a href="https://github.com/amannx21/Tolmol">Source (MIT)</a> · <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">Data schema</a> ·{" "}
-        <span>Arkiv Tiramisu · chain 7738577</span>
+        <a href="https://github.com/amannx21/Tolmol">{t("sourceCode")}</a> · <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">{t("dataSchema")}</a> ·{" "}
+        <span>{t("network")} · chain 7738577</span>
       </footer>
     </>
   )
@@ -81,7 +81,10 @@ export function DeviceCard({ compact = false }: { compact?: boolean }) {
       // The transfer lands in the next block or two.
       setTimeout(() => void bal.refresh(), 4000)
       setTimeout(() => void bal.refresh(), 9000)
-    } else setState(r.error ?? "error")
+    } else
+      setState(
+        r.error === "NO_RELAYER" ? t("noRelayer") : r.status === 429 ? t("gasLimit") : r.status === 409 ? t("gasNotNeeded") : r.status === 503 ? t("gasEmpty") : t("errGeneric"),
+      )
   }
   if (compact && !low) return null
   return (

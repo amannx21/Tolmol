@@ -5,7 +5,6 @@ import {
   dashboardReports,
   dashboardWitnesses,
   formatBp,
-  formatKg,
   monthToNum,
   shopStats,
   validWitnesses,
@@ -15,7 +14,7 @@ import {
   type Witness,
 } from "tolmol-sdk"
 import { liveReader, reader } from "./arkiv"
-import { STATE_NAMES, useLang } from "./i18n"
+import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { ErrorBox, Loading, loadShops, ShortfallBar } from "./ui"
 
@@ -23,6 +22,7 @@ const STATES = ["BR", "UP", "JH"]
 
 export function Dashboard({ initialState }: { initialState?: string }) {
   const { t, lang } = useLang()
+  const f = useFmt()
   const [state, setState] = useState(initialState && STATES.includes(initialState) ? initialState : "BR")
   const toMonth = currentMonth()
   const [fromMonth, setFromMonth] = useState(addMonths(toMonth, -2))
@@ -110,12 +110,12 @@ export function Dashboard({ initialState }: { initialState?: string }) {
             {t("from")}{" "}
             <select value={fromMonth} onChange={(e) => setFromMonth(e.currentTarget.value)}>
               {Array.from({ length: 12 }, (_, i) => addMonths(toMonth, -i)).map((m) => (
-                <option value={m}>{m}</option>
+                <option value={m}>{f.month(m)}</option>
               ))}
             </select>
           </label>
           <span class="small muted">
-            {t("to")} {toMonth}
+            {t("to")} {f.month(toMonth)}
           </span>
         </div>
         <label class="inline check">
@@ -142,7 +142,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
                   <div class="small muted">
-                    {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {formatKg(s.totalShortfallG)} {t("shortfall")} · {s.district}
+                    {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {f.kg(s.totalShortfallG)} {t("shortfall")} · {f.district(s.district)}
                   </div>
                 </a>
               </li>

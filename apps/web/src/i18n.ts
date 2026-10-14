@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
+import { formatKg } from "tolmol-sdk"
 
 export type Lang = "en" | "hi"
 
@@ -144,6 +145,37 @@ const en = {
   easyWay: "Use the easy way",
   reportAgain: "Report another month",
   people: "people",
+  demoShop: "Demo shop",
+  aboutIntro: "Tolmol (\"weigh and bargain\") keeps a public, tamper-evident record of how much ration grain people say they received at a fair-price shop, compared with their entitlement under the National Food Security Act. It runs on Arkiv, the Web3 database, on the Tiramisu testnet.",
+  hardTitle: "What makes it hard to erase",
+  hard1: "Each report is signed by an anonymous key created on the reporter's phone. Its on-chain creator can never be changed.",
+  hard2: "Reports are created read-only and handed to an address nobody controls in the same transaction, so nobody can edit or delete them.",
+  hard3: "Any other card holder can confirm a report from their own phone. Two confirmations extend its life automatically.",
+  hard4: "The data lives on Arkiv, not on our server. If this website disappears, the records can still be read.",
+  neverTitle: "What Tolmol never stores",
+  neverText: "No names, phone numbers, Aadhaar, ration card numbers, photos or free text. Only shop, month, grain, entitled and received grams.",
+  syntheticTitle: "Synthetic data",
+  syntheticText: "Every shop in this demo is invented (IDs start with SYN-). The districts are real places; the shops and reports are not.",
+  cliLine: "Or from a copy of the code:",
+  dataContract: "Data format",
+  threatModel: "Threat model",
+  notInRegistry: "not in the trusted shop list",
+  timeline: "Month by month",
+  readAtBlock: "Read at block",
+  headBlock: "latest block",
+  share: "Share",
+  undeletable: "owner 0x…dEaD: nobody can delete it",
+  sourceCode: "Source code (MIT)",
+  dataSchema: "Data format",
+  network: "Arkiv Tiramisu test network",
+  errShop: "Please choose a shop.",
+  errQty: "Please check the amounts: whole kilograms or halves, and received cannot be more than entitled.",
+  errMonth: "Please choose a month in the last 12 months.",
+  errGeneric: "Could not save right now. Please try again.",
+  noRelayer: "Free test gas is not available in this version. Use the Arkiv faucet.",
+  gasLimit: "Today's free gas limit for your network is used up. Use the Arkiv faucet or try tomorrow.",
+  gasNotNeeded: "This device already has gas, or has been used before, so it cannot get more free gas.",
+  gasEmpty: "Free gas has run out for now. Please use the Arkiv faucet.",
   rtiTitle: "Draft an RTI application",
   rtiHelp: "Creates a Right to Information request to the District Supply Office for this shop's stock and distribution records, with this page's evidence attached. Fill in your name and address by hand on paper: Tolmol never asks for them.",
   rtiDraft: "Draft my RTI",
@@ -301,6 +333,37 @@ const hi: Record<Key, string> = {
   easyWay: "आसान तरीका इस्तेमाल करें",
   reportAgain: "दूसरे महीने का दर्ज करें",
   people: "लोग",
+  demoShop: "डेमो दुकान",
+  aboutIntro: "तोलमोल (\"तौलना और मोलभाव\") इस बात का सार्वजनिक और छेड़छाड़-रोधी रिकॉर्ड रखता है कि लोगों को उचित मूल्य दुकान से कितना राशन मिला, और राष्ट्रीय खाद्य सुरक्षा अधिनियम के तहत उनका हक़ कितना था। यह Arkiv (एक Web3 डेटाबेस) के Tiramisu टेस्ट नेटवर्क पर चलता है।",
+  hardTitle: "इसे मिटाना मुश्किल क्यों है",
+  hard1: "हर रिपोर्ट रिपोर्ट करने वाले के फ़ोन पर बनी एक गुमनाम कुंजी से साइन होती है। इसे बनाने वाले का रिकॉर्ड कभी बदला नहीं जा सकता।",
+  hard2: "रिपोर्ट सिर्फ़-पढ़ने-लायक बनती है और उसी समय एक ऐसे पते को सौंप दी जाती है जिस पर किसी का नियंत्रण नहीं, इसलिए कोई उसे बदल या मिटा नहीं सकता।",
+  hard3: "कोई भी दूसरा कार्डधारक अपने फ़ोन से रिपोर्ट की पुष्टि कर सकता है। दो पुष्टियाँ होते ही रिपोर्ट अपने आप ज़्यादा समय तक बनी रहती है।",
+  hard4: "डेटा Arkiv पर रहता है, हमारे सर्वर पर नहीं। अगर यह वेबसाइट बंद भी हो जाए, तब भी रिकॉर्ड पढ़े जा सकते हैं।",
+  neverTitle: "तोलमोल क्या कभी नहीं रखता",
+  neverText: "नाम, फ़ोन नंबर, आधार, राशन कार्ड नंबर, फ़ोटो या कोई लिखा हुआ संदेश नहीं। सिर्फ़ दुकान, महीना, अनाज, हक़ और मिली मात्रा।",
+  syntheticTitle: "नकली (सिंथेटिक) डेटा",
+  syntheticText: "इस डेमो की हर दुकान नकली है (नंबर SYN- से शुरू होते हैं)। ज़िले असली जगहें हैं, पर दुकानें और रिपोर्टें नहीं।",
+  cliLine: "या कोड की कॉपी से:",
+  dataContract: "डेटा का स्वरूप",
+  threatModel: "ख़तरों का विश्लेषण",
+  notInRegistry: "भरोसेमंद दुकानों की सूची में नहीं",
+  timeline: "महीने-दर-महीने",
+  readAtBlock: "इस ब्लॉक पर पढ़ा गया",
+  headBlock: "नवीनतम ब्लॉक",
+  share: "साझा करें",
+  undeletable: "मालिक 0x…dEaD: इसे कोई नहीं मिटा सकता",
+  sourceCode: "सोर्स कोड (MIT)",
+  dataSchema: "डेटा का स्वरूप",
+  network: "Arkiv Tiramisu टेस्ट नेटवर्क",
+  errShop: "कृपया दुकान चुनें।",
+  errQty: "कृपया मात्रा जाँचें: पूरे या आधे किलो में, और मिला हुआ अनाज हक़ से ज़्यादा नहीं हो सकता।",
+  errMonth: "कृपया पिछले 12 महीनों में से कोई महीना चुनें।",
+  errGeneric: "अभी सहेजा नहीं जा सका। कृपया फिर कोशिश करें।",
+  noRelayer: "इस संस्करण में मुफ़्त टेस्ट गैस उपलब्ध नहीं है। Arkiv faucet का उपयोग करें।",
+  gasLimit: "आपके नेटवर्क की आज की मुफ़्त गैस की सीमा पूरी हो गई। Arkiv faucet का उपयोग करें या कल कोशिश करें।",
+  gasNotNeeded: "इस डिवाइस के पास पहले से गैस है, या यह पहले इस्तेमाल हो चुका है, इसलिए और मुफ़्त गैस नहीं मिल सकती।",
+  gasEmpty: "मुफ़्त गैस अभी ख़त्म हो गई है। कृपया Arkiv faucet का उपयोग करें।",
   rtiTitle: "RTI आवेदन का मसौदा",
   rtiHelp: "इस दुकान के स्टॉक और वितरण रिकॉर्ड के लिए ज़िला आपूर्ति कार्यालय को सूचना के अधिकार का आवेदन बनाता है, और इस पेज का सबूत साथ जोड़ता है। अपना नाम और पता काग़ज़ पर हाथ से भरें: तोलमोल इन्हें कभी नहीं माँगता।",
   rtiDraft: "मेरा RTI बनाएँ",
@@ -357,4 +420,44 @@ export const STATE_NAMES: Record<string, { en: string; hi: string }> = {
   BR: { en: "Bihar", hi: "बिहार" },
   UP: { en: "Uttar Pradesh", hi: "उत्तर प्रदेश" },
   JH: { en: "Jharkhand", hi: "झारखंड" },
+}
+
+// Hindi names for the (real) districts used by the synthetic shop registry.
+export const DISTRICT_NAMES: Record<string, { en: string; hi: string }> = {
+  gaya: { en: "Gaya", hi: "गया" },
+  patna: { en: "Patna", hi: "पटना" },
+  muzaffarpur: { en: "Muzaffarpur", hi: "मुज़फ़्फ़रपुर" },
+  darbhanga: { en: "Darbhanga", hi: "दरभंगा" },
+  varanasi: { en: "Varanasi", hi: "वाराणसी" },
+  gorakhpur: { en: "Gorakhpur", hi: "गोरखपुर" },
+  bahraich: { en: "Bahraich", hi: "बहराइच" },
+  sitapur: { en: "Sitapur", hi: "सीतापुर" },
+  ranchi: { en: "Ranchi", hi: "रांची" },
+  dumka: { en: "Dumka", hi: "दुमका" },
+  palamu: { en: "Palamu", hi: "पलामू" },
+  giridih: { en: "Giridih", hi: "गिरिडीह" },
+}
+const MONTHS: Record<Lang, string[]> = {
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+  hi: ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"],
+}
+
+export const districtName = (slug: string, lang: Lang) =>
+  DISTRICT_NAMES[slug]?.[lang] ?? slug.charAt(0).toUpperCase() + slug.slice(1)
+
+/** "2026-10" -> "October 2026" / "अक्टूबर 2026". */
+export function monthName(m: string, lang: Lang) {
+  const [y, mm] = m.split("-")
+  const name = MONTHS[lang][Number(mm) - 1]
+  return name && y ? `${name} ${y}` : m
+}
+
+/** Language-aware formatters: kilograms ("4.5 किलो"), months and districts. */
+export function useFmt() {
+  const { t, lang } = useLang()
+  return {
+    kg: (g: number) => `${formatKg(g).replace(" kg", "")} ${t("kg")}`,
+    month: (m: string) => monthName(m, lang),
+    district: (d: string) => districtName(d, lang),
+  }
 }

@@ -4,7 +4,6 @@ import {
   currentMonth,
   DuplicateError,
   formatBp,
-  formatKg,
   ITEMS,
   kgToGrams,
   NFSA,
@@ -16,13 +15,14 @@ import {
   type Shop,
 } from "tolmol-sdk"
 import { device, reader } from "./arkiv"
-import { STATE_NAMES, useLang } from "./i18n"
+import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { DeviceCard, ErrorBox, Loading, loadShops } from "./ui"
 
 export function ReportForm({ initialShop }: { initialShop?: string }) {
   const { t, lang } = useLang()
+  const f = useFmt()
   const [shops, setShops] = useState<Shop[] | null>(null)
   const [loadErr, setLoadErr] = useState<unknown>(null)
   const [state, setState] = useState("")
@@ -73,7 +73,8 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
       validateReportInput({ shopId: shop.shopId, month, item, entitledG: kgToGrams(entitled), receivedG: kgToGrams(received) })
       setStep("confirm")
     } catch (e) {
-      setError((e as Error).message)
+      const field = e instanceof ValidationError ? e.field : ""
+      setError(field === "shop" ? t("errShop") : field === "month" ? t("errMonth") : t("errQty"))
     }
   }
 
@@ -98,7 +99,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
       else if (isOffline(e)) {
         enqueueReport(input, shop)
         setQueued(true)
-      } else setError(String((e as Error).message ?? e).split("\n")[0] ?? "error")
+      } else setError(t("errGeneric"))
     }
   }
 
@@ -117,17 +118,17 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
             {shop && label(shop)} <span class="mono small">{shopId}</span>
           </dd>
           <dt>{t("month")}</dt>
-          <dd>{month}</dd>
+          <dd>{f.month(month)}</dd>
           <dt>{t("item")}</dt>
           <dd>{t(item)}</dd>
           <dt>{t("entitledKg")}</dt>
-          <dd>{parsed && formatKg(parsed.e)}</dd>
+          <dd>{parsed && f.kg(parsed.e)}</dd>
           <dt>{t("receivedKg")}</dt>
-          <dd>{parsed && formatKg(parsed.r)}</dd>
+          <dd>{parsed && f.kg(parsed.r)}</dd>
           <dt>{t("shortfall")}</dt>
           <dd>
             <strong>
-              {parsed && `${formatKg(parsed.e - parsed.r)} (${formatBp(parsed.bp)})`}
+              {parsed && `${f.kg(parsed.e - parsed.r)} (${formatBp(parsed.bp)})`}
             </strong>
           </dd>
         </dl>
@@ -177,7 +178,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
         <select value={district} disabled={!state} onChange={(e) => (setDistrict(e.currentTarget.value), setShopId(""))}>
           <option value="">—</option>
           {districts.map((d) => (
-            <option value={d}>{d[0]!.toUpperCase() + d.slice(1)}</option>
+            <option value={d}>{f.district(d)}</option>
           ))}
         </select>
       </label>
@@ -197,7 +198,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           {t("month")}
           <select value={month} onChange={(e) => setMonth(e.currentTarget.value)}>
             {months.map((m) => (
-              <option value={m}>{m}</option>
+              <option value={m}>{f.month(m)}</option>
             ))}
           </select>
         </label>
@@ -222,7 +223,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
       </div>
       {parsed && (
         <p class="shortfall" aria-live="polite">
-          {t("shortfall")}: <strong>{formatKg(parsed.e - parsed.r)}</strong> ({formatBp(parsed.bp)})
+          {t("shortfall")}: <strong>{f.kg(parsed.e - parsed.r)}</strong> ({formatBp(parsed.bp)})
         </p>
       )}
       <details class="helper">
@@ -233,7 +234,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           <input class="tiny" inputMode="numeric" value={members} onInput={(e) => setMembers(e.currentTarget.value)} />
         </label>
         <p class="small">
-          {t("helperTotal")}: <strong>{total ? formatKg(total) : "—"}</strong> · {t("helperAay")}: <strong>{formatKg(NFSA.aayPerFamilyG)}</strong>
+          {t("helperTotal")}: <strong>{total ? f.kg(total) : "—"}</strong> · {t("helperAay")}: <strong>{f.kg(NFSA.aayPerFamilyG)}</strong>
         </p>
       </details>
       {error && (

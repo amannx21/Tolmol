@@ -5,7 +5,7 @@
 // Legal basis (Right to Information Act, 2005): s.6(1) request in English, Hindi or the official language;
 // s.6(2) no reasons needed; s.7(1) reply within 30 days; s.7(5) no fee for persons below the poverty line.
 import { dedupeReports, explorerEntityUrl, formatBp, formatKg, shopStats, validWitnesses, type Report, type Shop, type Witness } from "tolmol-sdk"
-import type { Lang } from "./i18n"
+import { districtName, monthName, type Lang } from "./i18n"
 
 export type RtiInput = {
   shop: Pick<Shop, "shopId" | "district" | "state" | "labelEn" | "labelHi"> | undefined
@@ -17,21 +17,28 @@ export type RtiInput = {
   pageUrl: string
 }
 
+const ITEM_EN: Record<string, string> = { rice: "rice", wheat: "wheat", millet: "coarse grain", total: "all grain" }
+const ITEM_HI: Record<string, string> = { rice: "चावल", wheat: "गेहूँ", millet: "मोटा अनाज", total: "कुल अनाज" }
 const STATE_EN: Record<string, string> = { BR: "Bihar", UP: "Uttar Pradesh", JH: "Jharkhand" }
 const STATE_HI: Record<string, string> = { BR: "बिहार", UP: "उत्तर प्रदेश", JH: "झारखंड" }
 
 export function draftRti(input: RtiInput, lang: Lang): string {
   const kept = dedupeReports(input.reports)
   const stats = shopStats(input.reports, input.witnesses)[0]
-  const months = input.months.length ? input.months.join(", ") : "—"
-  const district = input.shop?.district ? input.shop.district[0]!.toUpperCase() + input.shop.district.slice(1) : "[district]"
+  const months = input.months.length ? input.months.map((m) => monthName(m, lang)).join(", ") : "—"
+  const district = input.shop?.district ? districtName(input.shop.district, lang) : "[district]"
+  const kg = (g: number) => (lang === "hi" ? formatKg(g).replace(" kg", " किलो") : formatKg(g))
   const state = input.shop ? (lang === "hi" ? STATE_HI : STATE_EN)[input.shop.state] ?? input.shop.state : "[state]"
   const evidence = kept
-    .map((r) => `- ${r.month} ${r.item}: ${formatKg(r.receivedG)} / ${formatKg(r.entitledG)} (${formatBp(r.shortfallBp)}), ${validWitnesses(r, input.witnesses).length} conf. ${explorerEntityUrl(r.key)}`)
+    .map((r) => `- ${monthName(r.month, lang)} ${(lang === "hi" ? ITEM_HI : ITEM_EN)[r.item] ?? r.item}: ${kg(r.receivedG)} / ${kg(r.entitledG)} (${formatBp(r.shortfallBp)}), ${validWitnesses(r, input.witnesses).length} ${lang === "hi" ? "पुष्टि" : "conf."} ${explorerEntityUrl(r.key)}`)
     .join("\n")
   const summary = stats
-    ? `${stats.reports} reports from ${stats.reporters} devices; total shortfall ${formatKg(stats.totalShortfallG)} of ${formatKg(stats.totalEntitledG)} (${formatBp(stats.shortfallBp)}); ${stats.corroborated} reports confirmed by other devices.`
-    : "No reports recorded."
+    ? lang === "hi"
+      ? `${stats.reporters} डिवाइसों से ${stats.reports} रिपोर्टें; कुल कमी ${kg(stats.totalShortfallG)}, ${kg(stats.totalEntitledG)} में से (${formatBp(stats.shortfallBp)}); ${stats.corroborated} रिपोर्टों की दूसरे डिवाइसों ने पुष्टि की।`
+      : `${stats.reports} reports from ${stats.reporters} devices; total shortfall ${kg(stats.totalShortfallG)} of ${kg(stats.totalEntitledG)} (${formatBp(stats.shortfallBp)}); ${stats.corroborated} reports confirmed by other devices.`
+    : lang === "hi"
+      ? "कोई रिपोर्ट दर्ज नहीं।"
+      : "No reports recorded."
   const synthetic = input.shopId.startsWith("SYN-")
 
   if (lang === "hi") {

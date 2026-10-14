@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "preact/hooks"
 import { addMonths, currentMonth, DuplicateError, formatKg, NFSA, submitReport, type Shop } from "tolmol-sdk"
 import { device, ensureGas, reader } from "./arkiv"
-import { setLang, STATE_NAMES, useLang, type Lang } from "./i18n"
+import { setLang, STATE_NAMES, useFmt, useLang, type Lang } from "./i18n"
 import { setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
@@ -22,12 +22,6 @@ export function Say({ text }: { text: string }) {
       {t("listen")}
     </button>
   )
-}
-
-/** "4.5 kg" in English, "4.5 किलो" in Hindi. */
-export function useKg() {
-  const { t } = useLang()
-  return (g: number) => `${formatKg(g).replace(" kg", "")} ${t("kg")}`
 }
 
 // ---------------------------------------------------------------- first visit
@@ -112,7 +106,8 @@ type Step = "shop" | "month" | "card" | "members" | "entitled" | "received" | "r
 
 export function EasyReport({ initialShop }: { initialShop?: string }) {
   const { t, lang } = useLang()
-  const kg = useKg()
+  const f = useFmt()
+  const kg = f.kg
   const [prefs] = usePrefs()
   const [shops, setShops] = useState<Shop[] | null>(null)
   const [loadErr, setLoadErr] = useState<unknown>(null)
@@ -152,7 +147,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   }
   const matches = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return (shops ?? []).filter((s) => !q || s.shopId.toLowerCase().includes(q) || s.district.includes(q) || label(s).toLowerCase().includes(q) || (STATE_NAMES[s.state]?.[lang] ?? "").toLowerCase().includes(q)).slice(0, 12)
+    return (shops ?? []).filter((s) => !q || s.shopId.toLowerCase().includes(q) || s.district.includes(q) || label(s).toLowerCase().includes(q) || (STATE_NAMES[s.state]?.[lang] ?? "").toLowerCase().includes(q) || f.district(s.district).toLowerCase().includes(q)).slice(0, 12)
   }, [shops, search, lang])
 
   if (loadErr) return <ErrorBox error={loadErr} />
@@ -220,7 +215,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
           {[currentMonth(), addMonths(currentMonth(), -1)].map((m, i) => (
             <button class={`big-choice ${month === m ? "selected" : ""}`} onClick={() => (setMonth(m), next("card"))}>
               <strong>{i === 0 ? t("thisMonth") : t("lastMonth")}</strong>
-              <span class="small mono">{m}</span>
+              <span class="small">{f.month(m)}</span>
             </button>
           ))}
         </div>
@@ -228,7 +223,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
           {t("otherMonth")}
           <select value={month} onChange={(e) => setMonth(e.currentTarget.value)}>
             {Array.from({ length: 12 }, (_, i) => addMonths(currentMonth(), -i)).map((m) => (
-              <option value={m}>{m}</option>
+              <option value={m}>{f.month(m)}</option>
             ))}
           </select>
         </label>
@@ -295,7 +290,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
       <section class="card easy">
         <BackBtn />
         <h2>{t("qEntitled")}</h2>
-        <Say text={`${t("qEntitled")} ${formatKg(entitledG).replace(" kg", "")} ${t("kg")}`} />
+        <Say text={`${t("qEntitled")} ${kg(entitledG)}`} />
         <Stepper grams={entitledG} onChange={(g) => (setEntitledG(g), setReceivedG(Math.min(receivedG, g)))} min={500} />
         <button class="big-action" onClick={() => next("received")}>{t("next")} →</button>
       </section>
@@ -315,7 +310,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   }
 
   if (step === "review" && shop) {
-    const summary = `${t("summaryShould")} ${formatKg(entitledG).replace(" kg", "")} ${t("kg")}. ${t("summaryGot")} ${formatKg(receivedG).replace(" kg", "")} ${t("kg")}. ${t("summaryLess")} ${formatKg(shortfall).replace(" kg", "")} ${t("kg")}.`
+    const summary = `${t("summaryShould")} ${kg(entitledG)}. ${t("summaryGot")} ${kg(receivedG)}. ${t("summaryLess")} ${kg(shortfall)}.`
     const save = async () => {
       setError(null)
       const input = { shopId: shop.shopId, month, item: "total" as const, entitledG, receivedG }
@@ -339,7 +334,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         else if (isOffline(e)) {
           enqueueReport(input, shop)
           setQueued(true)
-        } else setError(String((e as Error).message ?? e).split("\n")[0] ?? "error")
+        } else setError(t("errGeneric"))
       } finally {
         setBusy(null)
       }
@@ -370,7 +365,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
 
   if (step === "done" && doneKey && shop) {
     const url = `${location.origin}${location.pathname}#/r/${doneKey}`
-    const text = t("waText", { shop: label(shop), month })
+    const text = t("waText", { shop: label(shop), month: f.month(month) })
     return (
       <section class="card easy success">
         <h2>✓ {t("doneEasy")}</h2>
@@ -381,7 +376,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         </a>
         {"share" in navigator && (
           <button class="big-action secondary" onClick={() => void navigator.share({ text, url }).catch(() => {})}>
-            Share…
+            {t("share")}…
           </button>
         )}
         <a class="big-action secondary" href={`#/shop/${shop.shopId}`}>{t("seeMyShop")}</a>

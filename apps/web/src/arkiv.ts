@@ -57,8 +57,8 @@ export const MIN_WRITE_WEI = 3_000_000_000_000_000n
 const RELAYER_URL = (import.meta.env.VITE_RELAYER_URL as string | undefined) || (import.meta.env.PROD ? "https://tolmol-relayer.vercel.app" : "")
 
 /** Asks the gas-drip relayer for a small amount of testnet GLM. The relayer only ever sends GLM; it never writes Tolmol data. */
-export async function requestGas(address: `0x${string}`): Promise<{ ok: boolean; txHash?: string; error?: string }> {
-  if (!RELAYER_URL) return { ok: false, error: "No relayer configured for this build" }
+export async function requestGas(address: `0x${string}`): Promise<{ ok: boolean; txHash?: string; error?: string; status?: number }> {
+  if (!RELAYER_URL) return { ok: false, error: "NO_RELAYER" }
   try {
     const res = await fetch(`${RELAYER_URL.replace(/\/$/, "")}/drip`, {
       method: "POST",
@@ -66,7 +66,7 @@ export async function requestGas(address: `0x${string}`): Promise<{ ok: boolean;
       body: JSON.stringify({ address }),
     })
     const body = (await res.json().catch(() => ({}))) as { txHash?: string; error?: string }
-    return res.ok ? { ok: true, txHash: body.txHash } : { ok: false, error: body.error ?? `HTTP ${res.status}` }
+    return res.ok ? { ok: true, txHash: body.txHash } : { ok: false, error: body.error ?? `HTTP ${res.status}`, status: res.status }
   } catch (e) {
     return { ok: false, error: String((e as Error).message ?? e) }
   }

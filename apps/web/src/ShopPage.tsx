@@ -6,7 +6,6 @@ import {
   evidenceRows,
   explorerAddressUrl,
   formatBp,
-  formatKg,
   shopReports,
   shopStats,
   shopWitnesses,
@@ -18,7 +17,7 @@ import {
   type Witness,
 } from "tolmol-sdk"
 import { reader, short } from "./arkiv"
-import { STATE_NAMES, useLang } from "./i18n"
+import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { draftRti } from "./rti"
 import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
@@ -45,6 +44,7 @@ function download(name: string, text: string, type: string) {
 
 export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: string; atBlock?: string }) {
   const { t, lang } = useLang()
+  const f = useFmt()
   const [rtiText, setRtiText] = useState<string | null>(null)
   const [data, setData] = useState<Data | null>(null)
   const [err, setErr] = useState<unknown>(null)
@@ -117,8 +117,8 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
         </h2>
         <p class="small muted">
           <span class="mono">{shopId}</span>
-          {data.shop && ` · ${data.shop.district} · ${STATE_NAMES[data.shop.state]?.[lang] ?? data.shop.state}`}
-          {!data.shop && " · not in the trusted registry"}
+          {data.shop && ` · ${f.district(data.shop.district)} · ${STATE_NAMES[data.shop.state]?.[lang] ?? data.shop.state}`}
+          {!data.shop && ` · ${t("notInRegistry")}`}
         </p>
         {stats ? (
           <div class="statrow">
@@ -142,7 +142,7 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
           <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
             <option value="">{t("allMonths")}</option>
             {[...new Set(data.reports.map((r) => r.month))].sort().reverse().map((m) => (
-              <option value={m}>{m}</option>
+              <option value={m}>{f.month(m)}</option>
             ))}
           </select>
           <a class="button secondary" href={`#/report?shop=${shopId}`}>
@@ -153,14 +153,14 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
 
       {months.length > 1 && (
         <section class="card">
-          <h3>Timeline</h3>
+          <h3>{t("timeline")}</h3>
           <ul class="timeline">
             {months.map((m) => {
               const v = byMonth.get(m)!
               const bp = Math.floor((v.s * 10_000) / v.e)
               return (
                 <li>
-                  <span class="mono">{m}</span> <ShortfallBar bp={bp} /> <strong>{formatBp(bp)}</strong> <span class="small muted">({v.n})</span>
+                  <span>{f.month(m)}</span> <ShortfallBar bp={bp} /> <strong>{formatBp(bp)}</strong> <span class="small muted">({v.n})</span>
                 </li>
               )
             })}
@@ -187,11 +187,11 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
               const counted = keptKeys.has(r.key.toLowerCase())
               return (
                 <tr class={counted ? "" : "dim"}>
-                  <td class="mono">{r.month}</td>
+                  <td>{f.month(r.month)}</td>
                   <td>{t(r.item)}</td>
                   <td>
                     <a href={`#/r/${r.key}`}>
-                      {formatKg(r.shortfallG)} · {formatBp(r.shortfallBp)}
+                      {f.kg(r.shortfallG)} · {formatBp(r.shortfallBp)}
                     </a>
                     {!counted && <span class="tag">{t("duplicateIgnored")}</span>}
                   </td>
@@ -242,8 +242,8 @@ export function ShopPage({ shopId, month, atBlock }: { shopId: string; month?: s
           )}
         </form>
         <p class="small muted mono">
-          read at block {data.atBlock.toString()}
-          {historic && ` (head ${data.head.toString()})`}
+          {t("readAtBlock")} {data.atBlock.toString()}
+          {historic && ` (${t("headBlock")} ${data.head.toString()})`}
         </p>
       </section>
 
