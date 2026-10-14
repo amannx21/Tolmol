@@ -1,0 +1,9 @@
+.action-icon { display: inline-block; width: 1.2em; height: 1.2em; vertical-align: -.22em; margin-right: .45em; flex-shrink: 0; }
+.landing-listen .action-icon, .big-action .action-icon { margin-right: 0; }
+.tabs .action-icon { width: 1.1em; height: 1.1em; margin-right: .35em; }
+@media (max-width: 720px) {
+  .tabs { gap: 2px; }
+  .tabs a { display: inline-flex; flex-direction: column; align-items: center; gap: 3px; padding: 7px 6px; font-size: .78rem; }
+  .tabs .action-icon { margin-right: 0; }
+  .tabs .nav-report { flex-direction: row; gap: 5px; padding-left: 9px; padding-right: 9px; min-height: 44px; }
+}

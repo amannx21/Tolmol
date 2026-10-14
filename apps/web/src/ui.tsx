@@ -7,22 +7,28 @@ import { usePrefs } from "./prefs"
 import { stopSpeaking } from "./speak"
 import { PhoneVerification } from "./verified"
 import type { Route } from "./router"
+import { Mark } from "./Identity"
+import { ActionIcon } from "./ActionIcon"
 
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
-  const { t, toggle } = useLang()
+  const { t, toggle, lang } = useLang()
   const [prefs, setPrefs] = usePrefs()
   const nav: [Route["name"], string, string][] = [
     ["home", "#/", t("navHome")],
-    ["report", "#/report", t("navReport")],
     ["dashboard", "#/dashboard", t("navDashboard")],
     ["about", "#/about", t("navAbout")],
   ]
-  if (prefs.mode === "full") nav.splice(3, 0, ["verify", "#/verify", t("navVerify")])
+  if (prefs.mode === "full") nav.splice(2, 0, ["verify", "#/verify", t("navVerify")])
+  nav.push(["report", "#/report", t("navReport")])
   return (
     <>
+      <a class="skip-link" href="#main-content" onClick={(event) => {
+        event.preventDefault()
+        document.getElementById("main-content")?.focus()
+      }}>{lang === "hi" ? "मुख्य सामग्री पर जाएँ" : "Skip to content"}</a>
       <header class="top">
         <a class="brand" href="#/">
-          <span class="logo" aria-hidden="true">⚖</span> {t("appName")}
+          <span class="logo"><Mark /></span><span>{t("appName")}<small>{lang === "hi" ? "सबके लिए समान" : "Equal for all"}</small></span>
         </a>
         <div class="top-actions">
           <button
@@ -52,15 +58,15 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
       )}
       <nav class="tabs" aria-label="Main">
         {nav.map(([name, href, label]) => (
-          <a href={href} aria-current={route.name === name ? "page" : undefined}>
-            {label}
+          <a class={name === "report" ? "nav-report" : undefined} href={href} aria-current={route.name === name ? "page" : undefined}>
+            <ActionIcon name={name === "home" ? "home" : name === "dashboard" ? "dashboard" : name === "verify" ? "check" : name === "about" ? "info" : "report"} />{label}
           </a>
         ))}
       </nav>
       <p class="banner" role="note">
         {t("synthetic")}
       </p>
-      <main>{children}</main>
+      <main id="main-content" tabIndex={-1} class={`page-${route.name} mode-${prefs.mode}`}>{children}</main>
       <footer class="foot">
         <a href="https://github.com/amannx21/Tolmol">{t("sourceCode")}</a> · <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">{t("dataSchema")}</a> ·{" "}
         <span>{t("network")} · chain 7738577</span>
@@ -109,7 +115,7 @@ export function DeviceCard({ compact = false }: { compact?: boolean }) {
       {low && (
         <div class="row">
           <button onClick={drip} disabled={state === "busy"}>
-            {state === "busy" ? t("gettingGas") : t("getGas")}
+            <ActionIcon name="download" />{state === "busy" ? t("gettingGas") : t("getGas")}
           </button>
           <a class="small" href="https://hub.arkiv.network/faucet" target="_blank" rel="noopener">
             {t("faucetFallback")}
@@ -130,7 +136,7 @@ export const Explorer = ({ k, label }: { k: string; label?: string }) => (
 
 export function Loading() {
   const { t } = useLang()
-  return <p class="muted">{t("loading")}</p>
+  return <p class="muted loading" role="status"><span class="loading-dot" aria-hidden="true" />{t("loading")}</p>
 }
 
 export function ErrorBox({ error }: { error: unknown }) {
@@ -161,3 +167,12 @@ export const ShortfallBar = ({ bp }: { bp: number }) => (
     <span style={{ width: `${Math.min(100, bp / 100)}%`, background: bp >= 1500 ? "var(--bad)" : bp >= 500 ? "var(--warn)" : "var(--ok)" }} />
   </span>
 )
+
+/** Decorative seal appears only after the existing write flow confirms success. */
+export function SuccessSeal() {
+  return <svg class="success-seal" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+    <circle cx="20" cy="20" r="18" fill="var(--soft)" />
+    <circle class="seal-ring" cx="20" cy="20" r="16" stroke="currentColor" stroke-width="1.5" pathLength="1" />
+    <path class="seal-check" d="m12 20 5 5 11-11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" />
+  </svg>
+}

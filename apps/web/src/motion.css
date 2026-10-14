@@ -1,0 +1,57 @@
+/* Motion mirrors the product: fair balance, a growing record, a confirmed result. */
+[data-reveal] { transition: opacity 420ms ease, transform 420ms cubic-bezier(.22, 1, .36, 1); }
+[data-reveal-state="pending"] { opacity: 0; transform: translateY(14px); }
+[data-reveal-state="visible"] { opacity: 1; transform: none; transition-delay: var(--reveal-delay, 0ms); }
+/* Keyboard navigation must never wait for an entrance animation. */
+[data-reveal]:focus-within { opacity: 1; transform: none; transition: none; }
+.balance-beam { transform-origin: 160px 80px; animation: find-balance 1400ms cubic-bezier(.22, 1, .36, 1) both; }
+.grain-sprout { stroke-dasharray: 160; stroke-dashoffset: 0; animation: sprout-draw 850ms ease-out 200ms backwards; }
+.grain-pivot { transform-origin: 160px 68px; animation: grain-arrive 550ms ease-out both; }
+.bar > span { transform-origin: left center; animation: measure-fill 650ms cubic-bezier(.22, 1, .36, 1) both; }
+.preview-timeline li::before { transition: box-shadow 180ms ease; }
+.preview-timeline li:hover::before { box-shadow: 0 0 0 4px var(--soft); }
+.inline-action > span, .text-action > span, .button > span { display: inline-block; transition: transform 180ms ease; }
+.inline-action:hover > span, .inline-action:focus-visible > span { transform: translate(2px, -2px); }
+.text-action:hover > span { transform: translateY(3px); }
+.button:hover > span { transform: translateX(3px); }
+.feature-icon { transition: background 180ms ease, transform 180ms ease; }
+@media (hover: hover) {
+  .journey-card:hover .feature-icon, .tool-card:hover .feature-icon { transform: translateY(-2px); }
+}
+.faq-list details[open] p { animation: detail-open 220ms ease-out; }
+.report-step { animation: step-arrive 220ms ease-out both !important; }
+.report-progress { margin: 0 0 22px; }
+.progress-caption { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .75rem; }
+.report-progress ol { display: flex; list-style: none; padding: 0; margin: 8px 0 0; gap: 6px; }
+.report-progress li { flex: 1; height: 4px; border-radius: 4px; background: var(--line); position: relative; overflow: hidden; }
+.report-progress li::after { content: ""; display: block; height: 100%; width: 100%; background: var(--brand); transform: scaleX(0); transform-origin: left; transition: transform 240ms ease; }
+.report-progress li.reached::after { transform: scaleX(1); }
+.report-progress li[aria-current="step"]::after { animation: measure-fill 300ms ease-out both; }
+.success-heading { display: flex; align-items: center; gap: 12px; }
+.success-seal { width: 40px; height: 40px; flex-shrink: 0; color: var(--ok); }
+.seal-ring { stroke-dasharray: 1; stroke-dashoffset: 0; animation: seal-draw 400ms ease-out both; }
+.seal-check { stroke-dasharray: 1; stroke-dashoffset: 0; animation: seal-draw 300ms ease-out 250ms both; }
+.confirmation-feedback { animation: confirmed 400ms ease-out; padding: 12px 16px; background: var(--soft); border-left: 3px solid var(--ok); border-radius: 10px; }
+.rank li.flash { animation: record-update 1000ms ease-out; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes find-balance { 0% { transform: rotate(-7deg); } 42% { transform: rotate(3deg); } 72% { transform: rotate(-1deg); } 100% { transform: rotate(0); } }
+@keyframes sprout-draw { from { stroke-dashoffset: 160; } to { stroke-dashoffset: 0; } }
+@keyframes grain-arrive { from { opacity: 0; transform: translateY(-5px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes measure-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes detail-open { from { opacity: .3; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+@keyframes step-arrive { from { opacity: .4; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes seal-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes confirmed { from { opacity: .4; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@keyframes record-update { from { box-shadow: inset 3px 0 var(--accent); } to { box-shadow: inset 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .report-step { animation: none !important; }
+  [data-reveal-state] { opacity: 1; transform: none; }
+  .grain-sprout, .seal-ring, .seal-check { stroke-dashoffset: 0; }
+}
+@media print {
+  [data-reveal-state] { opacity: 1 !important; transform: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .report-step { animation: none !important; }
+  .report-progress { display: none; }
+}

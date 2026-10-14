@@ -1,3 +1,4 @@
+import { ActionIcon } from "./ActionIcon"
 // Officials act on the record: the shop page's "Official actions" card (with action buttons for a verified official of
 // that district) and the dashboard's public "Needs official attention" list. All read straight from Arkiv.
 import { useEffect, useState } from "preact/hooks"
@@ -95,7 +96,7 @@ export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: s
           </div>
           <p class="small muted">{t("officialActionLegal")}</p>
           <button onClick={record} disabled={!pick || busy}>
-            {t("recordAction")}
+            <ActionIcon name="save" />{t("recordAction")}
           </button>
         </div>
       )}

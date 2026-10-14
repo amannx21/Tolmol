@@ -1,3 +1,4 @@
+import { ActionIcon } from "./ActionIcon"
 // Shops answer, reporters confirm (community score card). Read straight from Arkiv; writes are sealed entities.
 import { useEffect, useState } from "preact/hooks"
 import {
@@ -119,7 +120,7 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
             ))}
           </div>
           <button onClick={answer} disabled={!pick || busy}>
-            {t("sendAnswer")}
+            <ActionIcon name="send" />{t("sendAnswer")}
           </button>
         </div>
       )}

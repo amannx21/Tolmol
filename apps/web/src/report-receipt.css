@@ -1,0 +1,25 @@
+.report-intro { display: grid; grid-template-columns: minmax(0, 220px) 1fr; gap: 20px; align-items: center; margin: 20px 0; padding: 16px; background: var(--soft); border-radius: 14px; }
+.report-intro .reference-photo img { aspect-ratio: auto; }
+.report-intro figcaption { font-size: .6rem; }
+.report-intro h3 { font-size: 1rem; line-height: 1.4; }
+.report-intro p { margin: 0; font-size: .86rem; color: var(--muted); }
+.report-raised-notice { display: grid; grid-template-columns: 1.35fr 1fr; gap: 28px; align-items: start; padding-bottom: 24px; margin-bottom: 22px; border-bottom: 1px solid var(--line); }
+.raised-heading { font-size: 1.5rem !important; line-height: 1.4 !important; scroll-margin-top: 85px; }
+.raised-heading:focus { outline: none; }
+.report-raised-copy > div[role="status"] p { margin: 10px 0 18px; font-size: .93rem; }
+.report-reference { display: flex; flex-wrap: wrap; gap: 8px 14px; padding: 12px; margin: 0 0 20px; background: var(--soft); border-radius: 10px; font-size: .8rem; }
+.report-reference > span { color: var(--muted); }
+.official-followup h3 { font-size: 1rem; }
+.official-followup p { font-size: .86rem; color: var(--muted); margin: 0 0 16px; }
+.raised-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.raised-actions .button { font-size: .83rem; }
+.complaint-submission-note { font-size: .75rem; margin: 14px 0 0; }
+.report-raised-notice .reference-photo { border: 1px solid var(--line); padding: 10px; background: var(--card); border-radius: 14px; }
+.report-raised-notice .reference-photo img { aspect-ratio: auto; }
+@media (max-width: 720px) {
+  .report-intro { grid-template-columns: 1fr; gap: 14px; }
+  .report-intro .reference-photo { max-width: 300px; margin: 0 auto; }
+  .report-raised-notice { grid-template-columns: 1fr; gap: 22px; }
+  .raised-actions { flex-direction: column; align-items: stretch; }
+  .report-raised-notice .reference-photo { max-width: 340px; }
+}

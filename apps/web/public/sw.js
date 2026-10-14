@@ -1,6 +1,6 @@
 // Tolmol service worker: keeps the app shell available offline. It never caches Arkiv RPC responses
 // (other origins are not touched), so evidence is always read live from Arkiv when online.
-const CACHE = "tolmol-shell-v1"
+const CACHE = "tolmol-shell-v2"
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["./", "./manifest.webmanifest", "./icon.svg"])).then(() => self.skipWaiting()))
 })

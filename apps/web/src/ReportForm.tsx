@@ -1,3 +1,4 @@
+import { ActionIcon } from "./ActionIcon"
 import { useEffect, useMemo, useState } from "preact/hooks"
 import {
   addMonths,
@@ -23,6 +24,7 @@ import { IssueList, IssuePicker } from "./extras"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { DeviceCard, ErrorBox, Loading, loadShops } from "./ui"
+import { ReportIntro } from "./ReferencePhotos"
 
 export function ReportForm({ initialShop }: { initialShop?: string }) {
   const { t, lang } = useLang()
@@ -160,10 +162,10 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
         )}
         <div class="row">
           <button class="secondary" onClick={() => setStep("form")} disabled={step === "sending"}>
-            ←
+            <ActionIcon name="back" />{t("back")}
           </button>
           <button onClick={send} disabled={step === "sending" || queued}>
-            {step === "sending" ? t("sending") : t("submit")}
+            <ActionIcon name="send" />{step === "sending" ? t("sending") : t("submit")}
           </button>
         </div>
       </section>
@@ -175,6 +177,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   return (
     <section class="card">
       <h2>{t("ctaReport")}</h2>
+      <ReportIntro />
       <p class="small">
         <a href={`#/report?v=easy${shopId ? `&shop=${shopId}` : ""}`}>{t("easyWay")} →</a>
       </p>
@@ -277,7 +280,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           {error}
         </p>
       )}
-      <button onClick={review}>{t("preview")} →</button>
+      <button onClick={review}><ActionIcon name="check" />{t("preview")} →</button>
     </section>
   )
 }

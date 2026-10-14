@@ -12,7 +12,17 @@ import { VerifyPage } from "./extras"
 import { CardPage, TestCardsPage } from "./verified"
 import { useLang } from "./i18n"
 import { Layout } from "./ui"
+import { DesignPreview } from "./DesignPreview"
 import "./styles.css"
+import "./design.css"
+import "./flow.css"
+import "./motion.css"
+import "./landing.css"
+import "./actions.css"
+import "./preview.css"
+import "./photos.css"
+import "./amount.css"
+import "./report-receipt.css"
 
 function QueueBanner() {
   const n = useQueueCount()
@@ -28,6 +38,7 @@ function App() {
   const route = useRoute()
   const [prefs] = usePrefs()
   const easy = prefs.mode === "easy"
+  if (route.name === "designPreview") return <DesignPreview />
   let page
   switch (route.name) {
     case "report":

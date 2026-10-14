@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Tolmol — grain and fair measure</title>
+  <path d="M20 5c6 4 6 8 0 12-6-4-6-8 0-12Z" fill="#dca956"/>
+  <path d="M7 17h26M20 17v17m-7 0h14M11 17v7m18-7v7" stroke="#195c45" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M5 24h12c0 4-2.5 7-6 7s-6-3-6-7Zm18 0h12c0 4-2.5 7-6 7s-6-3-6-7Z" fill="#195c45"/>
+</svg>
