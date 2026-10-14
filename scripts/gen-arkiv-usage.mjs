@@ -23,6 +23,8 @@ const FEATURES = [
   ["Expiry the user controls", "The reporter picks 30, 90 or 180 days and whether others may extend (the permissionlessExtension flag).", "packages/tolmol-sdk/src/writes.ts", /expires: ExpirationTime.fromDays\(lifetimeDays\)/, 2],
   ["Creation flags read back", "Reads select creationFlags, so a witness never tries to extend a report whose reporter opted out.", "packages/tolmol-sdk/src/queries.ts", /const META = /, 1],
   ["Withdrawal as a sealed entity", "A reporter's mistake is withdrawn by a new readonly entity, burned in the same batch; the report itself stays.", "packages/tolmol-sdk/src/writes.ts", /export async function withdrawReport/, 26],
+  ["$creator + creation blocks: burst patterns", "3+ different creators within 30 blocks at one shop are flagged on every shop page and can be left out of the dashboard.", "packages/tolmol-sdk/src/rules.ts", /export function rapidGroups/, 20],
+  ["$creator for privacy: a separate ID per report", "Optional: each report is created by a fresh key funded by the relayer, so creators cannot be linked.", "apps/web/src/arkiv.ts", /export async function fileReport/, 40],
   ["$creator: withdrawals only from the reporter", "A tolmol.correction counts only when its $creator wrote the report.", "packages/tolmol-sdk/src/rules.ts", /export function withdrawnKeys/, 8],
   ["$creator: different-witness rule and dedupe", "Witness must be a different creator; one per creator; earliest by block then key.", "packages/tolmol-sdk/src/rules.ts", /export function dedupeReports/, 28],
   ["WebSocket entity events", "watchEntityEvents on a webSocket() transport, no fromBlock: pushed, not polled. Only burn transfers are fetched.", "packages/tolmol-sdk/src/live.ts", /export function watchTolmol/, 50],
