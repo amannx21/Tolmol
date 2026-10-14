@@ -105,7 +105,7 @@ export function useBalance(address: `0x${string}`) {
 export const MIN_WRITE_WEI = 3_000_000_000_000_000n
 
 /** Public URL of the gas-drip relayer (not a secret). VITE_RELAYER_URL overrides it; dev builds default to none. */
-const RELAYER_URL = (import.meta.env.VITE_RELAYER_URL as string | undefined) || (import.meta.env.PROD ? "https://tolmol-relayer.vercel.app" : "")
+export const RELAYER_URL = (import.meta.env.VITE_RELAYER_URL as string | undefined) || (import.meta.env.PROD ? "https://tolmol-relayer.vercel.app" : "")
 
 /** Asks the gas-drip relayer for a small amount of testnet GLM. The relayer only ever sends GLM; it never writes Tolmol data. */
 export async function requestGas(address: `0x${string}`): Promise<{ ok: boolean; txHash?: string; error?: string; status?: number }> {

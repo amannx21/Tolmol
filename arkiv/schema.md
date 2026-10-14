@@ -21,6 +21,8 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | `tolmol.report` | The reporter's own device wallet | `0x000000000000000000000000000000000000dEaD` (burn) | readonly; permissionlessExtension unless the reporter opts out | **reporter chooses 30, 90 (default) or 180 days**; extended by corroboration if allowed (see below) | empty |
 | `tolmol.witness` | A different device wallet | burn address | readonly, permissionlessExtension | Same deadline as its report | empty |
 | `tolmol.correction` | The report's own device wallet (honoured only then) | burn address | readonly, permissionlessExtension | until the report's `createdAt` + 365 days | empty |
+| `tolmol.verifier` | Registry wallet | Registry wallet | readonly | 180 days; the registry extends it while it trusts the verifier | empty |
+| `tolmol.attestation` | A verifier named by the registry | That verifier | readonly | 365 days (re-verify yearly) | empty |
 
 ### Why these flags and owners
 
@@ -155,6 +157,44 @@ typo in the grams) needs a way to say so. A correction is a new, sealed entity t
   undone either. It lives until the report's `createdAt` + 365 days, which outlasts any extension of the report.
 - After withdrawing, the same device may file a corrected report for that shop, month and grain.
 
+## `tolmol.verifier` and `tolmol.attestation` (verified card holders, simple version)
+
+Fake device IDs are free, so Tolmol can mark reports from **verified card holders**. A verifier checks a ration card
+once and publishes "this device is a verified card holder". In this demo the cards are **synthetic test cards** signed
+by a test issuer key (`0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f`), standing in for the state; in future the card would be the DigiLocker
+ration card (`docs/VERIFIED_REPORTERS.md`). Verification is optional: unverified reports still count.
+
+`tolmol.verifier` (created by the registry wallet; trusted only from it):
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.verifier`, `1` | |
+| `verifier` | str | `0x1c58335a9c5c5a3440f8018984cf9069b7c9408b` | the verifier wallet's address (lower case) |
+| `synthetic` | bool | `true` | |
+
+`tolmol.attestation` (created by a named verifier; counted only from one):
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.attestation`, `1` | |
+| `device` | str | `0x11fa…ae9c` | the verified device wallet (lower case) |
+| `state` | str | `BR` | the card's state |
+| `shop_id` | str | `SYN-BR-0003` | the card's (synthetic) shop |
+| `card_tag` | key | `0x8c1e…` | HMAC-SHA256(verifier secret, card serial). The serial is random, not personal; without the secret nobody can link the tag to a card |
+| `method` | str | `test_card` | `test_card` today; `camp` reserved for in-person verification |
+| `verified_on` | u64 | `1791936000000` | start of the UTC day, ms |
+| `synthetic` | bool | `true` | |
+
+**How the verifier works** (`apps/relayer/src/verifier.ts`, `POST /verify`): it checks the issuer's signature on the
+card and a signature from the phone proving it controls `device`, then queries Arkiv for an attestation with the same
+`card_tag` (`createdBy(verifier)`). If one exists for another device it refuses ("card already used"). Otherwise it
+creates the attestation. Its "already used" memory **is Arkiv**: there is no verifier database.
+
+**How readers decide who is verified** (`verifiedDevices` in `packages/tolmol-sdk/src/verify.ts`): trust attestations
+only from a `verifier` named by a live registry entity; one device per `card_tag` (the earliest wins); one card per
+device. Shop pages say how many counted reports come from verified card holders, reports and confirmations show
+"✓ verified card holder", and the dashboard has a "count only verified" view.
+
 ## Rules the app enforces
 
 1. **One report per (device, shop, month, item).** Before creating, the app queries
@@ -177,6 +217,8 @@ typo in the grams) needs a way to say so. A correction is a new, sealed entity t
 7. **Patterns, not rules.** Readers also flag (never drop) reports filed by 3 or more different `$creator`s within
    30 blocks (one minute) at one shop, rapid confirmations, and devices that did nothing else (`patternSignals`).
    The dashboard can leave burst reports out as a view. All of it comes from public `createdAt` blocks and `$creator`.
+8. **Verified card holders by `$creator`.** A device is verified only by an attestation whose `$creator` is a verifier
+   named by a live `tolmol.verifier` from the registry; one device per card (earliest), one card per device.
 
 These rules live in the app and the SDK package. Arkiv cannot enforce them, because anyone can
 write any entity. The dashboard applies them when it reads, so a bypassing writer gains nothing.
@@ -191,6 +233,8 @@ Tiramisu blocks are 2 s, so 1 day = 43,200 blocks. Durations use whole days only
 | `tolmol.report` | **the reporter's choice: 30, 90 (default) or 180 days** | 90 days is long enough to file a complaint or RTI about last month's ration (RTI replies are due in 30 days). A reporter who wants less exposure can pick 30; one building a longer case can pick 180 |
 | `tolmol.witness` | same deadline as its report | a corroboration means nothing without its report |
 | `tolmol.correction` | until report `createdAt` + 365 days | must outlive the report, whatever extensions it got |
+| `tolmol.verifier` | 180 days, extended by the registry | letting it lapse revokes the verifier everywhere, with no delete and no server |
+| `tolmol.attestation` | 365 days | a card holder re-verifies once a year |
 
 **Corroboration renews the lease.** When a witness corroborates a report that will then have
 **2 or more distinct witnesses**, the witness's device sends one atomic batch:
@@ -234,6 +278,9 @@ Pages are at most 200. Multi-page walks are pinned with `.atBlock(head)` and use
 | Q10 | Shop page: withdrawals | `project AND type = "tolmol.correction" AND shop_id = <id> [AND month = <m>]` |
 | Q11 | Dashboard: withdrawals | `project AND type = "tolmol.correction" AND state = <s>` |
 | Q12 | Report page: is it withdrawn? | `project AND type = "tolmol.correction" AND report_key = key(<k>)` |
+| Q13 | Trusted verifiers | `project AND type = "tolmol.verifier"`, `.createdBy(REGISTRY)` |
+| Q14 | Verified devices | `project AND type = "tolmol.attestation"` (one per verified phone), then `verifiedDevices` on the device |
+| Q15 | Verifier: card already used? | `project AND type = "tolmol.attestation" AND card_tag = key(<tag>)`, `.createdBy(verifier)` |
 
 Fields selected: `key`, `creator`, `owner`, `createdAt`, `expiresAt`, `creationFlags`, `attributes` (never the
 payload for reports, which is empty anyway). Shop and dashboard pages have a "How this is computed" panel that
@@ -266,6 +313,7 @@ watcher as a fallback.
 | Kept off Arkiv | Why |
 |---|---|
 | Names, phone numbers, Aadhaar, ration card numbers, addresses | Arkiv entities are public and permanent in transaction history. Hashing does not help: these values are guessable, so hashes can be reversed |
+| The ration card used for verification, and its serial | Only `card_tag`, a keyed fingerprint of a random serial, goes on Arkiv. The card is checked by the verifier and never stored anywhere |
 | Free text of any kind | Free text invites personal details. Every field is a number or a fixed choice |
 | Photos of receipts, weighing scales or shops | Too large (the public RPC caps requests at 262,144 bytes), and photos identify people and places |
 | Household size and card type | They would make reports easier to link to a household. The device uses them only to compute `entitled_g` |

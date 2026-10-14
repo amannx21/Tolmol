@@ -4,18 +4,187 @@
   "title": "Tolmol data contract (Arkiv entities, schema_version 1)",
   "description": "Machine-readable form of arkiv/schema.md. Each object describes the ATTRIBUTES of one Arkiv entity type as returned by @arkiv-network/sdk (name -> {type, value}). Arkiv Tiramisu, chain 7738577. All data is synthetic. Trust rules (dedupe, different-device witnesses, reporter-only withdrawals, registry-only shops) are in arkiv/schema.md.",
   "$defs": {
-    "str": { "type": "object", "required": ["type", "value"], "properties": { "type": { "const": "str" }, "value": { "type": "string", "maxLength": 128 } } },
-    "i32": { "type": "object", "required": ["type", "value"], "properties": { "type": { "const": "i32" }, "value": { "type": "integer" } } },
-    "u64": { "type": "object", "required": ["type", "value"], "properties": { "type": { "const": "u64" }, "value": { "description": "bigint in the SDK, hex string in raw JSON-RPC" } } },
-    "bool": { "type": "object", "required": ["type", "value"], "properties": { "type": { "const": "bool" }, "value": { "type": "boolean" } } },
-    "key": { "type": "object", "required": ["type", "value"], "properties": { "type": { "const": "key" }, "value": { "type": "string", "pattern": "^0x[0-9a-f]{64}$" } } },
-    "project": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "const": "tolmol" } } }] },
-    "schemaVersion": { "allOf": [{ "$ref": "#/$defs/i32" }, { "properties": { "value": { "const": 1 } } }] },
-    "shopId": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "pattern": "^SYN-[A-Z]{2}-[0-9]{4}$" } } }] },
-    "state": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "pattern": "^[A-Z]{2}$" } } }] },
-    "month": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" } } }] },
-    "item": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "enum": ["rice", "wheat", "millet", "total"] } } }] },
-    "grams": { "allOf": [{ "$ref": "#/$defs/i32" }, { "properties": { "value": { "minimum": 0, "maximum": 100000 } } }] }
+    "str": {
+      "type": "object",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "str"
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 128
+        }
+      }
+    },
+    "i32": {
+      "type": "object",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "i32"
+        },
+        "value": {
+          "type": "integer"
+        }
+      }
+    },
+    "u64": {
+      "type": "object",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "u64"
+        },
+        "value": {
+          "description": "bigint in the SDK, hex string in raw JSON-RPC"
+        }
+      }
+    },
+    "bool": {
+      "type": "object",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "bool"
+        },
+        "value": {
+          "type": "boolean"
+        }
+      }
+    },
+    "key": {
+      "type": "object",
+      "required": [
+        "type",
+        "value"
+      ],
+      "properties": {
+        "type": {
+          "const": "key"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{64}$"
+        }
+      }
+    },
+    "project": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/str"
+        },
+        {
+          "properties": {
+            "value": {
+              "const": "tolmol"
+            }
+          }
+        }
+      ]
+    },
+    "schemaVersion": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/i32"
+        },
+        {
+          "properties": {
+            "value": {
+              "const": 1
+            }
+          }
+        }
+      ]
+    },
+    "shopId": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/str"
+        },
+        {
+          "properties": {
+            "value": {
+              "pattern": "^SYN-[A-Z]{2}-[0-9]{4}$"
+            }
+          }
+        }
+      ]
+    },
+    "state": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/str"
+        },
+        {
+          "properties": {
+            "value": {
+              "pattern": "^[A-Z]{2}$"
+            }
+          }
+        }
+      ]
+    },
+    "month": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/str"
+        },
+        {
+          "properties": {
+            "value": {
+              "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$"
+            }
+          }
+        }
+      ]
+    },
+    "item": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/str"
+        },
+        {
+          "properties": {
+            "value": {
+              "enum": [
+                "rice",
+                "wheat",
+                "millet",
+                "total"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "grams": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/i32"
+        },
+        {
+          "properties": {
+            "value": {
+              "minimum": 0,
+              "maximum": 100000
+            }
+          }
+        }
+      ]
+    }
   },
   "oneOf": [
     {
@@ -23,15 +192,59 @@
       "description": "Synthetic registry. Trusted only when $creator = 0x6DBf6A36E27d814c58A05312913DCEEfc0dAe221. readonly + permissionlessExtension, 180 days. Payload: JSON {label_en, label_hi, synthetic}.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "type", "schema_version", "shop_id", "state", "district", "synthetic"],
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "shop_id",
+        "state",
+        "district",
+        "synthetic"
+      ],
       "properties": {
-        "project": { "$ref": "#/$defs/project" },
-        "type": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "const": "tolmol.shop" } } }] },
-        "schema_version": { "$ref": "#/$defs/schemaVersion" },
-        "shop_id": { "$ref": "#/$defs/shopId" },
-        "state": { "$ref": "#/$defs/state" },
-        "district": { "$ref": "#/$defs/str" },
-        "synthetic": { "allOf": [{ "$ref": "#/$defs/bool" }, { "properties": { "value": { "const": true } } }] }
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.shop"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "synthetic": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/bool"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": true
+                }
+              }
+            }
+          ]
+        }
       }
     },
     {
@@ -39,24 +252,110 @@
       "description": "One device's claim for one shop, month and grain. Created readonly (+ permissionlessExtension unless the reporter opted out) and transferred to 0x...dEaD in the same batch. Empty payload. Readers recompute shortfall_g, shortfall_bp and month_num and drop entities that disagree.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "type", "schema_version", "shop_id", "state", "district", "month", "month_num", "item", "entitled_g", "received_g", "shortfall_g", "shortfall_bp", "reported_at", "synthetic"],
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "shop_id",
+        "state",
+        "district",
+        "month",
+        "month_num",
+        "item",
+        "entitled_g",
+        "received_g",
+        "shortfall_g",
+        "shortfall_bp",
+        "reported_at",
+        "synthetic"
+      ],
       "properties": {
-        "project": { "$ref": "#/$defs/project" },
-        "type": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "const": "tolmol.report" } } }] },
-        "schema_version": { "$ref": "#/$defs/schemaVersion" },
-        "shop_id": { "$ref": "#/$defs/shopId" },
-        "state": { "$ref": "#/$defs/state" },
-        "district": { "$ref": "#/$defs/str" },
-        "month": { "$ref": "#/$defs/month" },
-        "month_num": { "$ref": "#/$defs/i32", "description": "YYYYMM as a number, for range queries" },
-        "item": { "$ref": "#/$defs/item" },
-        "entitled_g": { "$ref": "#/$defs/grams" },
-        "received_g": { "$ref": "#/$defs/grams" },
-        "shortfall_g": { "$ref": "#/$defs/grams" },
-        "shortfall_bp": { "allOf": [{ "$ref": "#/$defs/i32" }, { "properties": { "value": { "minimum": 0, "maximum": 10000 } } }] },
-        "issues": { "allOf": [{ "$ref": "#/$defs/i32" }, { "properties": { "value": { "minimum": 0, "maximum": 127 } } }], "description": "Optional bitmask: 1 charged_money, 2 auth_failed, 4 thumb_no_grain, 8 shop_closed, 16 bad_quality, 32 portability_refused, 64 no_receipt. Absent = 0." },
-        "reported_at": { "$ref": "#/$defs/u64", "description": "Start of the UTC day, ms (reports after 2026-10-14); earlier reports carry the device ms time" },
-        "synthetic": { "$ref": "#/$defs/bool" }
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.report"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "month": {
+          "$ref": "#/$defs/month"
+        },
+        "month_num": {
+          "$ref": "#/$defs/i32",
+          "description": "YYYYMM as a number, for range queries"
+        },
+        "item": {
+          "$ref": "#/$defs/item"
+        },
+        "entitled_g": {
+          "$ref": "#/$defs/grams"
+        },
+        "received_g": {
+          "$ref": "#/$defs/grams"
+        },
+        "shortfall_g": {
+          "$ref": "#/$defs/grams"
+        },
+        "shortfall_bp": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 10000
+                }
+              }
+            }
+          ]
+        },
+        "issues": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 127
+                }
+              }
+            }
+          ],
+          "description": "Optional bitmask: 1 charged_money, 2 auth_failed, 4 thumb_no_grain, 8 shop_closed, 16 bad_quality, 32 portability_refused, 64 no_receipt. Absent = 0."
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64",
+          "description": "Start of the UTC day, ms (reports after 2026-10-14); earlier reports carry the device ms time"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
       }
     },
     {
@@ -64,18 +363,60 @@
       "description": "'I also got less at this shop this month' from a different device. Counted once per $creator, never from the report's own creator. readonly + permissionlessExtension, transferred to 0x...dEaD. Empty payload.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "type", "schema_version", "report_key", "shop_id", "state", "month", "item", "reported_at", "synthetic"],
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "report_key",
+        "shop_id",
+        "state",
+        "month",
+        "item",
+        "reported_at",
+        "synthetic"
+      ],
       "properties": {
-        "project": { "$ref": "#/$defs/project" },
-        "type": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "const": "tolmol.witness" } } }] },
-        "schema_version": { "$ref": "#/$defs/schemaVersion" },
-        "report_key": { "$ref": "#/$defs/key" },
-        "shop_id": { "$ref": "#/$defs/shopId" },
-        "state": { "$ref": "#/$defs/state" },
-        "month": { "$ref": "#/$defs/month" },
-        "item": { "$ref": "#/$defs/item" },
-        "reported_at": { "$ref": "#/$defs/u64" },
-        "synthetic": { "$ref": "#/$defs/bool" }
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.witness"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "report_key": {
+          "$ref": "#/$defs/key"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "month": {
+          "$ref": "#/$defs/month"
+        },
+        "item": {
+          "$ref": "#/$defs/item"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
       }
     },
     {
@@ -83,18 +424,221 @@
       "description": "Withdrawal of a report. Honoured ONLY when its $creator equals the report's $creator. readonly, transferred to 0x...dEaD, lives until report.createdAt + 365 days. Empty payload.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["project", "type", "schema_version", "report_key", "shop_id", "state", "month", "action", "reported_at", "synthetic"],
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "report_key",
+        "shop_id",
+        "state",
+        "month",
+        "action",
+        "reported_at",
+        "synthetic"
+      ],
       "properties": {
-        "project": { "$ref": "#/$defs/project" },
-        "type": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "const": "tolmol.correction" } } }] },
-        "schema_version": { "$ref": "#/$defs/schemaVersion" },
-        "report_key": { "$ref": "#/$defs/key" },
-        "shop_id": { "$ref": "#/$defs/shopId" },
-        "state": { "$ref": "#/$defs/state" },
-        "month": { "$ref": "#/$defs/month" },
-        "action": { "allOf": [{ "$ref": "#/$defs/str" }, { "properties": { "value": { "const": "withdraw" } } }] },
-        "reported_at": { "$ref": "#/$defs/u64" },
-        "synthetic": { "$ref": "#/$defs/bool" }
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.correction"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "report_key": {
+          "$ref": "#/$defs/key"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "month": {
+          "$ref": "#/$defs/month"
+        },
+        "action": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "withdraw"
+                }
+              }
+            }
+          ]
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
+      }
+    },
+    {
+      "title": "tolmol.verifier",
+      "description": "A wallet the registry trusts to verify card holders. Trusted only when $creator = the registry wallet. readonly, 180 days, extended while the verifier stays trusted (letting it expire revokes it). Empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "verifier",
+        "synthetic"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.verifier"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "verifier": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "pattern": "^0x[0-9a-f]{40}$"
+                }
+              }
+            }
+          ]
+        },
+        "synthetic": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/bool"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": true
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "title": "tolmol.attestation",
+      "description": "'This device is a verified card holder at shop X.' Counted only when $creator is a live verifier named by the registry; one device per card_tag (earliest wins). card_tag = HMAC-SHA256(verifier secret, card serial): no card data. readonly, owned by the verifier, 365 days. Empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "device",
+        "state",
+        "shop_id",
+        "card_tag",
+        "method",
+        "verified_on",
+        "synthetic"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.attestation"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "device": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "pattern": "^0x[0-9a-f]{40}$"
+                }
+              }
+            }
+          ]
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "card_tag": {
+          "$ref": "#/$defs/key"
+        },
+        "method": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "enum": [
+                    "test_card",
+                    "camp"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "verified_on": {
+          "$ref": "#/$defs/u64",
+          "description": "start of the UTC day, ms"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
       }
     }
   ]

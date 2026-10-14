@@ -1,8 +1,10 @@
 # Verified card holders without revealing who they are (design)
 
-> **Status: design and future scope, not built.** Nothing in the app, the SDK or on Arkiv claims verification today.
-> This page is the plan for the open threats T9 (fake accounts) and T10 (collusion) in [`THREAT_MODEL.md`](THREAT_MODEL.md),
-> and the path for a state government to adopt Tolmol. Written 2026-10-14.
+> **Status (2026-10-15): the simple version is built** (test cards). A verifier checks a signed ration card once and
+> publishes a `tolmol.attestation`; reports from verified phones show "✓ verified card holder" (`arkiv/schema.md`,
+> `apps/relayer/src/verifier.ts`, `packages/tolmol-sdk/src/verify.ts`). Its cards are **synthetic test cards**, and the
+> verifier can link a phone to its card (threat model T26). Everything below (camps, the anonymous Semaphore design,
+> Aadhaar QR, DigiLocker, government adoption) is **design and future scope, not built**. Written 2026-10-14.
 
 ## The problem
 

@@ -187,7 +187,11 @@ const base = (type: string) => [eq("project", str(PROJECT)), eq("type", str(type
 export function listVerifiers(client: Reader, opts: ReadOptions & { registry?: Hex } = {}) {
   return walkAll(client, base(VERIFY_TYPE.verifier), parseVerifier, { ...opts, createdBy: opts.registry ?? DEFAULT_REGISTRY })
 }
-/** Attestations in a state (dashboard, shop pages). */
+/** Every attestation (one per verified phone, so a short list). Used so a phone verified in one state counts everywhere. */
+export function listAttestations(client: Reader, opts: ReadOptions = {}) {
+  return walkAll(client, base(VERIFY_TYPE.attestation), parseAttestation, opts)
+}
+/** Attestations in a state. */
 export function stateAttestations(client: Reader, state: string, opts: ReadOptions = {}) {
   return walkAll(client, [...base(VERIFY_TYPE.attestation), eq("state", str(state))], parseAttestation, opts)
 }

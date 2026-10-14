@@ -5,6 +5,7 @@ import { device, MIN_WRITE_WEI, reader, requestGas, short, useBalance } from "./
 import { useLang } from "./i18n"
 import { usePrefs } from "./prefs"
 import { stopSpeaking } from "./speak"
+import { PhoneVerification } from "./verified"
 import type { Route } from "./router"
 
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
@@ -103,6 +104,7 @@ export function DeviceCard({ compact = false }: { compact?: boolean }) {
         </div>
       </div>
       {!compact && <p class="small">{t("deviceHelp")}</p>}
+      {!compact && <PhoneVerification />}
       {low && <p class="small">{t("needGas")}</p>}
       {low && (
         <div class="row">

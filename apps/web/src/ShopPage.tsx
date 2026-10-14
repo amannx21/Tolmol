@@ -25,6 +25,7 @@ import { go } from "./router"
 import { IssueCounts, PatternsCard } from "./extras"
 import { draftComplaint, draftRti, type RtiInput } from "./rti"
 import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
+import { useVerified, VerifiedBadge } from "./verified"
 
 /** A QR code (inline SVG) for this shop's public page, to print and stick up near the shop. */
 function ShopQr({ url }: { url: string }) {
@@ -47,6 +48,7 @@ function download(name: string, text: string, type: string) {
 }
 
 export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; month?: string; atBlock?: string; letter?: "rti" | "complaint" }) {
+  const verified = useVerified()
   const { t, lang } = useLang()
   const f = useFmt()
   const [rtiText, setRtiText] = useState<string | null>(null)
@@ -161,6 +163,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         ) : (
           <p class="muted">{t("empty")}</p>
         )}
+        {stats && verified && <p class="small">{t("verifiedCount", { n: kept.filter((r) => verified.has(r.creator.toLowerCase())).length, total: kept.length })}</p>}
         {stats && <IssueCounts counts={stats.issueCounts} labels />}
         <div class="row wrap">
           <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
@@ -223,7 +226,8 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
                   <td>
                     <a class="mono small" href={explorerAddressUrl(r.creator)} target="_blank" rel="noopener">
                       {short(r.creator)}
-                    </a>
+                    </a>{" "}
+                    <VerifiedBadge a={verified?.get(r.creator.toLowerCase())} />
                   </td>
                   <td class="small">
                     {daysLeft(r.expiresAt, data.atBlock)} {t("days")} · <Explorer k={r.key} label="↗" />

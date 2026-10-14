@@ -1,5 +1,6 @@
 // Vercel entry (Node.js runtime, Web Request/Response handlers). All paths are rewritten here by vercel.json.
-// Env vars (set in the Vercel dashboard, never in the repo): RELAYER_PRIVATE_KEY, ALLOWED_ORIGINS, IP_SALT.
+// Env vars (set in the Vercel dashboard, never in the repo): RELAYER_PRIVATE_KEY, ALLOWED_ORIGINS, IP_SALT,
+// and for the card verifier VERIFIER_PRIVATE_KEY, CARD_TAG_SECRET.
 // Rate limits use per-instance memory; the on-chain "fresh wallet" and balance checks are the hard limits.
 import { makeHandler, MemoryStore } from "../src/handler.js"
 
@@ -12,6 +13,8 @@ const run = (req: Request) => {
       ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
       IP_SALT: process.env.IP_SALT,
       RPC_URL: process.env.RPC_URL,
+      VERIFIER_PRIVATE_KEY: process.env.VERIFIER_PRIVATE_KEY,
+      CARD_TAG_SECRET: process.env.CARD_TAG_SECRET,
     },
     store,
   )

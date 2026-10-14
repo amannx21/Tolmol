@@ -16,6 +16,8 @@ import {
 } from "tolmol-sdk"
 import { fileReport, GasError, SeparateIdError } from "./arkiv"
 import { getPrefs } from "./prefs"
+import { useVerified } from "./verified"
+import { device } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { IssueList, IssuePicker } from "./extras"
 import { enqueueReport, isOffline } from "./queue"
@@ -42,6 +44,8 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   const [lifetimeDays, setLifetimeDays] = useState(90)
   const [allowExtension, setAllowExtension] = useState(true)
   const [separateId, setSeparateId] = useState(() => getPrefs().separateIds)
+  const verified = useVerified()
+  const phoneVerified = !!verified?.has(device().account.address.toLowerCase())
 
   useEffect(() => {
     loadShops()
@@ -255,6 +259,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
         <label class="inline check">
           <input type="checkbox" checked={separateId} onChange={(e) => setSeparateId(e.currentTarget.checked)} /> {t("separateIdLabel")}
         </label>
+        {separateId && phoneVerified && <p class="small muted">{t("separateIdNotVerified")}</p>}
       </fieldset>
       <details class="helper">
         <summary>{t("helperTitle")}</summary>

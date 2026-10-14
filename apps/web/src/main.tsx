@@ -9,6 +9,7 @@ import { startQueue, useQueueCount } from "./queue"
 import { useRoute } from "./router"
 import { ShopPage } from "./ShopPage"
 import { VerifyPage } from "./extras"
+import { CardPage, TestCardsPage } from "./verified"
 import { useLang } from "./i18n"
 import { Layout } from "./ui"
 import "./styles.css"
@@ -43,6 +44,12 @@ function App() {
       break
     case "about":
       page = <About />
+      break
+    case "card":
+      page = <CardPage c={route.c} />
+      break
+    case "testCards":
+      page = <TestCardsPage />
       break
     case "verify":
       page = <VerifyPage />

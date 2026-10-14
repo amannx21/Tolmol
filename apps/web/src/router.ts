@@ -9,6 +9,8 @@ export type Route =
   | { name: "verify" }
   | { name: "r"; key: string }
   | { name: "about" }
+  | { name: "card"; c: string }
+  | { name: "testCards" }
 
 export function parse(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#/, "").split("?")
@@ -32,6 +34,10 @@ export function parse(hash: string): Route {
       return { name: "about" }
     case "verify":
       return { name: "verify" }
+    case "card":
+      return { name: "card", c: q.get("c") ?? "" }
+    case "test-cards":
+      return { name: "testCards" }
   }
   return { name: "home" }
 }

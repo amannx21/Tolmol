@@ -8,6 +8,8 @@ const handle = makeHandler(
     ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
     IP_SALT: process.env.IP_SALT,
     RPC_URL: process.env.RPC_URL,
+    VERIFIER_PRIVATE_KEY: process.env.VERIFIER_PRIVATE_KEY,
+    CARD_TAG_SECRET: process.env.CARD_TAG_SECRET,
   },
   new MemoryStore(),
 )

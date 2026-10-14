@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import {
+  dedupeReports,
   addMonths,
   currentMonth,
   dashboardReports,
@@ -23,6 +24,7 @@ import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts } from "./extras"
 import { ErrorBox, Loading, loadShops, ShortfallBar } from "./ui"
+import { useVerified } from "./verified"
 
 const STATES = ["BR", "UP", "JH"]
 
@@ -40,6 +42,8 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   const [err, setErr] = useState<unknown>(null)
   const [onlyConfirmed, setOnlyConfirmed] = useState(false)
   const [hideRapid, setHideRapid] = useState(false)
+  const [onlyVerified, setOnlyVerified] = useState(false)
+  const verified = useVerified()
   const [corrections, setCorrections] = useState<Correction[]>([])
   const scope = useRef({ state, from: monthToNum(fromMonth), to: monthToNum(toMonth) })
   scope.current = { state, from: monthToNum(fromMonth), to: monthToNum(toMonth) }
@@ -111,8 +115,16 @@ export function Dashboard({ initialState }: { initialState?: string }) {
     const rs = [...reports.values()]
       .filter((r) => !onlyConfirmed || validWitnesses(r, ws).length > 0)
       .filter((r) => !hideRapid || !rapid.has(r.key.toLowerCase()))
+      .filter((r) => !onlyVerified || !!verified?.has(r.creator.toLowerCase()))
     return shopStats(rs, ws, withdrawnKeys(rs, corrections))
-  }, [reports, witnesses, onlyConfirmed, hideRapid, rapid, corrections])
+  }, [reports, witnesses, onlyConfirmed, hideRapid, rapid, corrections, onlyVerified, verified])
+  const verifiedByShop = useMemo(() => {
+    const m = new Map<string, number>()
+    if (!reports || !verified) return m
+    const all = [...reports.values()]
+    for (const r of dedupeReports(all, withdrawnKeys(all, corrections))) if (verified.has(r.creator.toLowerCase())) m.set(r.shopId, (m.get(r.shopId) ?? 0) + 1)
+    return m
+  }, [reports, verified, corrections])
 
   return (
     <>
@@ -147,6 +159,9 @@ export function Dashboard({ initialState }: { initialState?: string }) {
         <label class="inline check">
           <input type="checkbox" checked={hideRapid} onChange={(e) => setHideRapid(e.currentTarget.checked)} /> {t("hideRapid")}
         </label>
+        <label class="inline check">
+          <input type="checkbox" checked={onlyVerified} onChange={(e) => setOnlyVerified(e.currentTarget.checked)} /> {t("onlyVerified")}
+        </label>
       </section>
       {err ? (
         <ErrorBox error={err} />
@@ -168,6 +183,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
                   <IssueCounts counts={s.issueCounts} />
+                  {(verifiedByShop.get(s.shopId) ?? 0) > 0 && <span class="tag ok-tag">{t("verifiedRow", { n: verifiedByShop.get(s.shopId) ?? 0 })}</span>}
                   {!hideRapid && (rapidByShop.get(s.shopId) ?? 0) > 0 && <span class="tag warn">{t("rapidBadge", { n: rapidByShop.get(s.shopId) ?? 0 })}</span>}
                   <div class="small muted">
                     {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {f.kg(s.totalShortfallG)} {t("shortfall")} · {f.district(s.district)}

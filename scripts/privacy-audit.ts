@@ -27,6 +27,13 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   },
   "tolmol.witness": { ...COMMON, type: oneOf("tolmol.witness"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), item: oneOf("rice", "wheat", "millet", "total") },
   "tolmol.correction": { ...COMMON, type: oneOf("tolmol.correction"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), action: oneOf("withdraw") },
+  // Verification (simple version): the registry names verifiers; a verifier attests a device. No card data, only a
+  // keyed fingerprint (card_tag) that cannot be turned back into the card.
+  "tolmol.verifier": { project: oneOf("tolmol"), schema_version: oneOf(1), type: oneOf("tolmol.verifier"), verifier: re(/^0x[0-9a-f]{40}$/), synthetic: oneOf(true) },
+  "tolmol.attestation": {
+    project: oneOf("tolmol"), schema_version: oneOf(1), type: oneOf("tolmol.attestation"), device: re(/^0x[0-9a-f]{40}$/), state: re(STATE), shop_id: re(SHOP),
+    card_tag: re(HEX32), method: oneOf("test_card", "camp"), verified_on: any, synthetic: oneOf(true, false),
+  },
 }
 
 const r = httpReader()

@@ -74,6 +74,13 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    the device that wrote a report can withdraw it.
 8. **Check the evidence.** The **Verify** page takes an exported JSON evidence file and checks every row against Arkiv, so an
    official handed an evidence file can tell whether it was edited.
+9. **Verified card holders (demo with test cards).** Anyone can make a device ID, so a phone can be verified with a
+   ration card: a verifier checks the card's signature once and publishes "this phone is a verified card holder" on
+   Arkiv. Reports and confirmations then show **✓ verified card holder**, shop pages say how many reports are verified,
+   and the dashboard can count only verified reports. One card verifies one phone. The demo uses **synthetic test
+   cards** ([`#/test-cards`](https://amannx21.github.io/Tolmol/#/test-cards)) signed by a test key; in future the card is
+   the DigiLocker ration card ([`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md)). Verification is optional, so
+   nobody is silenced.
 
 **Two modes, chosen on first visit and switchable anytime:**
 
@@ -128,6 +135,7 @@ Every feature below changes something the user sees. Permalinks to exact lines: 
 | `createdBy()` | Shops are trusted only from the registry wallet; dedupe checks use the device as creator | Fake shops never appear in the picker; one report per device per shop-month-grain | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `$creator` in the UX | Every report and witness shows its device address with an explorer link | Authorship anyone can verify, that no one can forge | [`ReportView.tsx`](apps/web/src/ReportView.tsx) |
 | `$creator` as the trust rule | A withdrawal (`tolmol.correction`) counts only if its creator wrote the report | A dealer cannot "withdraw" a card holder's complaint | [`rules.ts`](packages/tolmol-sdk/src/rules.ts) |
+| `createdBy()` chain of trust | Registry names verifiers (`tolmol.verifier`); a device is verified only by an attestation from a named verifier; one device per card | The "✓ verified card holder" badge cannot be forged by writing the same fields | [`verify.ts`](packages/tolmol-sdk/src/verify.ts), [`verifier.ts`](apps/relayer/src/verifier.ts) |
 | Cursor pagination + pinned block | Every walk is `.limit(200).atBlock(head)` with `next()` | Consistent pages; dashboards beyond 200 reports | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `atBlock` historical reads | "Show as it was at block N" on every shop page and in exports | Evidence of what was public at a point in time | [`ShopPage.tsx`](apps/web/src/ShopPage.tsx) |
 | Creation flags | Reports and witnesses: `readonly` + `permissionlessExtension` (the reporter can switch extension off); flags are read back with `select({ creationFlags })` | Nobody can edit; the community can keep evidence alive unless the reporter wants it to expire on time | [`writes.ts`](packages/tolmol-sdk/src/writes.ts), [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
@@ -198,6 +206,8 @@ creator and transaction, so the evidence can be re-checked even after entities e
 | `0xAe8DCc161d9F27fACFE6D48A8B4DF148D64ab9E3` | Witness A in tests |
 | `0xA7EF19b057E28BcB7048a202992423Da937Df140` | Witness B in tests |
 | `0x357A30b18BF4020F243186d76dBdD44b830119e2` | Relayer: sends test-GLM drips only, never creates entities |
+| `0x1C58335A9C5c5a3440f8018984cf9069b7C9408B` | Card verifier: creates `tolmol.attestation` entities (named by the registry's `tolmol.verifier`) |
+| `0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f` | TEST card issuer: signs the synthetic test ration cards; never writes to Arkiv |
 | 10 seed device wallets | Synthetic beneficiaries; listed in [`arkiv/wallets.md`](arkiv/wallets.md) and `docs/seed-manifest.json` |
 
 Real users' device wallets are created in their browsers. To list every wallet that created a report, run the query
@@ -237,7 +247,8 @@ evidence, a rate-limited relayer that never signs data, no secrets or personal d
 many phones are hard to stop, so Tolmol makes them visible: each shop page lists **patterns to look at** (3 or more
 phones filing within one minute, rapid confirmations, one-off devices), worked out from public block numbers and
 `$creator`, and the dashboard can leave burst reports out. On the live data it flags exactly the shops our seed script
-filled in bursts. See the threat model below for what is still open.
+filled in bursts. And a phone can be **verified with a ration card** (demo: synthetic test cards): the badge counts only
+from verifiers named by the registry, one card per phone, so a fake account cannot claim it. See the threat model below for what is still open.
 
 **Open Source.** MIT. A documented data contract ([`arkiv/schema.md`](arkiv/schema.md), and as JSON Schema in
 [`docs/data-contract.schema.json`](docs/data-contract.schema.json)), a reusable [`tolmol-sdk`](packages/tolmol-sdk)
@@ -281,7 +292,10 @@ database: [`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md) (design, no
 - Testnet only. Gas comes from the faucet or our relayer.
 - Anonymous Arkiv reads are capped at about 100 queries per IP per ~13 minutes (friction F13). The app reads
   per viewer, so this is per person, but heavy use from one network can hit it.
-- No proof that a device belongs to a real card holder at that shop (see the threat model). Design for an optional,
+- Verification uses **synthetic test cards** in this demo, and the 40 public test cards let anyone verify a phone. In
+  production the card would come from the state (DigiLocker). In this simple version the verifier could link a
+  verified phone to its card (threat model T26); the anonymous design removes that.
+- Unverified devices are still allowed (on purpose), so there is no proof that every device belongs to a real card holder (see the threat model). Design for an optional,
   anonymous "verified card holder" badge, built on Arkiv entities with no identity data: [`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md) (not built).
 - Hindi strings were drafted with an AI assistant and need native review.
 - The trust filter ("count only confirmed reports") is a view, not proof: confirmations can also come from sybil devices.

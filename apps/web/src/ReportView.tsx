@@ -22,6 +22,7 @@ import { usePrefs } from "./prefs"
 import { useFmt, useLang } from "./i18n"
 import { IssueList, NextSteps, PrivacyPanel } from "./extras"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
+import { useVerified, VerifiedBadge } from "./verified"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const { t } = useLang()
@@ -34,6 +35,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const isNew = location.hash.includes("new=1")
+  const verified = useVerified()
   const me = device().account.address
 
   const load = async () => {
@@ -147,7 +149,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             <a class="mono" href={explorerAddressUrl(r.creator)} target="_blank" rel="noopener">
               {short(r.creator)}
             </a>
-            {mine && ` (${t("you")}${separate ? ` · ${t("separateIdShort")}` : ""})`}
+            {mine && ` (${t("you")}${separate ? ` · ${t("separateIdShort")}` : ""})`} <VerifiedBadge a={verified?.get(r.creator.toLowerCase())} />
           </dd>
           <dt>{t("createdBlock")}</dt>
           <dd class="mono">{r.createdAt.toString()}</dd>
@@ -176,6 +178,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
               <a class="mono" href={explorerAddressUrl(w.creator)} target="_blank" rel="noopener">
                 {short(w.creator)}
               </a>{" "}
+              <VerifiedBadge a={verified?.get(w.creator.toLowerCase())} />{" "}
               · <span class="mono small">#{w.createdAt.toString()}</span> · <Explorer k={w.key} />
               {!validKeys.has(w.key.toLowerCase()) && (
                 <span class="tag">{w.creator.toLowerCase() === r.creator.toLowerCase() ? t("selfWitnessIgnored") : t("duplicateIgnored")}</span>

@@ -10,9 +10,13 @@
 //  - at most PER_IP_PER_DAY drips per client IP per day, and PER_DAY_TOTAL drips per day overall,
 //  - the relayer keeps a reserve and refuses when its own balance is low.
 // The rate-limit store holds hashed IPs for 24 hours only. Nothing about the requester is written to Arkiv.
+//
+// POST /verify is the separate card verifier (src/verifier.ts), signed by its own wallet, enabled only when its env
+// vars are set. It writes one attestation per card; the drip wallet still never writes Tolmol data.
 import { tiramisu } from "@arkiv-network/sdk/chains"
 import { createPublicClient, createWalletClient, formatEther, http, isAddress, parseEther, type Hex } from "viem"
 import { privateKeyToAccount } from "viem/accounts"
+import { makeVerifier, VERIFY_PER_IP_PER_DAY, type VerifierEnv } from "./verifier.js"
 
 export const DRIP_WEI = parseEther("0.005") // about 30 report writes at today's Tiramisu gas price
 export const MAX_RECIPIENT_BALANCE = parseEther("0.002")
@@ -36,7 +40,7 @@ export class MemoryStore implements CounterStore {
   }
 }
 
-export type RelayerEnv = {
+export type RelayerEnv = VerifierEnv & {
   RELAYER_PRIVATE_KEY: string
   /** Comma-separated list of allowed browser origins, or "*". */
   ALLOWED_ORIGINS?: string
@@ -74,6 +78,7 @@ export function makeHandler(env: RelayerEnv, store: CounterStore) {
   const wallet = createWalletClient({ chain: tiramisu, transport, account })
   // One drip at a time per instance, so our own transactions never collide on the nonce.
   let queue: Promise<unknown> = Promise.resolve()
+  const verifier = makeVerifier(env)
 
   return async function handle(req: Request): Promise<Response> {
     const url = new URL(req.url)
@@ -84,7 +89,23 @@ export function makeHandler(env: RelayerEnv, store: CounterStore) {
 
     if (req.method === "GET" && (path === "/" || path === "/health" || path === "/api")) {
       const bal = await pub.getBalance({ address: account.address })
-      return json(200, { ok: true, relayer: account.address, balanceGlm: formatEther(bal), dripGlm: formatEther(DRIP_WEI), network: "tiramisu", chainId: tiramisu.id }, h)
+      return json(200, { ok: true, relayer: account.address, balanceGlm: formatEther(bal), dripGlm: formatEther(DRIP_WEI), network: "tiramisu", chainId: tiramisu.id, verifier: verifier?.address ?? null }, h)
+    }
+
+    if (req.method === "POST" && path === "/verify") {
+      if (!verifier) return json(503, { error: "card verifier not configured" }, h)
+      let body: { card?: unknown; device?: unknown; sig?: unknown }
+      try {
+        body = (await req.json()) as typeof body
+      } catch {
+        return json(400, { error: "body must be JSON: {card, device, sig}" }, h)
+      }
+      const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+      const day = new Date().toISOString().slice(0, 10)
+      if ((await store.incr(`verify:${day}:${await sha256Hex(`${env.IP_SALT ?? "tolmol"}:${ip}`)}`, 86_400)) > VERIFY_PER_IP_PER_DAY)
+        return json(429, { error: "daily verification limit for this network reached" }, h)
+      const r = await verifier.verify(body)
+      return json(r.status, r.body, h)
     }
 
     if (req.method !== "POST" || (path !== "/drip" && path !== "/api")) return json(404, { error: "not found" }, h)

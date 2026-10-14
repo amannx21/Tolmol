@@ -69,7 +69,10 @@ synthetic.
   only from the report's own device, every derived number recomputed by readers, and a Verify page that checks an
   exported evidence file row by row against the chain. Because one person with many phones is hard to stop, each shop
   page shows public-data patterns (3 or more phones filing within one minute, rapid confirmations, one-off devices) and
-  the dashboard can leave burst reports out. On the live data it flags exactly the shops our seed script filled.
+  the dashboard can leave burst reports out. On the live data it flags exactly the shops our seed script filled. A phone
+  can also be verified with a ration card (synthetic test cards in the demo; DigiLocker in future): the "✓ verified card
+  holder" badge counts only from verifiers the registry names, one card per phone, and the dashboard can count only
+  verified reports.
 
 ## Organiser questions (private to judges)
 
@@ -122,6 +125,9 @@ synthetic.
       Arkiv SDK and raw totals (on 2026-10-14 it and the app's rules both gave 125.4 kg short of 375 kg, 33.44%).
    7. Privacy: `node --import tsx scripts/privacy-audit.ts` checks every Tolmol entity against the data contract.
    8. Evidence: export a shop's JSON evidence, edit a number, and load it on the Verify page (`#/verify`): that row fails.
+   9. Verified card holders: open https://amannx21.github.io/Tolmol/#/test-cards, tap "Use on this phone" on any card,
+      then "Verify this phone". The About page then says the phone is verified, and its reports show ✓. The same card
+      in another browser profile is refused (one card, one phone).
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.
