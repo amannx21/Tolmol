@@ -22,11 +22,21 @@ describe("issues (what went wrong)", () => {
   it("accepts known flags and rejects unknown bits", () => {
     expect(validateReportInput({ ...ok, issues: ISSUES.charged_money | ISSUES.no_receipt }, NOW).issues).toBe(65)
     expect(validateReportInput(ok, NOW).issues).toBe(0)
-    expect(() => validateReportInput({ ...ok, issues: 128 }, NOW)).toThrow(/issues/)
+    expect(() => validateReportInput({ ...ok, issues: 1 << 17 }, NOW)).toThrow(/issues/)
     expect(() => validateReportInput({ ...ok, issues: -1 }, NOW)).toThrow(/issues/)
     expect(() => validateReportInput({ ...ok, issues: 1.5 }, NOW)).toThrow(/issues/)
-    expect(ALL_ISSUES_MASK).toBe(127)
+    expect(ALL_ISSUES_MASK).toBe((1 << 17) - 1)
     expect(issueList(ISSUES.shop_closed | ISSUES.bad_quality)).toEqual(["shop_closed", "bad_quality"])
+  })
+  it("store the first 7 flags in issues and the rest in issues2; old readers still count the report", () => {
+    const mask = ISSUES.no_receipt | ISSUES.slip_mismatch | ISSUES.threatened
+    const attrs = reportAttributes({ ...ok, issues: mask }, { state: "BR", district: "gaya" }, { synthetic: true, reportedAtMs: 1n })
+    expect((attrs.issues as { value: number }).value).toBe(ISSUES.no_receipt)
+    expect((attrs.issues2 as { value: number }).value).toBe((ISSUES.slip_mismatch | ISSUES.threatened) >> 7)
+    const raw = { key: `0x${"ab".repeat(32)}`, creator: `0x${"cd".repeat(20)}`, owner: `0x${"00".repeat(19)}01`, createdAt: 1n, expiresAt: 2n, attributes: attrs } as unknown as RawEntity
+    expect(parseReport(raw)?.issues).toBe(mask)
+    // no issues2 attribute at all when only the first 7 flags are used (fewer attributes on the explorer)
+    expect("issues2" in reportAttributes({ ...ok, issues: ISSUES.no_receipt }, { state: "BR", district: "gaya" }, { synthetic: true, reportedAtMs: 1n })).toBe(false)
   })
   it("are stored in one i32 attribute and parsed back; old reports without it read as 0", () => {
     const attrs = reportAttributes({ ...ok, issues: 6 }, { state: "BR", district: "gaya" }, { synthetic: true, reportedAtMs: 1_791_881_241_095n })

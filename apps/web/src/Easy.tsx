@@ -2,16 +2,17 @@ import { ActionIcon } from "./ActionIcon"
 // Easy mode: one question per screen, big buttons, numbers set with +/- instead of typing, read aloud,
 // no blockchain words, gas handled silently. Uses exactly the same SDK calls (and safeguards) as Full mode.
 import { useEffect, useMemo, useState } from "preact/hooks"
-import { addMonths, currentMonth, DuplicateError, NFSA, type Shop } from "tolmol-sdk"
+import { addMonths, currentMonth, DuplicateError, ISSUE_GROUPS, ISSUES, NFSA, REPORT_LIFETIME_CHOICES, type Shop } from "tolmol-sdk"
 import { ensureGas, fileReport, GasError, SeparateIdError } from "./arkiv"
-import { STATE_NAMES, useFmt, useLang } from "./i18n"
-import { setPrefs, usePrefs } from "./prefs"
+import { STATE_NAMES, useFmt, useLang, type Key } from "./i18n"
+import { getPrefs, setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { speak } from "./speak"
 import { IssueList, IssuePicker, NextSteps } from "./extras"
 import { ErrorBox, Loading, loadShops } from "./ui"
 import { HomeFlow } from "./HomeFlow"
+import { RoleHub } from "./roleUI"
 import { LandingHero } from "./Landing"
 import { AmountPicker } from "./AmountPicker"
 import { ReportIntro } from "./ReferencePhotos"
@@ -57,16 +58,23 @@ export function Welcome() {
 // ---------------------------------------------------------------- home
 export function EasyHome() {
   return (
-    <><LandingHero /><HomeFlow easy /></>
+    <><LandingHero /><RoleHub /><HomeFlow easy /></>
   )
 }
 
 // ---------------------------------------------------------------- report wizard
-type Step = "shop" | "month" | "card" | "members" | "entitled" | "received" | "issues" | "review" | "done"
+type Step = "shop" | "month" | "card" | "members" | "entitled" | "received" | "issues" | "issues_money" | "issues_access" | "issues_conduct" | "review" | "done"
+/** The "what else went wrong" questions, one screen each, in this order. */
+const ISSUE_STEPS: { step: Step; group: (typeof ISSUE_GROUPS)[number]["id"] }[] = [
+  { step: "issues", group: "grain" },
+  { step: "issues_money", group: "money" },
+  { step: "issues_access", group: "access" },
+  { step: "issues_conduct", group: "conduct" },
+]
 
 function ReportProgress({ step }: { step: Step }) {
   const { lang } = useLang()
-  const stage = step === "shop" || step === "month" ? 0 : step === "issues" ? 2 : step === "review" ? 3 : 1
+  const stage = step === "shop" || step === "month" ? 0 : step.startsWith("issues") ? 2 : step === "review" ? 3 : 1
   const labels = lang === "hi" ? ["दुकान और महीना", "राशन की मात्रा", "अन्य समस्याएँ", "जाँच"] : ["Shop & month", "Grain quantity", "Other issues", "Review"]
   return <div class="report-progress" aria-label={lang === "hi" ? "रिपोर्ट के चरण" : "Report stages"}>
     <div class="progress-caption"><span>{labels[stage]}</span><span>{stage + 1} / {labels.length}</span></div>
@@ -92,6 +100,10 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   const [receivedG, setReceivedG] = useState(20_000)
   const [amountValid, setAmountValid] = useState(true)
   const [issues, setIssues] = useState(0)
+  // "More options" on the review screen: the same choices as the full form, so Easy mode loses nothing.
+  const [lifetimeDays, setLifetimeDays] = useState(90)
+  const [allowExtension, setAllowExtension] = useState(true)
+  const [separateId, setSeparateId] = useState(() => getPrefs().separateIds)
   const [busy, setBusy] = useState<null | "preparing" | "sending">(null)
   const [error, setError] = useState<string | null>(null)
   const [queued, setQueued] = useState(false)
@@ -288,17 +300,23 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
     )
   }
 
-  if (step === "issues") {
+  const issueStep = ISSUE_STEPS.findIndex((x) => x.step === step)
+  if (issueStep >= 0) {
+    const { group } = ISSUE_STEPS[issueStep]!
+    const names = ISSUE_GROUPS.find((g) => g.id === group)!.issues
+    const picked = names.some((n) => (issues & ISSUES[n]) !== 0)
+    const title = t(`issueGroup_${group}` as Key)
     return (
       <section class="card easy report-step" key={step}>
         <ReportProgress step={step} />
         <BackBtn />
-        <h2>{t("issuesTitle")}</h2>
-        <Say text={`${t("issuesTitle")} ${t("issuesHelp")}`} />
-        <p class="small">{t("issuesHelp")}</p>
-        <IssuePicker value={issues} onChange={setIssues} big />
-        <button class="big-action" onClick={() => next("review")}>
-          {issues ? `${t("next")} →` : `${t("issuesNone")} →`}
+        <p class="small muted">{issueStep + 1} / {ISSUE_STEPS.length}</p>
+        <h2>{title}</h2>
+        <Say text={`${title} ${t("issueGroupHelp")}`} />
+        <p class="small">{t("issueGroupHelp")}</p>
+        <IssuePicker value={issues} onChange={setIssues} big only={names} />
+        <button class="big-action" onClick={() => next(ISSUE_STEPS[issueStep + 1]?.step ?? "review")}>
+          {picked ? `${t("next")} →` : `${t("issuesNone")} →`}
         </button>
       </section>
     )
@@ -316,7 +334,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
       }
       try {
         setBusy("sending")
-        const res = await fileReport(input, shop)
+        const res = await fileReport(input, shop, { lifetimeDays, allowExtension, separateId })
         setDoneKey(res.entityKey)
         next("done")
       } catch (e) {
@@ -344,6 +362,23 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         </div>
         {shortfall === 0 && <p class="small">{t("noShortfall")}</p>}
         <IssueList mask={issues} />
+        <details class="more-options">
+          <summary>{t("moreOptions")}</summary>
+          <p class="small">{t("lifetimeTitle")}</p>
+          <div class="row wrap">
+            {REPORT_LIFETIME_CHOICES.map((d) => (
+              <label class="inline">
+                <input type="radio" name="easy-lifetime" checked={lifetimeDays === d} onChange={() => setLifetimeDays(d)} /> {t("lifetimeDays", { n: d })}
+              </label>
+            ))}
+          </div>
+          <label class="inline check">
+            <input type="checkbox" checked={allowExtension} onChange={(e) => setAllowExtension(e.currentTarget.checked)} /> {t("allowExtend")}
+          </label>
+          <label class="inline check">
+            <input type="checkbox" checked={separateId} onChange={(e) => setSeparateId(e.currentTarget.checked)} /> {t("separateIdLabel")}
+          </label>
+        </details>
         <p class="notice">{t("permanentWarning")}</p>
         {queued ? (
           <p class="ok" role="status">{t("queued")}</p>

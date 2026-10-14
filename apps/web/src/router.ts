@@ -12,6 +12,8 @@ export type Route =
   | { name: "card"; c: string }
   | { name: "testCards" }
   | { name: "designPreview" }
+  | { name: "me" }
+  | { name: "tour" }
 
 export function parse(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#/, "").split("?")
@@ -20,6 +22,10 @@ export function parse(hash: string): Route {
   switch (parts[0]) {
     case "design-preview":
       return { name: "designPreview" }
+    case "me":
+      return { name: "me" }
+    case "tour":
+      return { name: "tour" }
     case "report":
       return { name: "report", shopId: q.get("shop") ?? undefined, view: q.get("v") === "full" ? "full" : q.get("v") === "easy" ? "easy" : undefined }
     case "dashboard":

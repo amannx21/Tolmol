@@ -116,6 +116,11 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
     setBusy(true)
     setMsg(null)
     try {
+      // Fetch free test gas first if this phone has none (Easy mode did this; Full mode now does too).
+      if (!(await ensureGas())) {
+        setMsg({ ok: false, text: t("gasFailed") })
+        return
+      }
       await corroborate(reader, device().writer, r.key, { synthetic: true })
       setMsg({ ok: true, text: t("corroborated") })
       await load()

@@ -63,9 +63,12 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    **"Complaint to the DGRO"** writes a complaint to the District Grievance Redressal Officer under Section 15 of
    the National Food Security Act, with the shop's shortfall and issue counts. Each shop page also has a QR code to
    share, so card holders at the shop can open it and confirm reports.
-5. **Say what else went wrong.** Optional big buttons: asked to pay money, fingerprint/OTP failed, thumb taken but
-   grain not given, shop closed, bad grain, card from another state refused (One Nation One Ration Card), no
-   receipt. Stored as one 7-bit number, never as text. Shop pages and the dashboard count them.
+5. **Say what else went wrong: four short questions, 17 answers.** Grain (thumb taken but grain not given, the
+   machine slip shows more than you got, not weighed in front of you, a different grain, a family member's share left
+   out, bad grain); money (asked to pay, made to buy dal/salt/oil/soap, no receipt); getting the ration (fingerprint or
+   OTP failed, shop closed, 3+ trips, told it "lapsed", other-state card refused); and how you were treated (card kept
+   by the dealer, scolded or threatened, no display board). Each is a problem card holders report in practice
+   ([`docs/SOURCES.md`](docs/SOURCES.md) §13). Stored only as two small numbers, never as text.
 6. **Know what to do next.** After a report: call the free food helpline **1967**, print the DGRO complaint or the
    RTI. If a card from another state was refused, it adds that under One Nation One Ration Card the ration can be
    taken at any ration shop in India.
@@ -99,7 +102,15 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    11(1) and 13. Actions are sealed, so nobody, the department included, can quietly remove them. A shop leaves the
    list only when its numbers improve, so recording an action cannot whitewash a shop, and inaction stays visible.
 
-**Two modes, chosen on first visit and switchable anytime:**
+**One site for everyone.** Card holders, shop dealers, officials and visitors use the same link and the same menu
+(Home, Shops, My activity, Verify, Get verified, About, Report). The home page shows what each person can do: a
+verified dealer sees "N reports waiting for your answer", a verified official sees the attention list, a card holder
+sees the status of their reports. Roles come from verification records on Arkiv, so they cannot be faked. **My
+activity** lists this phone's reports with confirmations, the shop's answer and whether it was fixed. **See how it
+works** (`#/tour`) walks through the whole story in six steps.
+
+**Two modes, chosen on first visit and switchable anytime.** Easy mode changes how things look, never what you can
+do: every page and option is in both.
 
 - **Easy (आसान)** is for card holders who are not used to apps. It asks one question per screen with big buttons:
   shop (remembered after the first time), month, card type, family size, then the amount received set with

@@ -4,7 +4,7 @@
 //
 // Legal basis (Right to Information Act, 2005): s.6(1) request in English, Hindi or the official language;
 // s.6(2) no reasons needed; s.7(1) reply within 30 days; s.7(5) no fee for persons below the poverty line.
-import { dedupeReports, explorerEntityUrl, formatBp, formatKg, issueList, shopStats, validWitnesses, type Report, type Shop, type Witness } from "tolmol-sdk"
+import { dedupeReports, explorerEntityUrl, formatBp, formatKg, issueList, shopStats, validWitnesses, type Report, type Shop, type Witness, type IssueName } from "tolmol-sdk"
 import { districtName, monthName, type Lang } from "./i18n"
 
 export type RtiInput = {
@@ -104,7 +104,7 @@ Full record: ${input.pageUrl}
 ${synthetic ? "\nNote: this demo shop is SYNTHETIC. For a real application, write your real shop's number.\n" : ""}`
 }
 
-const ISSUE_TEXT: Record<Lang, Record<string, string>> = {
+const ISSUE_TEXT: Record<Lang, Record<IssueName, string>> = {
   en: {
     charged_money: "money was demanded for grain that is free",
     auth_failed: "authentication failed and no grain was given",
@@ -113,6 +113,16 @@ const ISSUE_TEXT: Record<Lang, Record<string, string>> = {
     bad_quality: "the grain was of bad quality",
     portability_refused: "a ration card from another place was refused",
     no_receipt: "no receipt was given",
+    slip_mismatch: "the machine slip recorded more grain than was handed over",
+    no_weighing: "the grain was not weighed in front of the card holder",
+    tied_sale: "card holders were made to buy other items to get their ration",
+    card_kept: "the dealer kept the ration card, which clause 10(3) of the TPDS (Control) Order 2015 forbids",
+    no_board: "there was no board showing entitlement, price, timings and stock (clause 10(4)(ii))",
+    told_lapsed: "card holders were told that their ration had lapsed or not arrived",
+    many_trips: "card holders had to come three or more times",
+    wrong_grain: "a different grain was given, or one grain was not given at all",
+    threatened: "card holders were scolded or threatened for asking",
+    member_left_out: "a family member's share was left out",
   },
   hi: {
     charged_money: "मुफ़्त अनाज के लिए पैसे माँगे गए",
@@ -122,6 +132,16 @@ const ISSUE_TEXT: Record<Lang, Record<string, string>> = {
     bad_quality: "अनाज ख़राब गुणवत्ता का था",
     portability_refused: "दूसरी जगह का राशन कार्ड नहीं माना गया",
     no_receipt: "रसीद नहीं दी गई",
+    slip_mismatch: "मशीन की पर्ची में दिए गए अनाज से ज़्यादा दर्ज किया गया",
+    no_weighing: "अनाज कार्डधारक के सामने नहीं तौला गया",
+    tied_sale: "राशन लेने के लिए कार्डधारकों को दूसरी चीज़ें ख़रीदने को मजबूर किया गया",
+    card_kept: "डीलर ने राशन कार्ड अपने पास रख लिया, जो TPDS (नियंत्रण) आदेश 2015 के खंड 10(3) में मना है",
+    no_board: "हक़, दाम, समय और स्टॉक बताने वाला बोर्ड नहीं था (खंड 10(4)(ii))",
+    told_lapsed: "कार्डधारकों से कहा गया कि उनका राशन लैप्स हो गया या आया नहीं",
+    many_trips: "कार्डधारकों को तीन या ज़्यादा बार आना पड़ा",
+    wrong_grain: "दूसरा अनाज दिया गया, या कोई अनाज दिया ही नहीं गया",
+    threatened: "पूछने पर कार्डधारकों को डाँटा या धमकाया गया",
+    member_left_out: "परिवार के किसी सदस्य का हिस्सा नहीं दिया गया",
   },
 }
 

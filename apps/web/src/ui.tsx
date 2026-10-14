@@ -13,13 +13,16 @@ import { ActionIcon } from "./ActionIcon"
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
   const { t, toggle, lang } = useLang()
   const [prefs, setPrefs] = usePrefs()
+  // The same pages in Easy and Full mode: Easy changes how things look, never what you can do.
   const nav: [Route["name"], string, string][] = [
     ["home", "#/", t("navHome")],
     ["dashboard", "#/dashboard", t("navDashboard")],
+    ["me", "#/me", t("navMe")],
+    ["verify", "#/verify", t("navVerify")],
+    ["testCards", "#/test-cards", t("navGetVerified")],
     ["about", "#/about", t("navAbout")],
+    ["report", "#/report", t("navReport")],
   ]
-  if (prefs.mode === "full") nav.splice(2, 0, ["verify", "#/verify", t("navVerify")])
-  nav.push(["report", "#/report", t("navReport")])
   return (
     <>
       <a class="skip-link" href="#main-content" onClick={(event) => {
@@ -59,7 +62,7 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
       <nav class="tabs" aria-label="Main">
         {nav.map(([name, href, label]) => (
           <a class={name === "report" ? "nav-report" : undefined} href={href} aria-current={route.name === name ? "page" : undefined}>
-            <ActionIcon name={name === "home" ? "home" : name === "dashboard" ? "dashboard" : name === "verify" ? "check" : name === "about" ? "info" : "report"} />{label}
+            <ActionIcon name={name === "home" ? "home" : name === "dashboard" ? "dashboard" : name === "verify" ? "check" : name === "about" ? "info" : name === "me" ? "id" : name === "testCards" ? "shield" : "report"} />{label}
           </a>
         ))}
       </nav>

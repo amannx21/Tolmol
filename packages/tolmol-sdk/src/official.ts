@@ -136,7 +136,7 @@ export function strongestAction(list: readonly OfficialRecord[] | undefined): Of
   return best
 }
 
-export const ATTENTION_REASONS = ["high_shortfall", "confirmed", "charged_money", "not_fixed", "unanswered", "verified"] as const
+export const ATTENTION_REASONS = ["high_shortfall", "slip_mismatch", "charged_money", "threatened", "not_fixed", "confirmed", "unanswered", "verified"] as const
 export type AttentionReason = (typeof ATTENTION_REASONS)[number]
 export type Attention = { shopId: string; district: string; reasons: AttentionReason[]; score: number; latest: OfficialRecord | null }
 
@@ -144,7 +144,9 @@ export type Attention = { shopId: string; district: string; reasons: AttentionRe
  * Shops that need official attention, worst first. Rules are fixed and public, so anyone can check the list:
  *  - high_shortfall: grain-weighted shortfall >= 20% over 3+ reports from 2+ devices
  *  - confirmed: 2+ reports confirmed by other devices
- *  - charged_money: anyone reported being charged for free grain
+ *  - slip_mismatch: anyone reported that the machine slip shows more than they got (a sign of diversion)
+ *  - charged_money: anyone reported being charged for free grain, or made to buy other items to get it
+ *  - threatened: anyone reported being scolded or threatened for asking
  *  - not_fixed: a reporter said the shop's fix did not happen
  *  - unanswered: 3+ shortfall reports the shop has not answered
  *  - verified: 2+ reports from verified card holders (stronger evidence)
@@ -161,14 +163,16 @@ export function needsAttention(
     const a = answers.get(s.shopId)
     const reasons: AttentionReason[] = []
     if (s.shortfallBp >= 2000 && s.reports >= 3 && s.reporters >= 2) reasons.push("high_shortfall")
-    if (s.corroborated >= 2) reasons.push("confirmed")
-    if (s.issueCounts.charged_money > 0) reasons.push("charged_money")
+    if (s.issueCounts.slip_mismatch > 0) reasons.push("slip_mismatch")
+    if (s.issueCounts.charged_money > 0 || s.issueCounts.tied_sale > 0) reasons.push("charged_money")
+    if (s.issueCounts.threatened > 0) reasons.push("threatened")
     if ((a?.notFixed ?? 0) > 0) reasons.push("not_fixed")
+    if (s.corroborated >= 2) reasons.push("confirmed")
     if (s.shortReports - (a?.answered ?? 0) >= 3) reasons.push("unanswered")
     if ((verifiedReports.get(s.shopId) ?? 0) >= 2) reasons.push("verified")
     // Evidence of a problem is needed; supporting signals alone do not put a shop on the list.
-    if (!reasons.some((r) => r === "high_shortfall" || r === "charged_money" || r === "not_fixed")) continue
-    const weight: Record<AttentionReason, number> = { high_shortfall: 3, charged_money: 3, not_fixed: 2, confirmed: 2, unanswered: 1, verified: 1 }
+    if (!reasons.some((r) => r === "high_shortfall" || r === "slip_mismatch" || r === "charged_money" || r === "threatened" || r === "not_fixed")) continue
+    const weight: Record<AttentionReason, number> = { high_shortfall: 3, slip_mismatch: 3, charged_money: 3, threatened: 2, not_fixed: 2, confirmed: 2, unanswered: 1, verified: 1 }
     out.push({ shopId: s.shopId, district: s.district, reasons, score: reasons.reduce((t, r) => t + weight[r], 0) + Math.floor(s.shortfallBp / 1000), latest: strongestAction(actions.get(s.shopId)) })
   }
   return out.sort((x, y) => y.score - x.score || (x.shopId < y.shopId ? -1 : 1))

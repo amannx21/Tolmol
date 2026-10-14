@@ -10,6 +10,7 @@ import { useRoute } from "./router"
 import { ShopPage } from "./ShopPage"
 import { VerifyPage } from "./extras"
 import { CardPage, TestCardsPage } from "./verified"
+import { MyActivityPage, TourPage } from "./roleUI"
 import { useLang } from "./i18n"
 import { Layout } from "./ui"
 import { DesignPreview } from "./DesignPreview"
@@ -55,6 +56,12 @@ function App() {
       break
     case "about":
       page = <About />
+      break
+    case "me":
+      page = <MyActivityPage />
+      break
+    case "tour":
+      page = <TourPage />
       break
     case "card":
       page = <CardPage c={route.c} />
