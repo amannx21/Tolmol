@@ -65,8 +65,8 @@ card numbers are ever stored, and all demo data is synthetic.
    dedupe; cursor pagination pinned with `atBlock`; `atBlock` evidence view; `readonly` + `permissionlessExtension`;
    ownership transfer to `0x…dEaD`; per-type Entity Expiration; Lifetime Extension renewed by the 2nd confirmation;
    atomic batches with `predictEntityKeys`; `watchEntityEvents` over WebSocket with no `fromBlock`.
-   Code: https://github.com/amannx21/Tolmol/blob/[FILL final SHA]/docs/ARKIV_USAGE.md
-5. **Friction report** \*: https://github.com/amannx21/Tolmol/blob/[FILL final SHA]/arkiv/friction.md
+   Code: https://github.com/amannx21/Tolmol/blob/submission-v1/docs/ARKIV_USAGE.md
+5. **Friction report** \*: https://github.com/amannx21/Tolmol/blob/submission-v1/arkiv/friction.md
 6. **Wallet addresses** \*:
    - `0x6DBf6A36E27d814c58A05312913DCEEfc0dAe221`: registry, creates all synthetic shops
    - `0xDAD092E626A158220Aa2838d25CCD69F51de76BE`: reporter in tests; funds seed devices
@@ -74,7 +74,7 @@ card numbers are ever stored, and all demo data is synthetic.
    - `0x357A30b18BF4020F243186d76dBdD44b830119e2`: relayer, sends test-GLM drips only
    - 10 synthetic seed devices and every entity they created: `arkiv/wallets.md`, `docs/seed-manifest.json`
    - Per-device wallets of real visitors: run the README query and read `creator`
-7. **Schema** \*: https://github.com/amannx21/Tolmol/blob/[FILL final SHA]/arkiv/schema.md
+7. **Schema** \*: https://github.com/amannx21/Tolmol/blob/submission-v1/arkiv/schema.md
 8. **How judges can reproduce** \*:
    1. Run the curl in the README ("See the data without our website"). Every report has `owner = 0x…dEaD`.
    2. Open the live app https://amannx21.github.io/Tolmol/, go to Dashboard (Bihar). It ranks shops from `arkiv_query`; the badge says Live.
