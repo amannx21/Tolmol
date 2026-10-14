@@ -19,7 +19,7 @@ Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Open Source, 
 | Judged commit | **[FILL at deadline: SHA of tag `submission-v1`]** |
 
 > **All data is synthetic.** Every shop ID starts with `SYN-` and every seeded report carries `synthetic = true`.
-> Districts are real place names; the shops, dealers and reports are invented. No real person appears anywhere.
+> Districts are real place names; the shops, dealers and reports are invented. No real person appears in the demo records. Landing-page reference photographs show real PDS settings and carry separate photo credits.
 
 | Live dashboard | Hindi | Shop timeline | A report (owner `0x…dEaD`) |
 |---|---|---|---|
@@ -103,7 +103,7 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
 
 - **Easy (आसान)** is for card holders who are not used to apps. It asks one question per screen with big buttons:
   shop (remembered after the first time), month, card type, family size, then the amount received set with
-  large +/− buttons, so there is no typing. It reads each question aloud in Hindi with the phone's own voice.
+  large “1 kilo less” / “1 kilo more” buttons, with optional direct number entry. It reads each question aloud in Hindi with the phone's own voice.
   Test gas is fetched silently, and there are no blockchain words. After saving, a WhatsApp button asks
   neighbours to confirm, and confirming is one big "मुझे भी कम मिला ✓" button.
 - **Full (पूरा)** is for helpers, journalists and auditors: dashboard, per-grain form, explorer links, history

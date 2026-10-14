@@ -1,3 +1,4 @@
+import { ActionIcon } from "./ActionIcon"
 // Features added after reviewing documented PDS problems and other entries: issue tags, next steps
 // (helpline, grievance letter, RTI), the "what is public" panel, settings (server, new ID, offline reader)
 // and the evidence-file checker.
@@ -107,19 +108,19 @@ export function NextSteps({ shopId, mask = 0 }: { shopId: string; mask?: number 
         <li>
           {t("nextHelpline")}{" "}
           <a class="button secondary" href="tel:1967">
-            📞 {t("callHelpline")}
+            <ActionIcon name="phone" />{t("callHelpline")}
           </a>
         </li>
         <li>
           {t("nextComplaint")}{" "}
           <a class="button secondary" href={`#/shop/${shopId}?letter=complaint`}>
-            {t("draftComplaint")}
+            <ActionIcon name="letter" />{t("draftComplaint")}
           </a>
         </li>
         <li>
           {t("nextRti")}{" "}
           <a class="button secondary" href={`#/shop/${shopId}?letter=rti`}>
-            {t("openRti")}
+            <ActionIcon name="letter" />{t("openRti")}
           </a>
         </li>
         {(mask & ISSUES.portability_refused) !== 0 && <li>{t("nextPortability")}</li>}
@@ -192,24 +193,24 @@ export function Settings() {
         <input class="mono" placeholder={TIRAMISU_WS} value={ws} onInput={(e) => setWs(e.currentTarget.value.trim())} />
       </label>
       <div class="row wrap">
-        <button onClick={() => setRpc(/^https?:\/\//.test(http) ? http : null, /^wss?:\/\//.test(ws) ? ws : null)}>{t("save")}</button>
+        <button onClick={() => setRpc(/^https?:\/\//.test(http) ? http : null, /^wss?:\/\//.test(ws) ? ws : null)}><ActionIcon name="save" />{t("save")}</button>
         <button class="secondary" onClick={() => setRpc(null, null)}>
-          {t("resetDefault")}
+          <ActionIcon name="refresh" />{t("resetDefault")}
         </button>
       </div>
       <h3>{t("newId")}</h3>
       <p class="small">{t("newIdHelp")}</p>
       {confirmNewId ? (
-        <button onClick={newIdentity}>✓ {t("newId")}</button>
+        <button onClick={newIdentity}><ActionIcon name="id" />{t("newId")}</button>
       ) : (
         <button class="secondary" onClick={() => setConfirmNewId(true)}>
-          {t("newId")}
+          <ActionIcon name="id" />{t("newId")}
         </button>
       )}
       <h3>{t("mirrorLink")}</h3>
       <p class="small">{t("mirrorHelp")}</p>
       <a class="button secondary" href="mirror.html" download="tolmol-reader.html">
-        ⬇ tolmol-reader.html
+        <ActionIcon name="download" />tolmol-reader.html
       </a>{" "}
       <a href="mirror.html" target="_blank" rel="noopener">
         ↗

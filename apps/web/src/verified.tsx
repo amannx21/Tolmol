@@ -2,6 +2,7 @@
 // Everything is read from Arkiv in the browser: verifiers named by the registry, attestations by those verifiers.
 import qrcode from "qrcode-generator"
 import { useEffect, useState } from "preact/hooks"
+import { ActionIcon } from "./ActionIcon"
 import {
   decodeCard,
   deviceProofMessage,
@@ -140,6 +141,7 @@ export function CardPage({ c }: { c: string }) {
         </p>
       ) : (
         <button class="big-action" onClick={go} disabled={state === "busy"}>
+          <ActionIcon name="card" />
           {state === "busy" ? t("verifying") : t(isOfficial ? "verifyAsOfficial" : isDealer ? "verifyAsDealer" : "verifyWithCard")}
         </button>
       )}
@@ -192,7 +194,7 @@ export function TestCardsPage() {
               <strong>#{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {card.type}
               <br />
               <a class="button secondary" href={`#/card?c=${text}`}>
-                {t("useCard")}
+                <ActionIcon name="card" />{t("useCard")}
               </a>
             </div>
           </li>
@@ -210,7 +212,7 @@ export function TestCardsPage() {
                   <strong>D{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("dealerLicenceTitle")}
                   <br />
                   <a class="button secondary" href={`#/card?c=${text}`}>
-                    {t("useCard")}
+                  <ActionIcon name="card" />{t("useCard")}
                   </a>
                 </div>
               </li>
@@ -230,7 +232,7 @@ export function TestCardsPage() {
                   <strong>G{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("officialIdTitle")}
                   <br />
                   <a class="button secondary" href={`#/card?c=${text}`}>
-                    {t("useCard")}
+                  <ActionIcon name="card" />{t("useCard")}
                   </a>
                 </div>
               </li>

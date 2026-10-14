@@ -1,35 +1,15 @@
-import { useFmt, useLang } from "./i18n"
+import { useLang } from "./i18n"
 import { Settings } from "./extras"
 import { usePrefs } from "./prefs"
 import { DeviceCard } from "./ui"
+import { HomeFlow } from "./HomeFlow"
+import { LandingHero } from "./Landing"
 
 export function Home() {
-  const { t } = useLang()
-  const f = useFmt()
   return (
     <>
-      <section class="hero">
-        <h1>{t("tagline")}</h1>
-        <p>{t("homeWhy")}</p>
-        <div class="row wrap">
-          <a class="button" href="#/report">
-            {t("ctaReport")}
-          </a>
-          <a class="button secondary" href="#/dashboard">
-            {t("ctaDashboard")}
-          </a>
-        </div>
-      </section>
-      <section class="card">
-        <ol class="steps">
-          <li>{t("homeHow1")}</li>
-          <li>{t("homeHow2")}</li>
-          <li>{t("homeHow3")}</li>
-        </ol>
-        <p class="small">
-          {t("demoShop")}: <a href="#/shop/SYN-BR-0042">SYN-BR-0042 ({f.district("gaya")})</a>
-        </p>
-      </section>
+      <LandingHero />
+      <HomeFlow />
       <DeviceCard />
     </>
   )

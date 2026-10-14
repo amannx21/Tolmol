@@ -11,12 +11,15 @@ export type Route =
   | { name: "about" }
   | { name: "card"; c: string }
   | { name: "testCards" }
+  | { name: "designPreview" }
 
 export function parse(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#/, "").split("?")
   const q = new URLSearchParams(query)
   const parts = path.split("/").filter(Boolean).map(decodeURIComponent)
   switch (parts[0]) {
+    case "design-preview":
+      return { name: "designPreview" }
     case "report":
       return { name: "report", shopId: q.get("shop") ?? undefined, view: q.get("v") === "full" ? "full" : q.get("v") === "easy" ? "easy" : undefined }
     case "dashboard":

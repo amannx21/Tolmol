@@ -1,3 +1,4 @@
+import { ActionIcon } from "./ActionIcon"
 import { useEffect, useMemo, useState } from "preact/hooks"
 import qrcode from "qrcode-generator"
 import {
@@ -167,15 +168,15 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         )}
         {stats && verified && <p class="small">{t("verifiedCount", { n: kept.filter((r) => verified.has(r.creator.toLowerCase())).length, total: kept.length })}</p>}
         {stats && <IssueCounts counts={stats.issueCounts} labels />}
-        <div class="row wrap">
+        <div class="row wrap shop-primary-actions">
           <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
             <option value="">{t("allMonths")}</option>
             {[...new Set(data.reports.map((r) => r.month))].sort().reverse().map((m) => (
               <option value={m}>{f.month(m)}</option>
             ))}
           </select>
-          <a class="button secondary" href={`#/report?shop=${shopId}`}>
-            {t("ctaReport")}
+          <a class="button" href={`#/report?shop=${shopId}`}>
+            <ActionIcon name="report" />{t("ctaReport")}
           </a>
         </div>
       </section>
@@ -245,10 +246,10 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         <h3>{t("export")}</h3>
         <div class="row wrap">
           <button class="secondary" onClick={() => exportAs("csv")}>
-            CSV
+            <ActionIcon name="download" />CSV
           </button>
           <button class="secondary" onClick={() => exportAs("json")}>
-            JSON
+            <ActionIcon name="download" />JSON
           </button>
         </div>
         <form
@@ -263,7 +264,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
             <input class="mono" inputMode="numeric" value={blockInput} placeholder={data.head.toString()} onInput={(e) => setBlockInput(e.currentTarget.value)} />
           </label>
           <button class="secondary" type="submit">
-            {t("apply")}
+            <ActionIcon name="check" />{t("apply")}
           </button>
           {historic && (
             <a href={q({ block: undefined })} onClick={() => setBlockInput("")}>
@@ -282,14 +283,14 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         <p class="small">{t("rtiHelp")}</p>
         <div class="row wrap">
           <button class="secondary" onClick={() => setRtiText(draftRti(letterInput(), lang))}>
-            {t("rtiDraft")}
+            <ActionIcon name="letter" />{t("rtiDraft")}
           </button>
           <button class="secondary" onClick={() => setRtiText(draftComplaint(letterInput(), lang))}>
-            {t("draftComplaint")}
+            <ActionIcon name="letter" />{t("draftComplaint")}
           </button>
           {rtiText && (
             <button class="secondary" onClick={() => download(`tolmol-letter-${shopId}-${month ?? "all"}-${lang}.txt`, rtiText, "text/plain;charset=utf-8")}>
-              {t("rtiDownload")}
+              <ActionIcon name="download" />{t("rtiDownload")}
             </button>
           )}
         </div>
@@ -311,7 +312,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         <p class="small">{t("qrHelp")}</p>
         <ShopQr url={`${location.origin}${location.pathname}#/report?shop=${shopId}`} />
         <button class="secondary" onClick={() => window.print()}>
-          {t("print")}
+          <ActionIcon name="print" />{t("print")}
         </button>
       </section>
     </>

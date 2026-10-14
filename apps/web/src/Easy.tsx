@@ -1,15 +1,21 @@
+import { ActionIcon } from "./ActionIcon"
 // Easy mode: one question per screen, big buttons, numbers set with +/- instead of typing, read aloud,
 // no blockchain words, gas handled silently. Uses exactly the same SDK calls (and safeguards) as Full mode.
 import { useEffect, useMemo, useState } from "preact/hooks"
-import { addMonths, currentMonth, DuplicateError, formatKg, NFSA, type Shop } from "tolmol-sdk"
+import { addMonths, currentMonth, DuplicateError, NFSA, type Shop } from "tolmol-sdk"
 import { ensureGas, fileReport, GasError, SeparateIdError } from "./arkiv"
-import { setLang, STATE_NAMES, useFmt, useLang, type Lang } from "./i18n"
+import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { speak } from "./speak"
 import { IssueList, IssuePicker, NextSteps } from "./extras"
 import { ErrorBox, Loading, loadShops } from "./ui"
+import { HomeFlow } from "./HomeFlow"
+import { LandingHero } from "./Landing"
+import { AmountPicker } from "./AmountPicker"
+import { ReportIntro } from "./ReferencePhotos"
+import { RaisedReportNotice } from "./RaisedReportNotice"
 
 /** Speaks `text` whenever it changes, if read-aloud is on, and offers a Listen button. */
 export function Say({ text }: { text: string }) {
@@ -20,25 +26,16 @@ export function Say({ text }: { text: string }) {
   }, [text, lang, prefs.voice])
   return (
     <button class="listen" type="button" onClick={() => speak(text, lang)}>
-      {t("listen")}
+      <ActionIcon name="listen" />{t("listen")}
     </button>
   )
 }
 
 // ---------------------------------------------------------------- first visit
 export function Welcome() {
-  const { t, lang } = useLang()
+  const { t } = useLang()
   return (
-    <section class="card easy">
-      <h1>{t("welcomeTitle")}</h1>
-      <h2>{t("chooseLang")}</h2>
-      <div class="bigrow">
-        {(["hi", "en"] as Lang[]).map((l) => (
-          <button class={`big-choice ${lang === l ? "selected" : ""}`} onClick={() => setLang(l)}>
-            {l === "hi" ? "हिन्दी" : "English"}
-          </button>
-        ))}
-      </div>
+    <><LandingHero /><section class="card easy welcome-card welcome-options">
       <h2>{t("chooseMode")}</h2>
       <div class="bigcol">
         <button class="big-choice" onClick={() => setPrefs({ mode: "easy", voice: true, chosen: true })}>
@@ -53,57 +50,29 @@ export function Welcome() {
         </button>
       </div>
       <p class="small muted">{t("synthetic")}</p>
-    </section>
+    </section><HomeFlow easy /></>
   )
 }
 
 // ---------------------------------------------------------------- home
 export function EasyHome() {
-  const { t } = useLang()
-  const [prefs] = usePrefs()
   return (
-    <section class="easy">
-      <p class="lead">{t("tagline")}</p>
-      <Say text={t("startReport")} />
-      <a class="big-action" href="#/report">
-        <span class="icon" aria-hidden="true">⚖️</span>
-        {t("startReport")}
-      </a>
-      {prefs.myShop && (
-        <a class="big-action secondary" href={`#/shop/${prefs.myShop}`}>
-          <span class="icon" aria-hidden="true">🏪</span>
-          {t("seeMyShop")}
-        </a>
-      )}
-      <a class="big-action secondary" href="#/dashboard">
-        <span class="icon" aria-hidden="true">📋</span>
-        {t("seeAllShops")}
-      </a>
-    </section>
-  )
-}
-
-// ---------------------------------------------------------------- stepper
-function Stepper({ grams, onChange, min = 0, max = 100_000 }: { grams: number; onChange: (g: number) => void; min?: number; max?: number }) {
-  const { t } = useLang()
-  const set = (g: number) => onChange(Math.max(min, Math.min(max, g)))
-  return (
-    <div class="stepper">
-      <div class="stepper-value" aria-live="polite">
-        {formatKg(grams).replace(" kg", "")} <span>{t("kg")}</span>
-      </div>
-      <div class="stepper-buttons">
-        <button type="button" onClick={() => set(grams - 5000)} aria-label="-5 kg">−5</button>
-        <button type="button" onClick={() => set(grams - 500)} aria-label="-0.5 kg">−½</button>
-        <button type="button" onClick={() => set(grams + 500)} aria-label="+0.5 kg">+½</button>
-        <button type="button" onClick={() => set(grams + 5000)} aria-label="+5 kg">+5</button>
-      </div>
-    </div>
+    <><LandingHero /><HomeFlow easy /></>
   )
 }
 
 // ---------------------------------------------------------------- report wizard
 type Step = "shop" | "month" | "card" | "members" | "entitled" | "received" | "issues" | "review" | "done"
+
+function ReportProgress({ step }: { step: Step }) {
+  const { lang } = useLang()
+  const stage = step === "shop" || step === "month" ? 0 : step === "issues" ? 2 : step === "review" ? 3 : 1
+  const labels = lang === "hi" ? ["दुकान और महीना", "राशन की मात्रा", "अन्य समस्याएँ", "जाँच"] : ["Shop & month", "Grain quantity", "Other issues", "Review"]
+  return <div class="report-progress" aria-label={lang === "hi" ? "रिपोर्ट के चरण" : "Report stages"}>
+    <div class="progress-caption"><span>{labels[stage]}</span><span>{stage + 1} / {labels.length}</span></div>
+    <ol>{labels.map((label, index) => <li key={label} class={index <= stage ? "reached" : ""} aria-current={index === stage ? "step" : undefined}><span class="sr-only">{label}</span></li>)}</ol>
+  </div>
+}
 
 export function EasyReport({ initialShop }: { initialShop?: string }) {
   const { t, lang } = useLang()
@@ -121,6 +90,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   const [members, setMembers] = useState(4)
   const [entitledG, setEntitledG] = useState(20_000)
   const [receivedG, setReceivedG] = useState(20_000)
+  const [amountValid, setAmountValid] = useState(true)
   const [issues, setIssues] = useState(0)
   const [busy, setBusy] = useState<null | "preparing" | "sending">(null)
   const [error, setError] = useState<string | null>(null)
@@ -165,9 +135,11 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   if (step === "shop") {
     const showPicker = changing || !shop
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("qShop")}</h2>
+        <ReportIntro />
         <p class="small">
           <a href={`#/report?v=full${shopId ? `&shop=${shopId}` : ""}`}>{t("fullForm")} →</a>
         </p>
@@ -180,7 +152,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
               <span class="mono small">{shop.shopId}</span>
             </div>
             <button class="big-action" onClick={() => next("month")}>✓ {t("yesThisShop")}</button>
-            <button class="big-action secondary" onClick={() => setChanging(true)}>{t("changeShop")}</button>
+            <button class="big-action secondary" onClick={() => setChanging(true)}><ActionIcon name="shop" />{t("changeShop")}</button>
           </>
         ) : (
           <>
@@ -196,7 +168,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
                     next("month")
                   }}
                 >
-                  <strong>{label(s)}</strong>
+                  <strong><ActionIcon name="shop" />{label(s)}</strong>
                   <span class="small mono">{s.shopId}</span>
                 </button>
               ))}
@@ -209,14 +181,15 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
 
   if (step === "month") {
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("qMonth")}</h2>
         <Say text={t("qMonth")} />
         <div class="bigcol">
           {[currentMonth(), addMonths(currentMonth(), -1)].map((m, i) => (
             <button class={`big-choice ${month === m ? "selected" : ""}`} onClick={() => (setMonth(m), next("card"))}>
-              <strong>{i === 0 ? t("thisMonth") : t("lastMonth")}</strong>
+              <strong><ActionIcon name="calendar" />{i === 0 ? t("thisMonth") : t("lastMonth")}</strong>
               <span class="small">{f.month(m)}</span>
             </button>
           ))}
@@ -236,21 +209,22 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
 
   if (step === "card") {
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("qCard")}</h2>
         <Say text={`${t("qCard")} ${t("cardAay")}: ${t("cardAayHelp")}. ${t("cardPhh")}: ${t("cardPhhHelp")}.`} />
         <div class="bigcol">
           <button class="big-choice" onClick={() => (setEntitledG(NFSA.aayPerFamilyG), setReceivedG(NFSA.aayPerFamilyG), next("entitled"))}>
-            <strong>{t("cardAay")}</strong>
+            <strong><ActionIcon name="card" />{t("cardAay")}</strong>
             <span class="small">{t("cardAayHelp")}</span>
           </button>
           <button class="big-choice" onClick={() => next("members")}>
-            <strong>{t("cardPhh")}</strong>
+            <strong><ActionIcon name="people" />{t("cardPhh")}</strong>
             <span class="small">{t("cardPhhHelp")}</span>
           </button>
           <button class="big-choice" onClick={() => next("entitled")}>
-            <strong>{t("cardKnow")}</strong>
+            <strong><ActionIcon name="grain" />{t("cardKnow")}</strong>
           </button>
         </div>
       </section>
@@ -259,7 +233,8 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
 
   if (step === "members") {
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("qMembers")}</h2>
         <Say text={t("qMembers")} />
@@ -289,31 +264,34 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
 
   if (step === "entitled") {
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("qEntitled")}</h2>
         <Say text={`${t("qEntitled")} ${kg(entitledG)}`} />
-        <Stepper grams={entitledG} onChange={(g) => (setEntitledG(g), setReceivedG(Math.min(receivedG, g)))} min={500} />
-        <button class="big-action" onClick={() => next("received")}>{t("next")} →</button>
+        <AmountPicker grams={entitledG} onChange={(g) => (setEntitledG(g), setReceivedG(Math.min(receivedG, g)))} onValidityChange={setAmountValid} min={500} />
+        <button class="big-action" disabled={!amountValid} onClick={() => next("received")}>{t("next")} →</button>
       </section>
     )
   }
 
   if (step === "received") {
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("qReceived")}</h2>
         <Say text={t("qReceived")} />
-        <Stepper grams={receivedG} onChange={setReceivedG} max={entitledG} />
-        <button class="big-action" onClick={() => next("issues")}>{t("next")} →</button>
+        <AmountPicker grams={receivedG} onChange={setReceivedG} onValidityChange={setAmountValid} max={entitledG} />
+        <button class="big-action" disabled={!amountValid} onClick={() => next("issues")}>{t("next")} →</button>
       </section>
     )
   }
 
   if (step === "issues") {
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{t("issuesTitle")}</h2>
         <Say text={`${t("issuesTitle")} ${t("issuesHelp")}`} />
@@ -354,7 +332,8 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
       }
     }
     return (
-      <section class="card easy">
+      <section class="card easy report-step" key={step}>
+        <ReportProgress step={step} />
         <BackBtn />
         <h2>{label(shop)}</h2>
         <Say text={summary} />
@@ -370,7 +349,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
           <p class="ok" role="status">{t("queued")}</p>
         ) : (
           <button class="big-action" disabled={busy !== null} onClick={save}>
-            {busy === "preparing" ? t("preparing") : busy === "sending" ? t("sending") : `✓ ${t("sendEasy")}`}
+            <ActionIcon name="send" />{busy === "preparing" ? t("preparing") : busy === "sending" ? t("sending") : `✓ ${t("sendEasy")}`}
           </button>
         )}
         {error && <p class="err" role="alert">{error}</p>}
@@ -382,19 +361,19 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
     const url = `${location.origin}${location.pathname}#/r/${doneKey}`
     const text = t("waText", { shop: label(shop), month: f.month(month) })
     return (
-      <section class="card easy success">
-        <h2>✓ {t("doneEasy")}</h2>
-        <Say text={`${t("doneEasy")} ${t("askNeighbours")}`} />
+      <section class="card easy success report-step" key={step}>
+        <RaisedReportNotice reportKey={doneKey} shopId={shop.shopId} />
+        <Say text={`${t("reportRaisedTitle")} ${t("reportRaisedOfficials")} ${t("askNeighbours")}`} />
         <p>{t("askNeighbours")}</p>
         <a class="big-action whatsapp" href={`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`} target="_blank" rel="noopener">
-          {t("shareWhatsApp")}
+          <ActionIcon name="share" />{t("shareWhatsApp")}
         </a>
         {"share" in navigator && (
           <button class="big-action secondary" onClick={() => void navigator.share({ text, url }).catch(() => {})}>
-            {t("share")}…
+            <ActionIcon name="share" />{t("share")}…
           </button>
         )}
-        <a class="big-action secondary" href={`#/shop/${shop.shopId}`}>{t("seeMyShop")}</a>
+        <a class="big-action secondary" href={`#/shop/${shop.shopId}`}><ActionIcon name="shop" />{t("seeMyShop")}</a>
         <a class="link-back" href={`#/r/${doneKey}`}>{t("detailsAuditors")} →</a>
         <NextSteps shopId={shop.shopId} mask={issues} />
       </section>

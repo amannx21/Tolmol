@@ -1,3 +1,4 @@
+import { ActionIcon } from "./ActionIcon"
 import { useEffect, useState } from "preact/hooks"
 import {
   BURN_ADDRESS,
@@ -22,6 +23,7 @@ import { usePrefs } from "./prefs"
 import { useFmt, useLang } from "./i18n"
 import { IssueList, NextSteps, PrivacyPanel } from "./extras"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
+import { RaisedReportNotice } from "./RaisedReportNotice"
 import { useVerified, VerifiedBadge } from "./verified"
 import { ShopAnswer } from "./answersUI"
 
@@ -99,12 +101,12 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <>
             <p class="small">{t("withdrawConfirm")}</p>
             <button class="secondary" onClick={withdraw} disabled={busy}>
-              {t("withdrawYes")}
+              <ActionIcon name="undo" />{t("withdrawYes")}
             </button>
           </>
         ) : (
           <button class="link-back" onClick={() => setConfirmWithdraw(true)}>
-            {t("withdraw")}
+            <ActionIcon name="undo" />{t("withdraw")}
           </button>
         )}
       </div>
@@ -191,12 +193,12 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <>
             <DeviceCard compact />
             <button onClick={confirm} disabled={busy}>
-              {busy ? t("corroborating") : t("corroborate")}
+              <ActionIcon name="people" />{busy ? t("corroborating") : t("corroborate")}
             </button>
           </>
         )}
         {mine && <p class="small muted">{t("ownReport")}</p>}
-        {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
+        {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
       {prefs.mode === "full" && <ShopAnswer report={r} mine={mine} />}
       {data.raw && <PrivacyPanel raw={data.raw} />}
@@ -206,14 +208,14 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   if (prefs.mode === "full") {
     return (
       <>
-      {isNew && (
-        <section class="card success" role="status">
-          <h2>✓ {t("sent")}</h2>
+      {isNew && mine && (
+        <section class="card success">
+          <RaisedReportNotice reportKey={r.key} shopId={r.shopId} />
           <p class="small">{t("shareForWitness")}</p>
           <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
           {"share" in navigator && (
             <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
-              {t("share")}
+              <ActionIcon name="share" />{t("share")}
             </button>
           )}
         </section>
@@ -238,14 +240,14 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   }
   return (
     <>
-      {isNew && (
-        <section class="card success" role="status">
-          <h2>✓ {t("sent")}</h2>
+      {isNew && mine && (
+        <section class="card success">
+          <RaisedReportNotice reportKey={r.key} shopId={r.shopId} />
           <p class="small">{t("shareForWitness")}</p>
           <input class="mono share" readOnly value={link} onFocus={(e) => e.currentTarget.select()} />
           {"share" in navigator && (
             <button class="secondary" onClick={() => void navigator.share({ url: link, title: "Tolmol" }).catch(() => {})}>
-              {t("share")}
+              <ActionIcon name="share" />{t("share")}
             </button>
           )}
         </section>
@@ -265,12 +267,12 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         <p class="lead">{t("confirmedBy", { n: valid.length })}</p>
         {!mine && !iWitnessed && (
           <button class="big-action" onClick={confirmEasy} disabled={busy}>
-            {busy ? t("corroborating") : t("confirmEasy")}
+            <ActionIcon name="people" />{busy ? t("corroborating") : t("confirmEasy")}
           </button>
         )}
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {withdrawBox}
-        {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
+        {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
       <ShopAnswer report={r} mine={mine} big />
       {mine && <NextSteps shopId={r.shopId} mask={r.issues} />}
