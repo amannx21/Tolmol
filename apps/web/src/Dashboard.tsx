@@ -12,6 +12,7 @@ import {
   validWitnesses,
   watchTolmol,
   withdrawnKeys,
+  rapidReportKeys,
   type Correction,
   type LiveStatus,
   type Report,
@@ -38,6 +39,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   const [flash, setFlash] = useState<Set<string>>(new Set())
   const [err, setErr] = useState<unknown>(null)
   const [onlyConfirmed, setOnlyConfirmed] = useState(false)
+  const [hideRapid, setHideRapid] = useState(false)
   const [corrections, setCorrections] = useState<Correction[]>([])
   const scope = useRef({ state, from: monthToNum(fromMonth), to: monthToNum(toMonth) })
   scope.current = { state, from: monthToNum(fromMonth), to: monthToNum(toMonth) }
@@ -92,12 +94,25 @@ export function Dashboard({ initialState }: { initialState?: string }) {
   }, [])
 
   // Trust-weighted view: optionally count only reports that at least one other device has confirmed.
+  // Public-data pattern: reports filed by 3+ phones within one minute at the same shop (see rapidGroups).
+  const rapid = useMemo(() => {
+    if (!reports) return new Set<string>()
+    const all = [...reports.values()]
+    return rapidReportKeys(all, withdrawnKeys(all, corrections))
+  }, [reports, corrections])
+  const rapidByShop = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const r of reports?.values() ?? []) if (rapid.has(r.key.toLowerCase())) m.set(r.shopId, (m.get(r.shopId) ?? 0) + 1)
+    return m
+  }, [reports, rapid])
   const ranked = useMemo(() => {
     if (!reports) return []
     const ws = [...witnesses.values()]
-    const rs = [...reports.values()].filter((r) => !onlyConfirmed || validWitnesses(r, ws).length > 0)
+    const rs = [...reports.values()]
+      .filter((r) => !onlyConfirmed || validWitnesses(r, ws).length > 0)
+      .filter((r) => !hideRapid || !rapid.has(r.key.toLowerCase()))
     return shopStats(rs, ws, withdrawnKeys(rs, corrections))
-  }, [reports, witnesses, onlyConfirmed, corrections])
+  }, [reports, witnesses, onlyConfirmed, hideRapid, rapid, corrections])
 
   return (
     <>
@@ -129,6 +144,9 @@ export function Dashboard({ initialState }: { initialState?: string }) {
         <label class="inline check">
           <input type="checkbox" checked={onlyConfirmed} onChange={(e) => setOnlyConfirmed(e.currentTarget.checked)} /> {t("onlyConfirmed")}
         </label>
+        <label class="inline check">
+          <input type="checkbox" checked={hideRapid} onChange={(e) => setHideRapid(e.currentTarget.checked)} /> {t("hideRapid")}
+        </label>
       </section>
       {err ? (
         <ErrorBox error={err} />
@@ -150,6 +168,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
                   <IssueCounts counts={s.issueCounts} />
+                  {!hideRapid && (rapidByShop.get(s.shopId) ?? 0) > 0 && <span class="tag warn">{t("rapidBadge", { n: rapidByShop.get(s.shopId) ?? 0 })}</span>}
                   <div class="small muted">
                     {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {f.kg(s.totalShortfallG)} {t("shortfall")} · {f.district(s.district)}
                   </div>

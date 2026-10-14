@@ -707,3 +707,19 @@ section.next li {
 .withdraw {
   margin-top: 10px;
 }
+
+/* ---------------- public-data patterns ---------------- */
+section.patterns ul {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+section.patterns li {
+  margin: 6px 0;
+}
+.warn-text {
+  color: var(--warn);
+}
+.tag.warn {
+  border-color: var(--warn);
+  color: var(--warn);
+}

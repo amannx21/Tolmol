@@ -161,3 +161,76 @@ export function withdrawnKeys(reports: readonly Report[], corrections: readonly 
   }
   return out
 }
+
+/** Defaults for patternSignals: 3+ different devices within 30 blocks (1 minute on Tiramisu). */
+export const RAPID_WINDOW_BLOCKS = 30n
+export const RAPID_MIN_DEVICES = 3
+
+export type RapidGroup = { fromBlock: bigint; toBlock: bigint; count: number; devices: number; keys: string[] }
+
+/**
+ * Groups of entities written by RAPID_MIN_DEVICES or more different devices within RAPID_WINDOW_BLOCKS of each
+ * other. Real card holders at one shop rarely file within the same minute; a script running many wallets does.
+ * A pattern worth a look, not proof: everything here comes from public block numbers and $creator.
+ */
+export function rapidGroups(
+  items: readonly { createdAt: bigint; creator: string; key: string }[],
+  windowBlocks: bigint = RAPID_WINDOW_BLOCKS,
+  minDevices: number = RAPID_MIN_DEVICES,
+): RapidGroup[] {
+  const sorted = [...items].sort((a, b) => (earlier(a, b) ? -1 : earlier(b, a) ? 1 : 0))
+  const out: RapidGroup[] = []
+  let i = 0
+  while (i < sorted.length) {
+    let j = i
+    while (j + 1 < sorted.length && sorted[j + 1]!.createdAt - sorted[i]!.createdAt <= windowBlocks) j++
+    const devices = new Set(sorted.slice(i, j + 1).map((x) => lc(x.creator))).size
+    if (devices >= minDevices) {
+      const group = sorted.slice(i, j + 1)
+      out.push({ fromBlock: group[0]!.createdAt, toBlock: group[group.length - 1]!.createdAt, count: group.length, devices, keys: group.map((x) => lc(x.key)) })
+      i = j + 1
+    } else i++
+  }
+  return out
+}
+
+export type PatternSignals = {
+  /** Counted reports filed in rapid groups (see rapidGroups). */
+  rapidReports: RapidGroup[]
+  /** Valid confirmations filed in rapid groups. */
+  rapidConfirmations: RapidGroup[]
+  /** Counted reports whose device wrote nothing else in this data: no other report, no confirmation. */
+  oneOffReports: number
+  /** Reports counted (after dedupe and withdrawals). */
+  reports: number
+}
+
+/**
+ * Public-data patterns for one shop (or any set of reports), shown next to the numbers so readers can judge them.
+ * Tolmol cannot prove who is behind a device (threat model T9, T10); this makes bursts and one-off devices visible.
+ */
+export function patternSignals(
+  reports: readonly Report[],
+  witnesses: readonly Witness[],
+  withdrawn: ReadonlySet<string> = new Set(),
+): PatternSignals {
+  const counted = dedupeReports(reports, withdrawn)
+  const valid = counted.flatMap((r) => validWitnesses(r, witnesses))
+  const activity = new Map<string, number>()
+  for (const x of [...reports, ...witnesses]) activity.set(lc(x.creator), (activity.get(lc(x.creator)) ?? 0) + 1)
+  return {
+    rapidReports: rapidGroups(counted),
+    rapidConfirmations: rapidGroups(valid),
+    oneOffReports: counted.filter((r) => (activity.get(lc(r.creator)) ?? 0) <= 1).length,
+    reports: counted.length,
+  }
+}
+
+/** Keys of counted reports that fall in a rapid group at their shop (for the "leave out bursts" view). */
+export function rapidReportKeys(reports: readonly Report[], withdrawn: ReadonlySet<string> = new Set()): Set<string> {
+  const byShop = new Map<string, Report[]>()
+  for (const r of dedupeReports(reports, withdrawn)) byShop.set(r.shopId, [...(byShop.get(r.shopId) ?? []), r])
+  const out = new Set<string>()
+  for (const list of byShop.values()) for (const g of rapidGroups(list)) for (const k of g.keys) out.add(k)
+  return out
+}

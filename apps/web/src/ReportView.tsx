@@ -16,7 +16,7 @@ import {
   type Report,
   type Witness,
 } from "tolmol-sdk"
-import { device, ensureGas, reader, short } from "./arkiv"
+import { device, ensureGas, myAddresses, reader, short, writerForAddress } from "./arkiv"
 import { Say } from "./Easy"
 import { usePrefs } from "./prefs"
 import { useFmt, useLang } from "./i18n"
@@ -63,7 +63,9 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
 
   const valid = validWitnesses(r, data.witnesses)
   const validKeys = new Set(valid.map((w) => w.key.toLowerCase()))
-  const mine = r.creator.toLowerCase() === me.toLowerCase()
+  // Mine if any ID on this phone wrote it: the current one, a retired one, or a separate per-report ID.
+  const mine = myAddresses().has(r.creator.toLowerCase())
+  const separate = mine && r.creator.toLowerCase() !== me.toLowerCase()
   const iWitnessed = data.witnesses.some((w) => w.creator.toLowerCase() === me.toLowerCase())
   const link = `${location.origin}${location.pathname}#/r/${r.key}`
 
@@ -71,11 +73,12 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
     setBusy(true)
     setMsg(null)
     try {
-      if (!(await ensureGas())) {
+      const writer = writerForAddress(r.creator)
+      if (!writer || !(await ensureGas(writer.account.address))) {
         setMsg({ ok: false, text: t("gasFailed") })
         return
       }
-      await withdrawReport(reader, device().writer, r.key, { synthetic: true })
+      await withdrawReport(reader, writer, r.key, { synthetic: true })
       setMsg({ ok: true, text: t("withdrawDone") })
       setConfirmWithdraw(false)
       await load()
@@ -144,7 +147,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             <a class="mono" href={explorerAddressUrl(r.creator)} target="_blank" rel="noopener">
               {short(r.creator)}
             </a>
-            {mine && ` (${t("you")})`}
+            {mine && ` (${t("you")}${separate ? ` · ${t("separateIdShort")}` : ""})`}
           </dd>
           <dt>{t("createdBlock")}</dt>
           <dd class="mono">{r.createdAt.toString()}</dd>

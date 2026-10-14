@@ -3,10 +3,10 @@
 import { useEffect, useState } from "preact/hooks"
 
 export type Mode = "easy" | "full"
-export type Prefs = { mode: Mode; voice: boolean; myShop: string | null; chosen: boolean }
+export type Prefs = { mode: Mode; voice: boolean; myShop: string | null; chosen: boolean; separateIds: boolean }
 
 const KEY = "tolmol.prefs.v1"
-const DEFAULTS: Prefs = { mode: "easy", voice: true, myShop: null, chosen: false }
+const DEFAULTS: Prefs = { mode: "easy", voice: true, myShop: null, chosen: false, separateIds: false }
 const listeners = new Set<(p: Prefs) => void>()
 
 function load(): Prefs {

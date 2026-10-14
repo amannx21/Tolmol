@@ -1,9 +1,9 @@
 // Offline queue for reports. A report made without a connection is kept in this browser's localStorage
 // (shop, month, grain, grams; nothing personal) and sent automatically when the device is back online.
-// It is signed by the same device key at send time, so authorship is unchanged.
+// It is signed at send time with this phone's ID (or a separate one, if that setting is on).
 import { useEffect, useState } from "preact/hooks"
-import { DuplicateError, submitReport, type ReportInput, type Shop } from "tolmol-sdk"
-import { device, reader } from "./arkiv"
+import { DuplicateError, type ReportInput, type Shop } from "tolmol-sdk"
+import { fileReport, GasError, SeparateIdError } from "./arkiv"
 
 const KEY = "tolmol.queue.v1"
 type Queued = { input: ReportInput; shop: Pick<Shop, "shopId" | "state" | "district">; queuedAt: number }
@@ -43,9 +43,11 @@ export async function flushQueue(): Promise<number> {
   try {
     for (const item of read()) {
       try {
-        await submitReport(reader, device().writer, item.input, item.shop, { synthetic: true })
+        await fileReport(item.input, item.shop)
         sent++
       } catch (e) {
+        // No gas yet, or no network: keep it and try again later.
+        if (e instanceof GasError || e instanceof SeparateIdError) break
         if (!(e instanceof DuplicateError) && isOffline(e)) break
         // Duplicate or a permanent rejection: drop it so the queue cannot get stuck.
       }

@@ -10,15 +10,18 @@ import {
   issueList,
   parseReport,
   parseWitness,
+  patternSignals,
   PROJECT,
   TIRAMISU_HTTP,
   TIRAMISU_WS,
   type IssueName,
   type RawEntity,
   type Report,
+  type Witness,
 } from "tolmol-sdk"
 import { key as keyAttr } from "@arkiv-network/sdk/attr"
 import { newIdentity, reader, rpcSetting, setRpc } from "./arkiv"
+import { usePrefs } from "./prefs"
 import { useLang, type Key } from "./i18n"
 import { ErrorBox } from "./ui"
 
@@ -169,9 +172,15 @@ export function Settings() {
   const [http, setHttp] = useState(rpcSetting.http ?? "")
   const [ws, setWs] = useState(rpcSetting.ws ?? "")
   const [confirmNewId, setConfirmNewId] = useState(false)
+  const [prefs, setPrefs] = usePrefs()
   return (
     <section class="card">
       <h2>{t("settingsTitle")}</h2>
+      <h3>{t("separateIdSetting")}</h3>
+      <p class="small">{t("separateIdHelp")}</p>
+      <label class="inline check">
+        <input type="checkbox" checked={prefs.separateIds} onChange={(e) => setPrefs({ separateIds: e.currentTarget.checked })} /> {t("separateIdSetting")}
+      </label>
       <h3>{t("rpcTitle")}</h3>
       <p class="small">{t("rpcHelp")}</p>
       <label>
@@ -294,6 +303,31 @@ export function VerifyPage() {
           </ul>
         </>
       )}
+    </section>
+  )
+}
+
+// ------------------------------------------------------------------ public-data patterns (sybil / script signals)
+/** Bursts and one-off devices at one shop, from public block numbers and $creator. Patterns, not proof. */
+export function PatternsCard({ reports, witnesses, withdrawn }: { reports: Report[]; witnesses: Witness[]; withdrawn: ReadonlySet<string> }) {
+  const { t } = useLang()
+  const p = patternSignals(reports, witnesses, withdrawn)
+  if (p.reports === 0) return null
+  const quiet = p.rapidReports.length === 0 && p.rapidConfirmations.length === 0
+  return (
+    <section class="card patterns">
+      <h3>{t("patternsTitle")}</h3>
+      <ul>
+        {p.rapidReports.map((g) => (
+          <li class="warn-text">{t("patternsRapid", { count: g.count, devices: g.devices, from: g.fromBlock.toString(), to: g.toBlock.toString() })}</li>
+        ))}
+        {p.rapidConfirmations.map((g) => (
+          <li class="warn-text">{t("patternsRapidConf", { count: g.count, devices: g.devices, from: g.fromBlock.toString(), to: g.toBlock.toString() })}</li>
+        ))}
+        {quiet && <li>{t("patternsNone")}</li>}
+        {p.oneOffReports > 0 && <li>{t("patternsOneOff", { n: p.oneOffReports, total: p.reports })}</li>}
+      </ul>
+      <p class="small muted">{t("patternsFoot")}</p>
     </section>
   )
 }

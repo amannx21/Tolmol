@@ -1,8 +1,8 @@
 // Easy mode: one question per screen, big buttons, numbers set with +/- instead of typing, read aloud,
 // no blockchain words, gas handled silently. Uses exactly the same SDK calls (and safeguards) as Full mode.
 import { useEffect, useMemo, useState } from "preact/hooks"
-import { addMonths, currentMonth, DuplicateError, formatKg, NFSA, submitReport, type Shop } from "tolmol-sdk"
-import { device, ensureGas, reader } from "./arkiv"
+import { addMonths, currentMonth, DuplicateError, formatKg, NFSA, type Shop } from "tolmol-sdk"
+import { ensureGas, fileReport, GasError, SeparateIdError } from "./arkiv"
 import { setLang, STATE_NAMES, useFmt, useLang, type Lang } from "./i18n"
 import { setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, isOffline } from "./queue"
@@ -337,17 +337,14 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         return
       }
       try {
-        setBusy("preparing")
-        if (!(await ensureGas())) {
-          setError(t("gasFailed"))
-          return
-        }
         setBusy("sending")
-        const res = await submitReport(reader, device().writer, input, shop, { synthetic: true })
+        const res = await fileReport(input, shop)
         setDoneKey(res.entityKey)
         next("done")
       } catch (e) {
         if (e instanceof DuplicateError) setError(t("alreadyReported"))
+        else if (e instanceof SeparateIdError) setError(t("separateIdFailed"))
+        else if (e instanceof GasError) setError(t("gasFailed"))
         else if (isOffline(e)) {
           enqueueReport(input, shop)
           setQueued(true)

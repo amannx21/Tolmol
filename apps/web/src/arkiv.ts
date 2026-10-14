@@ -1,7 +1,20 @@
 import { useEffect, useState } from "preact/hooks"
 import { formatEther } from "viem"
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts"
-import { httpReader, writerFor, wsReader, type Reader, type Writer } from "tolmol-sdk"
+import {
+  DuplicateError,
+  httpReader,
+  myExistingReport,
+  reportCorrections,
+  submitReport,
+  writerFor,
+  wsReader,
+  type Reader,
+  type ReportInput,
+  type Shop,
+  type Writer,
+} from "tolmol-sdk"
+import { getPrefs } from "./prefs"
 
 /** Shared read-only clients. Reads go straight from the browser to the public Arkiv RPC: no Tolmol backend. */
 // --- Arkiv server: the public Tiramisu RPC by default; the user can point the app at any other Arkiv server
@@ -114,23 +127,130 @@ export async function requestGas(address: `0x${string}`): Promise<{ ok: boolean;
  * Makes sure this device can pay for a write: if its test-GLM balance is low, asks the relayer once and waits
  * (up to ~25 s) for the drip to land. Used by Easy mode so people never see the word "gas".
  */
-export async function ensureGas(): Promise<boolean> {
-  const { account } = device()
+export async function ensureGas(address: `0x${string}` = device().account.address): Promise<boolean> {
   const bal = async () => {
     try {
-      return await reader.getBalance({ address: account.address })
+      return await reader.getBalance({ address })
     } catch {
       return 0n
     }
   }
   if ((await bal()) >= MIN_WRITE_WEI) return true
-  const r = await requestGas(account.address)
+  const r = await requestGas(address)
   if (!r.ok) return false
   for (let i = 0; i < 12; i++) {
     await new Promise((res) => setTimeout(res, 2000))
     if ((await bal()) >= MIN_WRITE_WEI) return true
   }
   return false
+}
+
+// --- Privacy: a separate anonymous ID for each report (optional) ---------------------------------------------------
+// With this on, every report is signed by a brand-new key, so nobody can link one person's reports on chain.
+// The new key gets its test gas from the relayer, which funds every fresh wallet, so the funding does not link the
+// keys either (a top-up from this phone's main ID would). The keys stay on this phone only, so the reporter can still
+// withdraw those reports from here. Trade-off: the "one report per device" rule can only be checked on this phone.
+const ONE_TIME_KEY = "tolmol.onetime.v1"
+type OneTime = { pk: `0x${string}`; address: `0x${string}`; shopId: string; month: string; item: string; reportKey?: string; at: number }
+
+function readOneTime(): OneTime[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(ONE_TIME_KEY) ?? "[]") as OneTime[]
+    return Array.isArray(v) ? v.filter((x) => /^0x[0-9a-fA-F]{64}$/.test(x?.pk ?? "")) : []
+  } catch {
+    return []
+  }
+}
+function writeOneTime(list: OneTime[]) {
+  try {
+    localStorage.setItem(ONE_TIME_KEY, JSON.stringify(list))
+  } catch {
+    /* private mode: the key lives only in memory; the report itself is still written */
+  }
+}
+
+/** Every key this phone holds: its current ID, retired IDs and per-report IDs. */
+function allKeys(): `0x${string}`[] {
+  const out: `0x${string}`[] = []
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const name = localStorage.key(i) ?? ""
+      if (name === STORAGE_KEY || name.startsWith("tolmol.device.retired.")) {
+        const pk = localStorage.getItem(name)
+        if (pk && /^0x[0-9a-fA-F]{64}$/.test(pk)) out.push(pk as `0x${string}`)
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return [...out, ...readOneTime().map((x) => x.pk)]
+}
+
+/** Lower-cased addresses of every ID on this phone, so "your report" works for retired and per-report IDs too. */
+export function myAddresses(): Set<string> {
+  const set = new Set<string>([device().account.address.toLowerCase()])
+  for (const pk of allKeys()) set.add(privateKeyToAccount(pk).address.toLowerCase())
+  return set
+}
+
+/** A writer for one of this phone's IDs (to withdraw a report it wrote), or null if the key is not here. */
+export function writerForAddress(address: string): Writer | null {
+  if (address.toLowerCase() === device().account.address.toLowerCase()) return device().writer
+  for (const pk of allKeys()) {
+    const acct = privateKeyToAccount(pk)
+    if (acct.address.toLowerCase() === address.toLowerCase()) return writerFor(acct, rpcSetting.http)
+  }
+  return null
+}
+
+/** The phone could not get test gas for the write. */
+export class GasError extends Error {}
+/** A separate ID was asked for, but the relayer could not fund a fresh key right now (its daily limit, or offline). */
+export class SeparateIdError extends Error {}
+
+/**
+ * Files a report with the right key: this phone's ID, or a fresh one when "separate ID for each report" is on.
+ * Used by Easy mode, the full form and the offline queue, so all three follow the same rules.
+ */
+export async function fileReport(
+  input: ReportInput,
+  shop: Pick<Shop, "shopId" | "state" | "district">,
+  opts: { lifetimeDays?: number; allowExtension?: boolean; separateId?: boolean } = {},
+): Promise<{ entityKey: `0x${string}`; txHash: `0x${string}`; separateId: boolean }> {
+  const separate = opts.separateId ?? getPrefs().separateIds
+  const write = { synthetic: true, lifetimeDays: opts.lifetimeDays, allowExtension: opts.allowExtension }
+  if (!separate) {
+    if (!(await ensureGas())) throw new GasError("no test gas")
+    const res = await submitReport(reader, device().writer, input, shop, write)
+    return { ...res, separateId: false }
+  }
+
+  // One report per shop, month and grain from this phone, across all its IDs. Per-report IDs are checked from the
+  // list on this phone (the chain cannot link them; that is the point); the main ID with one query, as usual.
+  const list = readOneTime()
+  const same = (x: { shopId: string; month: string; item: string }) => x.shopId === input.shopId && x.month === input.month && x.item === input.item
+  for (const x of list.filter((x) => x.reportKey && same(x))) {
+    const withdrawn = (await reportCorrections(reader, x.reportKey as `0x${string}`)).items.some((c) => c.creator.toLowerCase() === x.address.toLowerCase())
+    if (!withdrawn) throw new DuplicateError("You already reported this shop, month and item", x.reportKey as `0x${string}`)
+  }
+  const mainExisting = await myExistingReport(reader, device().account.address, input)
+  if (mainExisting) {
+    const withdrawn = (await reportCorrections(reader, mainExisting.key)).items.some((c) => c.creator.toLowerCase() === mainExisting.creator.toLowerCase())
+    if (!withdrawn) throw new DuplicateError("You already reported this shop, month and item", mainExisting.key)
+  }
+
+  // Reuse a funded key that never got its report written (e.g. the write failed), otherwise make a new one.
+  let entry = list.find((x) => !x.reportKey && same(x))
+  if (!entry) {
+    const pk = generatePrivateKey()
+    entry = { pk, address: privateKeyToAccount(pk).address, shopId: input.shopId, month: input.month, item: input.item, at: Date.now() }
+    writeOneTime([...list, entry]) // saved before funding, so the key is never lost
+  }
+  if (!(await ensureGas(entry.address))) throw new SeparateIdError("could not fund a separate ID")
+  const writer = writerFor(privateKeyToAccount(entry.pk), rpcSetting.http)
+  const res = await submitReport(reader, writer, input, shop, { ...write, skipDuplicateCheck: true })
+  writeOneTime(readOneTime().map((x) => (x.pk === entry!.pk ? { ...x, reportKey: res.entityKey } : x)))
+  return { ...res, separateId: true }
 }
 
 export const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`

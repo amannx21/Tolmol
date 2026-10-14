@@ -9,13 +9,13 @@ import {
   NFSA,
   REPORT_LIFETIME_CHOICES,
   shortfallBp,
-  submitReport,
   validateReportInput,
   ValidationError,
   type Item,
   type Shop,
 } from "tolmol-sdk"
-import { device, reader } from "./arkiv"
+import { fileReport, GasError, SeparateIdError } from "./arkiv"
+import { getPrefs } from "./prefs"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { IssueList, IssuePicker } from "./extras"
 import { enqueueReport, isOffline } from "./queue"
@@ -41,6 +41,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   const [issues, setIssues] = useState(0)
   const [lifetimeDays, setLifetimeDays] = useState(90)
   const [allowExtension, setAllowExtension] = useState(true)
+  const [separateId, setSeparateId] = useState(() => getPrefs().separateIds)
 
   useEffect(() => {
     loadShops()
@@ -95,12 +96,13 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
       return
     }
     try {
-      const { writer } = device()
-      const res = await submitReport(reader, writer, input, shop, { synthetic: true, lifetimeDays, allowExtension })
+      const res = await fileReport(input, shop, { lifetimeDays, allowExtension, separateId })
       go(`#/r/${res.entityKey}?new=1`)
     } catch (e) {
       setStep("confirm")
       if (e instanceof DuplicateError) setError(t("alreadyReported"))
+      else if (e instanceof SeparateIdError) setError(t("separateIdFailed"))
+      else if (e instanceof GasError) setError(t("gasFailed"))
       else if (isOffline(e)) {
         enqueueReport(input, shop)
         setQueued(true)
@@ -127,7 +129,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           <dt>{t("item")}</dt>
           <dd>{t(item)}</dd>
           <dt>{t("lifetimeTitle")}</dt>
-          <dd>{t("lifetimeDays", { n: lifetimeDays })}{allowExtension ? ` · ${t("allowExtend")}` : ""}</dd>
+          <dd>{t("lifetimeDays", { n: lifetimeDays })}{allowExtension ? ` · ${t("allowExtend")}` : ""}{separateId ? ` · ${t("separateIdShort")}` : ""}</dd>
           <dt>{t("entitledKg")}</dt>
           <dd>{parsed && f.kg(parsed.e)}</dd>
           <dt>{t("receivedKg")}</dt>
@@ -249,6 +251,9 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
         </div>
         <label class="inline check">
           <input type="checkbox" checked={allowExtension} onChange={(e) => setAllowExtension(e.currentTarget.checked)} /> {t("allowExtend")}
+        </label>
+        <label class="inline check">
+          <input type="checkbox" checked={separateId} onChange={(e) => setSeparateId(e.currentTarget.checked)} /> {t("separateIdLabel")}
         </label>
       </fieldset>
       <details class="helper">
