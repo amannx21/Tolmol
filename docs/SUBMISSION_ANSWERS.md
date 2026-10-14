@@ -61,12 +61,15 @@ synthetic.
 - **Privacy.** A card holder who complains about the dealer they depend on every month is exposed if the record
   names them. The explorer shows no personal data: no name, phone, Aadhaar, card number, address, household size or
   free text, not even hashed. Reports have 16 small attributes, an empty payload, and the time rounded to the day. The user
-  controls expiry (30, 90 or 180 days, and whether neighbours may extend it) and can start a new device identity.
-  A public script audits every Tolmol entity on Tiramisu against the contract (PASS).
+  controls expiry (30, 90 or 180 days, and whether neighbours may extend it), and can sign each report with a
+  separate anonymous ID funded by the relayer, so nobody can link one person's reports, not even through who paid the
+  gas. A public script audits every Tolmol entity on Tiramisu against the contract (PASS).
 - **Security.** Officials and journalists are misled if complaints can be forged or quietly withdrawn. Tolmol
   trusts only `$creator`: registry-only shops, one report per device, witnesses from a different device, withdrawals
   only from the report's own device, every derived number recomputed by readers, and a Verify page that checks an
-  exported evidence file row by row against the chain.
+  exported evidence file row by row against the chain. Because one person with many phones is hard to stop, each shop
+  page shows public-data patterns (3 or more phones filing within one minute, rapid confirmations, one-off devices) and
+  the dashboard can leave burst reports out. On the live data it flags exactly the shops our seed script filled.
 
 ## Organiser questions (private to judges)
 

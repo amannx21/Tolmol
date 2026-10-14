@@ -12,8 +12,8 @@ import { httpReader } from "./clients.js"
 import { explorerEntityUrl } from "./constants.js"
 import { evidenceRows, toCsv, toJson } from "./evidence.js"
 import { addMonths, currentMonth, monthToNum } from "./model.js"
-import { dashboardReports, dashboardWitnesses, getReport, listShops, reportWitnesses, shopReports, shopWitnesses } from "./queries.js"
-import { formatBp, formatKg, shopStats, validWitnesses } from "./rules.js"
+import { dashboardReports, dashboardWitnesses, getReport, listShops, reportCorrections, reportWitnesses, shopCorrections, shopReports, shopWitnesses, stateCorrections } from "./queries.js"
+import { formatBp, formatKg, patternSignals, rapidReportKeys, shopStats, validWitnesses, withdrawnKeys } from "./rules.js"
 
 const USAGE = `tolmol: read Tolmol ration-shortfall evidence from Arkiv (Tiramisu testnet). Read-only.
 
@@ -59,19 +59,24 @@ async function main() {
   if (cmd === "query") {
     if (!values.shop) throw new Error("--shop is required")
     const head = atBlock ?? (await reader.getBlockNumber({ cacheTime: 0 }))
-    const [reps, wits] = await Promise.all([
+    const [reps, wits, corr] = await Promise.all([
       shopReports(reader, values.shop, values.month, { atBlock: head }),
       shopWitnesses(reader, values.shop, values.month, { atBlock: head }),
+      shopCorrections(reader, values.shop, values.month, { atBlock: head }),
     ])
-    const rows = evidenceRows(reps.items, wits.items, head)
+    const withdrawn = withdrawnKeys(reps.items, corr.items)
+    const rows = evidenceRows(reps.items, wits.items, head, withdrawn)
     if (values.format === "csv") return out(toCsv(rows))
     if (values.format === "json") return out(toJson(rows, { network: "Arkiv Tiramisu 7738577", shop_id: values.shop, month: values.month ?? "all", read_at_block: head.toString(), note: "SYNTHETIC demo data" }))
-    const s = shopStats(reps.items, wits.items)[0]
+    const s = shopStats(reps.items, wits.items, withdrawn)[0]
     out(`${values.shop} ${values.month ?? "(all months)"} at block ${head}`)
     if (s) out(`shortfall ${formatBp(s.shortfallBp)} of ${formatKg(s.totalEntitledG)} · ${s.reports} reports (${s.reporters} devices) · ${s.corroborated} confirmed`)
+    const p = patternSignals(reps.items, wits.items, withdrawn)
+    for (const g of p.rapidReports) out(`pattern: ${g.count} reports from ${g.devices} devices within blocks ${g.fromBlock}-${g.toBlock} (1 minute)`)
     for (const r of reps.items) {
       const w = validWitnesses(r, wits.items).length
-      out(`  ${r.month} ${pad(r.item, 6)} ${pad(formatKg(r.receivedG) + "/" + formatKg(r.entitledG), 18)} short ${pad(formatBp(r.shortfallBp), 6)} witnesses ${w}  creator ${r.creator}  ${explorerEntityUrl(r.key)}`)
+      const tag = withdrawn.has(r.key.toLowerCase()) ? "  [withdrawn by reporter]" : ""
+      out(`  ${r.month} ${pad(r.item, 6)} ${pad(formatKg(r.receivedG) + "/" + formatKg(r.entitledG), 18)} short ${pad(formatBp(r.shortfallBp), 6)} witnesses ${w}  creator ${r.creator}  ${explorerEntityUrl(r.key)}${tag}`)
     }
     return
   }
@@ -83,14 +88,18 @@ async function main() {
     const months: string[] = []
     for (let m = from; monthToNum(m) <= monthToNum(to); m = addMonths(m, 1)) months.push(m)
     const head = atBlock ?? (await reader.getBlockNumber({ cacheTime: 0 }))
-    const [reps, wits] = await Promise.all([
+    const [reps, wits, corr] = await Promise.all([
       dashboardReports(reader, { state: values.state, fromMonth: from, toMonth: to }, { atBlock: head }),
       dashboardWitnesses(reader, { state: values.state, months }, { atBlock: head }),
+      stateCorrections(reader, values.state, { atBlock: head }),
     ])
+    const withdrawn = withdrawnKeys(reps.items, corr.items)
+    const rapid = rapidReportKeys(reps.items, withdrawn)
     out(`${values.state} ${from}..${to} at block ${head}: worst shortfall first`)
-    shopStats(reps.items, wits.items).forEach((s, i) =>
-      out(`${pad(String(i + 1), 3)} ${pad(s.shopId, 13)} ${pad(formatBp(s.shortfallBp), 7)} ${pad(s.district, 13)} reports ${pad(String(s.reports), 3)} confirmed ${s.corroborated}`),
-    )
+    shopStats(reps.items, wits.items, withdrawn).forEach((s, i) => {
+      const bursts = reps.items.filter((r) => r.shopId === s.shopId && rapid.has(r.key.toLowerCase())).length
+      out(`${pad(String(i + 1), 3)} ${pad(s.shopId, 13)} ${pad(formatBp(s.shortfallBp), 7)} ${pad(s.district, 13)} reports ${pad(String(s.reports), 3)} confirmed ${pad(String(s.corroborated), 3)}${bursts ? ` in bursts ${bursts}` : ""}`)
+    })
     return
   }
 
@@ -99,10 +108,15 @@ async function main() {
     if (!key || !/^0x[0-9a-fA-F]{64}$/.test(key)) throw new Error("usage: tolmol report <entityKey>")
     const r = await getReport(reader, key)
     if (!r) throw new Error("not found, expired, or not a valid Tolmol report")
-    const ws = (await reportWitnesses(reader, key)).items
+    const [ws, corr] = await Promise.all([reportWitnesses(reader, key), reportCorrections(reader, key)])
     return out(
       JSON.stringify(
-        { ...r, witnesses: validWitnesses(r, ws).map((w) => ({ key: w.key, creator: w.creator, createdAt: w.createdAt })), explorer: explorerEntityUrl(r.key) },
+        {
+          ...r,
+          withdrawnByReporter: withdrawnKeys([r], corr.items).size > 0,
+          witnesses: validWitnesses(r, ws.items).map((w) => ({ key: w.key, creator: w.creator, createdAt: w.createdAt })),
+          explorer: explorerEntityUrl(r.key),
+        },
         (_, v) => (typeof v === "bigint" ? v.toString() : v),
         2,
       ),

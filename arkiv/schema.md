@@ -174,6 +174,10 @@ typo in the grams) needs a way to say so. A correction is a new, sealed entity t
 6. **A withdrawal counts only from the report's own creator** (see `tolmol.correction`). A withdrawn report
    is left out of rules 2 to 4 and no longer blocks rule 1 for its device.
 
+7. **Patterns, not rules.** Readers also flag (never drop) reports filed by 3 or more different `$creator`s within
+   30 blocks (one minute) at one shop, rapid confirmations, and devices that did nothing else (`patternSignals`).
+   The dashboard can leave burst reports out as a view. All of it comes from public `createdAt` blocks and `$creator`.
+
 These rules live in the app and the SDK package. Arkiv cannot enforce them, because anyone can
 write any entity. The dashboard applies them when it reads, so a bypassing writer gains nothing.
 

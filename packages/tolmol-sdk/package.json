@@ -1,8 +1,13 @@
 {
   "name": "tolmol-sdk",
   "version": "0.1.0",
-  "description": "Read and write Tolmol PDS shortfall reports on Arkiv (Tiramisu)",
+  "description": "Read and write Tolmol ration-shortfall reports on Arkiv, the Web3 database (Tiramisu testnet). Synthetic data only.",
   "license": "MIT",
+  "author": "Aman Arora",
+  "homepage": "https://github.com/amannx21/Tolmol/tree/main/packages/tolmol-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/amannx21/Tolmol/issues"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,11 +19,14 @@
   },
   "files": [
     "dist",
-    "src"
+    "src",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@arkiv-network/sdk": "0.8.1",
@@ -34,9 +42,16 @@
   },
   "keywords": [
     "arkiv",
+    "arkiv-network",
+    "web3-database",
     "pds",
     "ration",
+    "nfsa",
     "india",
-    "evidence"
-  ]
+    "evidence",
+    "civic-tech"
+  ],
+  "engines": {
+    "node": ">=20"
+  }
 }

@@ -221,17 +221,22 @@ can keep and open offline.
 **Privacy.** Who is exposed if this data leaks? A card holder who complains about the dealer they depend on every
 month. So the explorer shows nothing personal: no name, phone, Aadhaar, card number, address, household size or
 free text (not even hashed); 16 small attributes; empty payloads; the time rounded to the day. The user controls
-expiry: 30, 90 or 180 days, and whether neighbours may extend it. A device can start a new identity so later
-reports are not linked to earlier ones. Letters keep name and card number as paper blanks. Anyone can run
+expiry: 30, 90 or 180 days, and whether neighbours may extend it. With **a separate anonymous ID for each
+report** turned on, every report is signed by a fresh key funded by the relayer (which funds every fresh wallet), so
+nobody can link one person's reports, not even through who paid the gas. Letters keep name and card number as paper
+blanks. Anyone can run
 `scripts/privacy-audit.ts`, which checks every Tolmol entity on Tiramisu against
-[`docs/data-contract.schema.json`](docs/data-contract.schema.json). Open: wallets under one identity are linkable,
-and block times are public (threat model T15).
+[`docs/data-contract.schema.json`](docs/data-contract.schema.json). Open: block times are public, and with the
+option off, reports under one ID are linkable (threat model T15).
 
 **Security.** Who is misled if this data is forged? Officials and journalists who act on it. Authorship by
 `$creator` everywhere: registry-only shops, per-device dedupe, a witness must be a different device, a withdrawal
 counts only from the report's own creator, derived numbers recomputed by every reader, a Verify page for exported
-evidence, a rate-limited relayer that never signs data, no secrets or personal data on chain. See the threat model
-below for what is still open.
+evidence, a rate-limited relayer that never signs data, no secrets or personal data on chain. Fake reports from
+many phones are hard to stop, so Tolmol makes them visible: each shop page lists **patterns to look at** (3 or more
+phones filing within one minute, rapid confirmations, one-off devices), worked out from public block numbers and
+`$creator`, and the dashboard can leave burst reports out. On the live data it flags exactly the shops our seed script
+filled in bursts. See the threat model below for what is still open.
 
 **Open Source.** MIT. A documented data contract ([`arkiv/schema.md`](arkiv/schema.md), and as JSON Schema in
 [`docs/data-contract.schema.json`](docs/data-contract.schema.json)), a reusable [`tolmol-sdk`](packages/tolmol-sdk)
@@ -242,10 +247,11 @@ corroboration as lease renewal.
 
 ## Threat model (summary)
 
-Mitigated: operator deletion or edits, website takedown, a blocked RPC, forged authorship, fake shops, forged
+Mitigated: operator deletion or edits, website takedown, a blocked RPC, linking one person's reports (optional
+separate IDs), forged authorship, fake shops, forged
 derived numbers, duplicate and self-witness inflation, withdrawals by anyone but the reporter, edited evidence
 files, relayer abuse, leaked secrets. **Open:** sybil wallets (partly limited by
-gas and relayer caps), collusion, dishonest reporters, and linkability of one device's reports. Full table:
+gas and relayer caps, and made visible by burst patterns), collusion, dishonest reporters, and linkability of one device's reports. Full table:
 [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
 ## Architecture
