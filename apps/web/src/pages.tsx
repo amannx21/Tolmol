@@ -73,6 +73,12 @@ export function About() {
           {t("cliLine")} <code>npm run tolmol -- query --shop SYN-BR-0042</code> · {t("dataContract")}:{" "}
           <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">arkiv/schema.md</a>
         </p>
+        <p class="small">
+          <strong>{t("mirrorLink")}:</strong> {t("mirrorHelp")}{" "}
+          <a href="mirror.html" target="_blank" rel="noopener">
+            mirror.html
+          </a>
+        </p>
       </section>
       <DeviceCard />
       {prefs.mode === "full" && <Settings />}

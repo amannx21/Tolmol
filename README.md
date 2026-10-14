@@ -71,7 +71,7 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
 7. **Fix a mistake without deleting anything.** A reporter can **withdraw** their own report. The withdrawal is a
    new sealed entity; the report stays readable, tagged "withdrawn by its reporter", and drops out of totals. Only
    the device that wrote a report can withdraw it.
-8. **Check the evidence.** The **Verify** page takes an exported CSV and checks every row against Arkiv, so an
+8. **Check the evidence.** The **Verify** page takes an exported JSON evidence file and checks every row against Arkiv, so an
    official handed an evidence file can tell whether it was edited.
 
 **Two modes, chosen on first visit and switchable anytime:**

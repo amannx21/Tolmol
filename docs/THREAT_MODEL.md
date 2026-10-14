@@ -46,7 +46,7 @@ This page lists who might attack that promise, what stops them, and what is stil
 | T20 | RTI or complaint letter leaks the applicant's identity | Name, address and card number are blanks filled in on paper; the letters include shop evidence but no device address | **Mitigated** |
 | T21 | Someone "withdraws" another person's report (e.g. a dealer's wallet) | A `tolmol.correction` counts only when its `$creator` equals the report's `$creator` (`withdrawnKeys`). Others' corrections are ignored by the app, the CLI and the one-file reader alike | **Mitigated** |
 | T22 | The public RPC endpoint is blocked or filters Tolmol queries | Settings (Full mode) takes any Arkiv HTTP/WebSocket endpoint. `mirror.html` is a one-file, zero-dependency reader that takes any endpoint and can be saved and opened offline. The web app is served from two hosts (GitHub Pages and a Vercel mirror). The curl in the README needs only an RPC URL | **Mitigated** for reads |
-| T23 | Edited evidence: someone alters an exported CSV before handing it to an official | The **Verify** page takes an exported CSV and checks every row against Arkiv by entity key: the creator must match, and so must shop, month and grams for a report, or the report key for a witness. Missing and mismatched rows are shown one by one | **Mitigated** |
+| T23 | Edited evidence: someone alters an exported evidence file before handing it to an official | The **Verify** page takes an exported JSON evidence file and checks every row against Arkiv by entity key: the creator must match, and so must shop, month and grams for a report, or the report key for a witness. Missing and mismatched rows are shown one by one | **Mitigated** |
 | T24 | Spam corrections or issue tags to skew a shop's picture | Corrections from anyone but the report's creator are ignored. Issue tags are part of a report, so they inherit its dedupe and creator rules; an unknown bit makes the whole report invalid | **Mitigated** |
 
 ## What Tolmol does not solve
@@ -63,7 +63,7 @@ This page lists who might attack that promise, what stops them, and what is stil
 
 - `node --import tsx scripts/privacy-audit.ts`: every `project = "tolmol"` entity on Tiramisu matches the data
   contract (no unknown attributes, no free text, empty payloads). Read-only, no keys.
-- The Verify page (`#/verify`): re-checks an exported CSV against the chain.
+- The Verify page (`#/verify`): re-checks an exported JSON evidence file against the chain.
 - `examples/minimal-reader.mjs` and `public/mirror.html`: recompute shop shortfalls with nothing but the Arkiv SDK
   (or plain `fetch`) and the rules in `arkiv/schema.md`, so the app's numbers can be checked independently.
 

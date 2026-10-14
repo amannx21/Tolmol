@@ -118,7 +118,7 @@ synthetic.
       shortfall as the shop page. `node examples/minimal-reader.mjs SYN-BR-0042` shows the same data with only the
       Arkiv SDK and raw totals (on 2026-10-14 it and the app's rules both gave 125.4 kg short of 375 kg, 33.44%).
    7. Privacy: `node --import tsx scripts/privacy-audit.ts` checks every Tolmol entity against the data contract.
-   8. Evidence: export a shop's CSV, edit a number, and load it on the Verify page (`#/verify`): that row fails.
+   8. Evidence: export a shop's JSON evidence, edit a number, and load it on the Verify page (`#/verify`): that row fails.
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.
