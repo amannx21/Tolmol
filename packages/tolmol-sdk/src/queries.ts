@@ -2,8 +2,8 @@ import type { PublicArkivClient } from "@arkiv-network/sdk"
 import { i32, key, str } from "@arkiv-network/sdk/attr"
 import { eq, gte, lte, type Expression } from "@arkiv-network/sdk/query"
 import { DEFAULT_REGISTRY, PROJECT, TYPE } from "./constants.js"
-import { parseReport, parseShop, parseWitness, type RawEntity } from "./attributes.js"
-import { monthToNum, type Report, type Shop, type Witness } from "./model.js"
+import { parseCorrection, parseReport, parseShop, parseWitness, type RawEntity } from "./attributes.js"
+import { monthToNum, type Correction, type Report, type Shop, type Witness } from "./model.js"
 
 export type Reader = PublicArkivClient
 type Hex = `0x${string}`
@@ -152,4 +152,45 @@ export async function getReport(client: Reader, reportKey: Hex): Promise<Report 
   } catch {
     return null
   }
+}
+
+/** Withdrawals filed for reports at one shop (honoured only from the report's own creator, see withdrawnKeys). */
+export function shopCorrections(client: Reader, shopId: string, month?: string, opts: ReadOptions = {}): Promise<ReadResult<Correction>> {
+  const w = base(TYPE.correction)
+  w.push(eq("shop_id", str(shopId)))
+  if (month) w.push(eq("month", str(month)))
+  return walk(client, w, parseCorrection, opts)
+}
+
+/** Withdrawals in a state (for the dashboard). One query: corrections are rare. */
+export function stateCorrections(client: Reader, state: string, opts: ReadOptions = {}): Promise<ReadResult<Correction>> {
+  const w = base(TYPE.correction)
+  w.push(eq("state", str(state)))
+  return walk(client, w, parseCorrection, opts)
+}
+
+/** Withdrawals of one report. */
+export function reportCorrections(client: Reader, reportKey: Hex, opts: ReadOptions = {}): Promise<ReadResult<Correction>> {
+  const w = base(TYPE.correction)
+  w.push(eq("report_key", key(reportKey)))
+  return walk(client, w, parseCorrection, opts)
+}
+
+/** Human-readable query strings for a shop page, shown in the UI so anyone can re-run them. */
+export function describeShopQueries(shopId: string, month?: string): string[] {
+  const m = month ? ` AND month = str('${month}')` : ""
+  return [
+    `project = str('tolmol') AND type = str('tolmol.report') AND shop_id = str('${shopId}')${m}`,
+    `project = str('tolmol') AND type = str('tolmol.witness') AND shop_id = str('${shopId}')${m}`,
+    `project = str('tolmol') AND type = str('tolmol.correction') AND shop_id = str('${shopId}')${m}`,
+  ]
+}
+
+/** Human-readable query strings for the dashboard. */
+export function describeDashboardQueries(state: string, fromMonth: string, toMonth: string): string[] {
+  return [
+    `project = str('tolmol') AND type = str('tolmol.report') AND state = str('${state}') AND month_num >= i32(${monthToNum(fromMonth)}) AND month_num <= i32(${monthToNum(toMonth)})`,
+    `project = str('tolmol') AND type = str('tolmol.witness') AND state = str('${state}') AND month = str(<each month>)`,
+    `project = str('tolmol') AND type = str('tolmol.correction') AND state = str('${state}')`,
+  ]
 }

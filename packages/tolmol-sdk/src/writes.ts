@@ -1,9 +1,9 @@
 import { ExpirationTime, type WalletArkivClient } from "@arkiv-network/sdk"
 import type { Account } from "viem"
-import { reportAttributes, witnessAttributes } from "./attributes.js"
-import { BURN_ADDRESS, LIFETIME_DAYS } from "./constants.js"
+import { correctionAttributes, reportAttributes, witnessAttributes } from "./attributes.js"
+import { BLOCKS_PER_DAY, BURN_ADDRESS, LIFETIME_DAYS } from "./constants.js"
 import { validateReportInput, type Report, type Shop, type Witness } from "./model.js"
-import { getReport, myExistingReport, reportWitnesses, type Reader } from "./queries.js"
+import { getReport, myExistingReport, reportCorrections, reportWitnesses, type Reader } from "./queries.js"
 import { extensionTarget, validWitnesses } from "./rules.js"
 
 type Hex = `0x${string}`
@@ -48,14 +48,28 @@ export async function submitReport(
   writer: Writer,
   rawInput: unknown,
   shop: Pick<Shop, "shopId" | "state" | "district">,
-  opts: { synthetic: boolean; now?: Date; /** Caller already checked for a duplicate (saves one query). */ skipDuplicateCheck?: boolean } = { synthetic: true },
+  opts: {
+    synthetic: boolean
+    now?: Date
+    /** Caller already checked for a duplicate (saves one query). */
+    skipDuplicateCheck?: boolean
+    /** Privacy: the reporter chooses how long the report lives (default 90 days). */
+    lifetimeDays?: number
+    /** Privacy: allow neighbours to keep it alive longer (default true). If false, it expires exactly when chosen. */
+    allowExtension?: boolean
+  } = { synthetic: true },
 ): Promise<WriteResult> {
   const input = validateReportInput(rawInput, opts.now)
   if (input.shopId !== shop.shopId) throw new Error("shop does not match the report's shopId")
   const me = writer.account.address
+  const lifetimeDays = opts.lifetimeDays ?? LIFETIME_DAYS.report
+  if (!Number.isInteger(lifetimeDays) || lifetimeDays < 1 || lifetimeDays > LIFETIME_DAYS.cap) throw new Error(`lifetimeDays must be 1..${LIFETIME_DAYS.cap}`)
   if (!opts.skipDuplicateCheck) {
     const existing = await myExistingReport(reader, me, input)
-    if (existing) throw new DuplicateError("You already reported this shop, month and item", existing.key)
+    // A report its own reporter has withdrawn no longer blocks a corrected one.
+    if (existing && !(await reportCorrections(reader, existing.key)).items.some((c) => same(c.creator, me))) {
+      throw new DuplicateError("You already reported this shop, month and item", existing.key)
+    }
   }
 
   const [predicted] = await reader.predictEntityKeys({ owner: me, count: 1 })
@@ -69,8 +83,8 @@ export async function submitReport(
           synthetic: opts.synthetic,
           reportedAtMs: BigInt((opts.now ?? new Date()).getTime()),
         }),
-        expires: ExpirationTime.fromDays(LIFETIME_DAYS.report),
-        flags: FLAGS,
+        expires: ExpirationTime.fromDays(lifetimeDays),
+        flags: { readonly: true, permissionlessExtension: opts.allowExtension ?? true },
         salt: predicted.salt,
       },
     ],
@@ -158,4 +172,36 @@ export async function corroborate(
       throw e
     }
   }
+}
+
+/**
+ * Withdraws one of this device's own reports. The report itself is sealed and stays readable; this adds a
+ * readonly `tolmol.correction` (also handed to the burn address) that readers honour only because its $creator
+ * is the report's creator. It lives until report.createdAt + 365 days, so it outlasts any extension of the report.
+ */
+export async function withdrawReport(reader: Reader, writer: Writer, reportKey: Hex, opts: { synthetic: boolean; now?: Date } = { synthetic: true }): Promise<WriteResult> {
+  const me = writer.account.address
+  const report = await getReport(reader, reportKey)
+  if (!report) throw new ReportNotFoundError(reportKey)
+  if (!same(report.creator, me)) throw new Error("Only the device that wrote a report can withdraw it")
+  const existing = (await reportCorrections(reader, reportKey)).items.find((c) => same(c.creator, me))
+  if (existing) throw new DuplicateError("This report is already withdrawn", existing.key)
+  const [predicted] = await reader.predictEntityKeys({ owner: me, count: 1 })
+  if (!predicted) throw new Error("could not predict the entity key")
+  const res = await writer.executeBatch({
+    creates: [
+      {
+        payload: EMPTY,
+        contentType: CONTENT_TYPE,
+        attributes: correctionAttributes(report, { synthetic: opts.synthetic, reportedAtMs: BigInt((opts.now ?? new Date()).getTime()) }),
+        expires: ExpirationTime.atBlock(report.createdAt + BigInt(LIFETIME_DAYS.cap) * BLOCKS_PER_DAY, { atLeast: ExpirationTime.fromHours(1) }),
+        flags: { readonly: true, permissionlessExtension: true },
+        salt: predicted.salt,
+      },
+    ],
+    ownershipChanges: [{ entityKey: predicted.key, newOwner: BURN_ADDRESS }],
+  })
+  const created = res.createdEntities[0]
+  if (!created || !same(created, predicted.key)) throw new Error("created key does not match the prediction; reconcile before retrying")
+  return { entityKey: created, txHash: res.txHash }
 }

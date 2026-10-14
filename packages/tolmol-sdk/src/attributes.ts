@@ -1,6 +1,6 @@
 import type { AttributeInputs } from "@arkiv-network/sdk"
 import { bool, i32, key, str, u64 } from "@arkiv-network/sdk/attr"
-import { PROJECT, SCHEMA_VERSION, TYPE } from "./constants.js"
+import { ALL_ISSUES_MASK, PROJECT, SCHEMA_VERSION, TYPE } from "./constants.js"
 import {
   DISTRICT_RE,
   isItem,
@@ -9,6 +9,8 @@ import {
   SHOP_ID_RE,
   shortfallBp,
   STATE_RE,
+  type Correction,
+  dayStartMs,
   type Report,
   type ReportInput,
   type Shop,
@@ -62,7 +64,8 @@ export function reportAttributes(
     received_g: i32(input.receivedG),
     shortfall_g: i32(input.entitledG - input.receivedG),
     shortfall_bp: i32(shortfallBp(input.entitledG, input.receivedG)),
-    reported_at: u64(opts.reportedAtMs),
+    issues: i32(input.issues ?? 0),
+    reported_at: u64(dayStartMs(opts.reportedAtMs)),
     synthetic: bool(opts.synthetic),
   }
 }
@@ -80,7 +83,22 @@ export function witnessAttributes(
     state: str(report.state),
     month: str(report.month),
     item: str(report.item),
-    reported_at: u64(opts.reportedAtMs),
+    reported_at: u64(dayStartMs(opts.reportedAtMs)),
+    synthetic: bool(opts.synthetic),
+  }
+}
+
+export function correctionAttributes(report: Pick<Report, "key" | "shopId" | "state" | "month">, opts: { synthetic: boolean; reportedAtMs: bigint }): AttributeInputs {
+  return {
+    project: str(PROJECT),
+    type: str(TYPE.correction),
+    schema_version: i32(SCHEMA_VERSION),
+    report_key: key(report.key),
+    shop_id: str(report.shopId),
+    state: str(report.state),
+    month: str(report.month),
+    action: str("withdraw"),
+    reported_at: u64(dayStartMs(opts.reportedAtMs)),
     synthetic: bool(opts.synthetic),
   }
 }
@@ -161,6 +179,9 @@ export function parseReport(e: RawEntity): Report | null {
     return null
   }
   if (sg !== entitledG - receivedG || sbp !== bp) return null
+  // Optional (added after the first reports): absent means no extra issues.
+  const issues = e.attributes?.issues === undefined ? 0 : n32(e, "issues")
+  if (issues === undefined || issues < 0 || (issues & ~ALL_ISSUES_MASK) !== 0) return null
   return {
     ...c,
     owner: e.owner,
@@ -174,6 +195,7 @@ export function parseReport(e: RawEntity): Report | null {
     receivedG,
     shortfallG: sg,
     shortfallBp: sbp,
+    issues,
     reportedAt,
     synthetic: b(e, "synthetic") === true,
     createdAt: e.createdAt,
@@ -194,4 +216,16 @@ export function parseWitness(e: RawEntity): Witness | null {
   if (!isHex(reportKey) || !shopId || !SHOP_ID_RE.test(shopId) || !month || !MONTH_RE.test(month) || !isItem(item)) return null
   if (reportedAt === undefined) return null
   return { ...c, owner: e.owner, reportKey, shopId, state, month, item, reportedAt, createdAt: e.createdAt, expiresAt: e.expiresAt }
+}
+
+export function parseCorrection(e: RawEntity): Correction | null {
+  const c = common(e, TYPE.correction)
+  if (!c || e.createdAt === undefined) return null
+  const reportKey = attr(e, "report_key", "key")
+  const shopId = s(e, "shop_id")
+  const state = s(e, "state")
+  const month = s(e, "month")
+  if (!isHex(reportKey) || !shopId || !SHOP_ID_RE.test(shopId) || !state || !STATE_RE.test(state) || !month || !MONTH_RE.test(month)) return null
+  if (s(e, "action") !== "withdraw") return null
+  return { ...c, reportKey, shopId, state, month, action: "withdraw", createdAt: e.createdAt }
 }

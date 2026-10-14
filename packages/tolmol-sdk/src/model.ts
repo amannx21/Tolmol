@@ -1,4 +1,4 @@
-import { ITEMS, MAX_ENTITLED_G, type Item } from "./constants.js"
+import { ALL_ISSUES_MASK, ITEMS, MAX_ENTITLED_G, type Item } from "./constants.js"
 
 /** Synthetic shop IDs only: `SYN-<state code>-<4 digits>`. Anything else is rejected, so no real registry ID can slip in. */
 export const SHOP_ID_RE = /^SYN-[A-Z]{2}-\d{4}$/
@@ -23,9 +23,12 @@ export type ReportInput = {
   item: Item
   entitledG: number
   receivedG: number
+  /** Bitmask of ISSUES (what else went wrong). Optional; 0 = none. */
+  issues?: number
 }
 
-export type Report = ReportInput & {
+export type Report = Omit<ReportInput, "issues"> & {
+  issues: number
   key: `0x${string}`
   state: string
   district: string
@@ -38,6 +41,17 @@ export type Report = ReportInput & {
   owner: `0x${string}`
   createdAt: bigint
   expiresAt: bigint
+}
+
+export type Correction = {
+  key: `0x${string}`
+  reportKey: `0x${string}`
+  shopId: string
+  state: string
+  month: string
+  action: "withdraw"
+  creator: `0x${string}`
+  createdAt: bigint
 }
 
 export type Witness = {
@@ -107,7 +121,7 @@ export function kgToGrams(kg: string): number {
   return Number(whole) * 1000 + Number(frac.padEnd(3, "0"))
 }
 
-const ALLOWED_INPUT_KEYS = new Set(["shopId", "month", "item", "entitledG", "receivedG"])
+const ALLOWED_INPUT_KEYS = new Set(["shopId", "month", "item", "entitledG", "receivedG", "issues"])
 
 /**
  * Validates a report before it can reach Arkiv. Rejects unknown fields outright, so a caller cannot
@@ -139,5 +153,15 @@ export function validateReportInput(input: unknown, now: Date = new Date()): Rep
   if (typeof rec !== "number" || !Number.isSafeInteger(rec) || rec < 0 || rec > e) {
     throw new ValidationError("receivedG", "must be a whole number of grams between 0 and the entitlement")
   }
-  return { shopId: r.shopId, month: r.month, item: r.item, entitledG: e, receivedG: rec }
+  const iss = r.issues ?? 0
+  if (typeof iss !== "number" || !Number.isSafeInteger(iss) || iss < 0 || (iss & ~ALL_ISSUES_MASK) !== 0) {
+    throw new ValidationError("issues", "must be a combination of the known issue flags")
+  }
+  return { shopId: r.shopId, month: r.month, item: r.item, entitledG: e, receivedG: rec, issues: iss }
+}
+
+/** Start of the UTC day for a timestamp: reports store the day, not the second (less to link a report to a shop visit). */
+export const dayStartMs = (ms: number | bigint) => {
+  const n = BigInt(ms)
+  return n - (n % 86_400_000n)
 }

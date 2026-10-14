@@ -14,7 +14,7 @@ describe("report attributes round-trip", () => {
   const attrs = reportAttributes(input, { state: "BR", district: "gaya" }, { synthetic: true, reportedAtMs: 1_791_881_241_095n })
   it("uses lowercase names, typed integers and no free text", () => {
     for (const name of Object.keys(attrs)) expect(name).toMatch(/^[a-z][a-z0-9_]*$/)
-    expect(Object.keys(attrs)).toHaveLength(15)
+    expect(Object.keys(attrs)).toHaveLength(16) // 15 + the issues bitmask
     expect((attrs.shortfall_bp as { type: string; value: number }).type).toBe("i32")
     expect((attrs.shortfall_bp as { value: number }).value).toBe(1600)
     expect((attrs.reported_at as { type: string }).type).toBe("u64")

@@ -47,7 +47,7 @@ describe("months", () => {
 
 describe("validateReportInput", () => {
   it("accepts a valid report", () => {
-    expect(validateReportInput(ok, NOW)).toEqual(ok)
+    expect(validateReportInput(ok, NOW)).toEqual({ ...ok, issues: 0 })
   })
   it("rejects future and stale months", () => {
     expect(() => validateReportInput({ ...ok, month: "2026-11" }, NOW)).toThrow(/future/)

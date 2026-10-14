@@ -1,5 +1,5 @@
-import { BLOCKS_PER_DAY, LIFETIME_DAYS, MIN_WITNESSES_TO_EXTEND } from "./constants.js"
-import type { Report, Witness } from "./model.js"
+import { BLOCKS_PER_DAY, ISSUE_NAMES, ISSUES, LIFETIME_DAYS, MIN_WITNESSES_TO_EXTEND, type IssueName } from "./constants.js"
+import type { Correction, Report, Witness } from "./model.js"
 
 const lc = (s: string) => s.toLowerCase()
 
@@ -13,9 +13,10 @@ function earlier(a: { createdAt: bigint; key: string }, b: { createdAt: bigint; 
  * Keeps one report per (creator, shop, month, item): the earliest by block, ties broken by key.
  * Deterministic for any input order, so every viewer computes the same set.
  */
-export function dedupeReports(reports: readonly Report[]): Report[] {
+export function dedupeReports(reports: readonly Report[], withdrawn: ReadonlySet<string> = new Set()): Report[] {
   const best = new Map<string, Report>()
   for (const r of reports) {
+    if (withdrawn.has(lc(r.key))) continue
     const id = `${lc(r.creator)}|${r.shopId}|${r.month}|${r.item}`
     const cur = best.get(id)
     if (!cur || earlier(r, cur)) best.set(id, r)
@@ -73,10 +74,12 @@ export type ShopStats = {
   /** Reports with a positive shortfall. */
   shortReports: number
   months: string[]
+  /** How many counted reports flagged each issue. */
+  issueCounts: Record<IssueName, number>
 }
 
 /** Aggregates deduplicated reports (and their witnesses) per shop, worst shortfall first. */
-export function shopStats(reports: readonly Report[], witnesses: readonly Witness[]): ShopStats[] {
+export function shopStats(reports: readonly Report[], witnesses: readonly Witness[], withdrawn: ReadonlySet<string> = new Set()): ShopStats[] {
   const byReport = new Map<string, Witness[]>()
   for (const w of witnesses) {
     const k = lc(w.reportKey)
@@ -85,7 +88,7 @@ export function shopStats(reports: readonly Report[], witnesses: readonly Witnes
     else byReport.set(k, [w])
   }
   const map = new Map<string, ShopStats & { _reporters: Set<string>; _months: Set<string> }>()
-  for (const r of dedupeReports(reports)) {
+  for (const r of dedupeReports(reports, withdrawn)) {
     let s = map.get(r.shopId)
     if (!s) {
       s = {
@@ -101,6 +104,7 @@ export function shopStats(reports: readonly Report[], witnesses: readonly Witnes
         shortfallBp: 0,
         shortReports: 0,
         months: [],
+        issueCounts: Object.fromEntries(ISSUE_NAMES.map((n) => [n, 0])) as Record<IssueName, number>,
         _reporters: new Set(),
         _months: new Set(),
       }
@@ -113,6 +117,7 @@ export function shopStats(reports: readonly Report[], witnesses: readonly Witnes
     s.witnesses += wc
     if (wc >= 1) s.corroborated++
     if (r.shortfallG > 0) s.shortReports++
+    for (const n of ISSUE_NAMES) if (r.issues & ISSUES[n]) s.issueCounts[n]++
     s.totalEntitledG += r.entitledG
     s.totalShortfallG += r.shortfallG
   }
@@ -141,4 +146,17 @@ export function formatKg(g: number): string {
   const whole = Math.floor(g / 1000)
   const frac = String(g % 1000).padStart(3, "0").replace(/0+$/, "")
   return frac ? `${whole}.${frac} kg` : `${whole} kg`
+}
+
+/**
+ * Keys of reports withdrawn by their own reporter. A correction counts only if its $creator is the report's
+ * $creator; anyone else's "correction" is ignored, so nobody can hide someone else's report.
+ */
+export function withdrawnKeys(reports: readonly Report[], corrections: readonly Correction[]): Set<string> {
+  const creatorOf = new Map(reports.map((r) => [lc(r.key), lc(r.creator)]))
+  const out = new Set<string>()
+  for (const c of corrections) {
+    if (c.action === "withdraw" && creatorOf.get(lc(c.reportKey)) === lc(c.creator)) out.add(lc(c.reportKey))
+  }
+  return out
 }
