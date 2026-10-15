@@ -18,6 +18,7 @@ import { ReportEntry } from "./SchemeEntry"
 import { ProofPage } from "./proofUI"
 import { TrustPage } from "./trust"
 import { RawPage } from "./rawPage"
+import { AddOnsPage } from "./schemeHome"
 import "./styles.css"
 import "./design.css"
 import "./flow.css"
@@ -103,6 +104,9 @@ function App() {
       break
     case "raw":
       page = <RawPage />
+      break
+    case "schemes":
+      page = <AddOnsPage scheme={route.s} />
       break
     case "card":
       page = <CardPage c={route.c} />

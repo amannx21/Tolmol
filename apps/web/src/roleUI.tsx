@@ -60,7 +60,7 @@ function ToolCards({ cards }: { cards: Card[] }) {
 }
 
 /** "What you can do here": everyone's tools, plus the cards for this phone's verified role. Same in Easy and Full. */
-export function RoleHub() {
+export function RoleHub({ scheme = "pds" }: { scheme?: "pds" | "mdm" | "nrega" } = {}) {
   const { t } = useLang()
   const holders = useVerified()
   const dealers = useDealers()
@@ -99,13 +99,12 @@ export function RoleHub() {
     { icon: "check", title: t("verifyTitle"), body: t("hubCheckBody"), action: t("hubCheckAction"), href: "#/verify" },
     ...(roleCard ? [] : [{ icon: "shield" as const, title: t("navGetVerified"), body: t("hubVerifyBody"), action: t("hubVerifyAction"), href: "#/test-cards" }]),
     { icon: "next", title: t("tourTitle"), body: t("hubTourBody"), action: t("hubTourAction"), href: "#/tour" },
-    // The same ledger for other schemes: school meals and rural work wages.
-    { icon: "people", title: t("scheme_mdm"), body: t("schemeHelp_mdm"), action: t("schemeReportBtn"), href: "#/report?scheme=mdm" },
-    { icon: "calendar", title: t("scheme_nrega"), body: t("schemeHelp_nrega"), action: t("schemeReportBtn"), href: "#/report?scheme=nrega" },
+    // Add-ons on the same ledger (ration stays the main topic).
+    ...(scheme === "pds" ? [{ icon: "people" as const, title: t("hubAddOnsTitle"), body: t("hubAddOnsBody"), action: t("hubAddOnsAction"), href: "#/schemes" }] : []),
   ]
   return (
     <>
-    <CheckShop />
+    <CheckShop scheme={scheme} />
     <section class="flow-section role-hub" aria-labelledby="role-title">
       <div class="section-heading">
         <div>

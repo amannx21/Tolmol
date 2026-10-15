@@ -17,11 +17,13 @@ export function ReportEntry({ shopId, scheme, children }: { shopId?: string; sch
       .catch(() => setFromShop(null))
   }, [shopId])
   if (fromShop === undefined) return <Loading />
+  // Ration is the main flow and is shown exactly as designed; the add-ons appear only when asked for.
   const active = fromShop ?? scheme ?? "pds"
+  if (active === "pds") return <>{children}</>
   return (
     <>
       <SchemeChooser scheme={active} />
-      {active === "pds" ? children : <SchemeReport scheme={active} initialShop={shopId} />}
+      <SchemeReport scheme={active} initialShop={shopId} />
     </>
   )
 }

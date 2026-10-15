@@ -210,11 +210,13 @@ export function Dashboard({ initialState, scheme: initialScheme }: { initialStat
           </span>
         </div>
         <div class="row wrap">
-          <select value={scheme} onChange={(e) => { const s = e.currentTarget.value as Scheme; setScheme(s); go(`#/dashboard?state=${state}${s === "pds" ? "" : `&scheme=${s}`}`) }} aria-label={t("schemeDashboard")}>
-            {SCHEMES_SHOWN.map((s) => (
-              <option value={s}>{t(`scheme_${s}` as Key)}</option>
-            ))}
-          </select>
+          {scheme !== "pds" && (
+            <select value={scheme} onChange={(e) => { const s = e.currentTarget.value as Scheme; setScheme(s); go(`#/dashboard?state=${state}${s === "pds" ? "" : `&scheme=${s}`}`) }} aria-label={t("schemeDashboard")}>
+              {SCHEMES_SHOWN.map((s) => (
+                <option value={s}>{s === "pds" ? `← ${t("backToRation")}` : t(`scheme_${s}` as Key)}</option>
+              ))}
+            </select>
+          )}
           <select value={state} onChange={(e) => (setState(e.currentTarget.value), go(`#/dashboard?state=${e.currentTarget.value}${scheme === "pds" ? "" : `&scheme=${scheme}`}`))} aria-label={t("state")}>
             {STATES.map((s) => (
               <option value={s}>{STATE_NAMES[s]?.[lang]}</option>

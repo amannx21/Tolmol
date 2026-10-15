@@ -304,14 +304,16 @@ export function SchemeReport({ scheme, initialShop }: { scheme: Other; initialSh
   return <Loading />
 }
 
-/** "Which scheme is this about?": shown above the report screens. Ration keeps its own flows; the others use SchemeReport. */
+/** On an add-on's report page: switch between the add-ons, or go back to the main ration flow. */
 export function SchemeChooser({ scheme }: { scheme: Scheme }) {
   const { t } = useLang()
   return (
-    <nav class="scheme-chooser" aria-label={t("whichScheme")}>
-      <span class="small muted">{t("whichScheme")}</span>
-      {(["pds", "mdm", "nrega"] as const).map((s) => (
-        <a class={`chip ${s === scheme ? "selected" : ""}`} href={s === "pds" ? "#/report" : `#/report?scheme=${s}`} aria-current={s === scheme ? "page" : undefined}>
+    <nav class="scheme-chooser" aria-label={t("addOnsTitle")}>
+      <a class="chip" href="#/report?scheme=pds">
+        ← 🌾 {t("backToRation")}
+      </a>
+      {(["mdm", "nrega"] as const).map((s) => (
+        <a class={`chip ${s === scheme ? "selected" : ""}`} href={`#/report?scheme=${s}`} aria-current={s === scheme ? "page" : undefined}>
           {t(`scheme_${s}` as Key)}
         </a>
       ))}

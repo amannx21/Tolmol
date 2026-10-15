@@ -92,6 +92,8 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
         <a href="#/trust">{t("trustLink")}</a>
         {" · "}
         <a href="#/raw">{t("rawLink")}</a>
+        {" · "}
+        <a href="#/schemes">{t("addOnsLink")}</a>
         <ReadInspector />
       </footer>
     </>

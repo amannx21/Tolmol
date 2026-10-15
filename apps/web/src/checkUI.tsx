@@ -13,6 +13,7 @@ import {
   shopStocks,
   shopVerdict,
   withdrawnKeys,
+  type Scheme,
   type Shop,
   type ShopStats,
   type Verdict,
@@ -25,7 +26,7 @@ import { ErrorBox, loadOutlets } from "./ui"
 
 const ICON: Record<Verdict, string> = { red: "🟥", amber: "🟧", green: "🟩", grey: "⬜" }
 
-export function CheckShop() {
+export function CheckShop({ scheme }: { scheme?: Scheme } = {}) {
   const { t, lang } = useLang()
   const [outlets, setOutlets] = useState<Shop[]>([])
   const [q, setQ] = useState("")
@@ -33,8 +34,8 @@ export function CheckShop() {
   const [err, setErr] = useState<unknown>(null)
   const [res, setRes] = useState<{ shop: Shop; stats: ShopStats | undefined; verdict: Verdict; noBoard: boolean } | null>(null)
   useEffect(() => {
-    loadOutlets().then(setOutlets, () => setOutlets([]))
-  }, [])
+    loadOutlets().then((all) => setOutlets(scheme ? all.filter((s) => s.scheme === scheme) : all), () => setOutlets([]))
+  }, [scheme])
   const label = (s: Shop) => (lang === "hi" ? s.labelHi : s.labelEn)
 
   const check = async () => {
@@ -66,7 +67,7 @@ export function CheckShop() {
 
   return (
     <section class="card check-shop" aria-labelledby="check-title">
-      <h2 id="check-title">{t("checkTitle")}</h2>
+      <h2 id="check-title">{t(scheme === "mdm" ? "checkTitle_mdm" : scheme === "nrega" ? "checkTitle_nrega" : "checkTitle")}</h2>
       <p class="small">{t("checkHelp")}</p>
       <form
         class="row wrap"
@@ -75,7 +76,7 @@ export function CheckShop() {
           void check()
         }}
       >
-        <input class="mono" list="check-outlets" value={q} onInput={(e) => setQ(e.currentTarget.value)} placeholder="SYN-BR-0042" aria-label={t("checkPlaceholder")} />
+        <input class="mono" list="check-outlets" value={q} onInput={(e) => setQ(e.currentTarget.value)} placeholder={scheme === "mdm" ? "SYN-BR-5001" : scheme === "nrega" ? "SYN-BR-7001" : "SYN-BR-0042"} aria-label={t("checkPlaceholder")} />
         <datalist id="check-outlets">
           {outlets.map((s) => (
             <option value={s.shopId}>{label(s)}</option>
