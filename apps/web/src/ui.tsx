@@ -13,16 +13,15 @@ import { ActionIcon } from "./ActionIcon"
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
   const { t, toggle, lang } = useLang()
   const [prefs, setPrefs] = usePrefs()
-  // The same pages in Easy and Full mode: Easy changes how things look, never what you can do.
   const nav: [Route["name"], string, string][] = [
     ["home", "#/", t("navHome")],
     ["dashboard", "#/dashboard", t("navDashboard")],
     ["me", "#/me", t("navMe")],
-    ["verify", "#/verify", t("navVerify")],
     ["testCards", "#/test-cards", t("navGetVerified")],
     ["about", "#/about", t("navAbout")],
-    ["report", "#/report", t("navReport")],
   ]
+  if (prefs.mode === "full") nav.splice(2, 0, ["verify", "#/verify", t("navVerify")])
+  nav.push(["report", "#/report", t("navReport")])
   return (
     <>
       <a class="skip-link" href="#main-content" onClick={(event) => {
