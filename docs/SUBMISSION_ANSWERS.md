@@ -11,8 +11,8 @@ Nothing here is submitted automatically; the builder submits and publishes.
 - **Technologies:** Arkiv (Tiramisu), @arkiv-network/sdk 0.8.1, viem, TypeScript, Preact, Vite, Vitest, Node.js
 - **Platforms:** Web (mobile-first), CLI
 - **Media:** `docs/media/dashboard-en.jpg`, `dashboard-hi.jpg`, `shop-page.jpg`, `report.jpg`
-- **Links:** repo https://github.com/amannx21/Tolmol · app https://amannx21.github.io/Tolmol/ · mirror
-  https://tolmol-web-kappa.vercel.app · video [FILL]
+- **Links:** repo https://github.com/amannx21/Tolmol · app https://tolmol-web-kappa.vercel.app · backup
+  https://amannx21.github.io/Tolmol/ · video [FILL]
 
 ### The problem it solves *
 
@@ -76,7 +76,7 @@ synthetic.
 
 ## Organiser questions (private to judges)
 
-1. **Live app URL** \*: https://amannx21.github.io/Tolmol/ (public, no login, static on GitHub Pages)
+1. **Live app URL** \*: https://tolmol-web-kappa.vercel.app (public, no login, static on Vercel; the same build is also on GitHub Pages at https://amannx21.github.io/Tolmol/)
 2. **Indian nationality** \*: Yes (AMAN ARORA)
 3. **Why Arkiv?** \*
 
@@ -114,29 +114,29 @@ synthetic.
 7. **Schema** \*: https://github.com/amannx21/Tolmol/blob/submission-v1/arkiv/schema.md
 8. **How judges can reproduce** \*:
    1. Run the curl in the README ("See the data without our website"). Every report has `owner = 0x…dEaD`.
-   2. Open the live app https://amannx21.github.io/Tolmol/, go to Dashboard (Bihar). It ranks shops from `arkiv_query`; the badge says Live.
+   2. Open the live app https://tolmol-web-kappa.vercel.app/, go to Dashboard (Bihar). It ranks shops from `arkiv_query`; the badge says Live.
    3. Open shop SYN-BR-0042. Type a past block (e.g. 518000) in "Show as it was at block" to see `atBlock` history.
    4. Tap Report, "Get free test gas", file a report. Open the link in another browser profile, get gas, tap
       "I also got less at this shop this month". Watch the dashboard update in the first window.
    5. From a clone: `npm ci && npm test`, then `npm run tolmol -- query --shop SYN-BR-0042`.
-   6. Without our app: open https://amannx21.github.io/Tolmol/mirror.html (one file, plain fetch, any RPC). It
+   6. Without our app: open https://tolmol-web-kappa.vercel.app/mirror.html (one file, plain fetch, any RPC). It
       applies the same rules (dedupe, other-device confirmations, reporter-only withdrawals) and gives the same
       shortfall as the shop page. `node examples/minimal-reader.mjs SYN-BR-0042` shows the same data with only the
       Arkiv SDK and raw totals (on 2026-10-14 it and the app's rules both gave 125.4 kg short of 375 kg, 33.44%).
    7. Privacy: `node --import tsx scripts/privacy-audit.ts` checks every Tolmol entity against the data contract.
    8. Evidence: export a shop's JSON evidence, edit a number, and load it on the Verify page (`#/verify`): that row fails.
-   9. Verified card holders: open https://amannx21.github.io/Tolmol/#/test-cards, tap "Use on this phone" on any card,
+   9. Verified card holders: open https://tolmol-web-kappa.vercel.app/#/test-cards, tap "Use on this phone" on any card,
       then "Verify this phone". The About page then says the phone is verified, and its reports show ✓. The same card
       in another browser profile is refused (one card, one phone).
-   10. Shops answer: open https://amannx21.github.io/Tolmol/#/shop/SYN-BR-0042. The score card reads "Answered 4 of 29
+   10. Shops answer: open https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-0042. The score card reads "Answered 4 of 29
       reports · fixed (confirmed by reporters) 3". Open one of those reports to see the shop's answer and the
       reporter's "fixed ✓". To act as a dealer, use a test dealer licence on #/test-cards, then open a report of that
       shop: the answer buttons appear (fixed choices, no text box).
-   11. Officials: open https://amannx21.github.io/Tolmol/#/dashboard?state=BR. "Needs official attention" lists shops with
+   11. Officials: open https://tolmol-web-kappa.vercel.app/#/dashboard?state=BR. "Needs official attention" lists shops with
       the reasons, and SYN-BR-0042 shows "Latest official action: Show-cause notice issued to the dealer". Its shop page
       shows the three recorded actions. With a test official ID (#/test-cards), the action buttons appear on shop pages
       of that district only.
-   12. The whole story in six steps: https://amannx21.github.io/Tolmol/#/tour
+   12. The whole story in six steps: https://tolmol-web-kappa.vercel.app/#/tour
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.

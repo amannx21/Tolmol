@@ -8,10 +8,10 @@ Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Open Source, 
 
 | | |
 |---|---|
-| Live app | **https://amannx21.github.io/Tolmol/** (no login, works on a phone, English + हिन्दी) |
-| Mirror (second host) | https://tolmol-web-kappa.vercel.app (same build, deployed from `main` on Vercel) |
+| Live app | **https://tolmol-web-kappa.vercel.app** (Vercel; no login, works on a phone, English + हिन्दी) |
+| Backup host | https://amannx21.github.io/Tolmol/ (GitHub Pages; the same build, deployed from `main`) |
 | npm package | [`tolmol-sdk`](https://www.npmjs.com/package/tolmol-sdk): `npm install tolmol-sdk` (read the data and apply the rules; read-only CLI `npx tolmol-sdk`) |
-| One-file reader | [`mirror.html`](https://amannx21.github.io/Tolmol/mirror.html): no framework, no build, any Arkiv RPC; save it and open it anywhere |
+| One-file reader | [`mirror.html`](https://tolmol-web-kappa.vercel.app/mirror.html): no framework, no build, any Arkiv RPC; save it and open it anywhere |
 | Gas-drip relayer | https://tolmol-relayer.vercel.app/health (Vercel; sends test GLM to fresh device wallets only) |
 | Demo video (3 min) | **[FILL]** |
 | Network | Arkiv **Tiramisu** testnet, chain ID `7738577` · [explorer](https://tiramisu.explorer.arkiv.network) |
@@ -81,7 +81,7 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    ration card: a verifier checks the card's signature once and publishes "this phone is a verified card holder" on
    Arkiv. Reports and confirmations then show **✓ verified card holder**, shop pages say how many reports are verified,
    and the dashboard can count only verified reports. One card verifies one phone. The demo uses **synthetic test
-   cards** ([`#/test-cards`](https://amannx21.github.io/Tolmol/#/test-cards)) signed by a test key; in future the card is
+   cards** ([`#/test-cards`](https://tolmol-web-kappa.vercel.app/#/test-cards)) signed by a test key; in future the card is
    the DigiLocker ration card ([`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md)). Verification is optional, so
    nobody is silenced.
 10. **Shops answer, reporters confirm (a community score card).** The shop's dealer, verified with a (test) dealer
@@ -188,7 +188,7 @@ curl -s https://rpc.tiramisu.db-chain.testnet.arkiv.network \
 
 Every returned entity has `owner = 0x…dEaD`, a device `creator`, and the attributes in `arkiv/schema.md`.
 
-Or open [`mirror.html`](https://amannx21.github.io/Tolmol/mirror.html) (one file, plain `fetch`, works with any
+Or open [`mirror.html`](https://tolmol-web-kappa.vercel.app/mirror.html) (one file, plain `fetch`, works with any
 Arkiv RPC; it applies the rules in `arkiv/schema.md`), or run `node examples/minimal-reader.mjs SYN-BR-0042`,
 which uses only `@arkiv-network/sdk` and prints raw totals for you to build on.
 
