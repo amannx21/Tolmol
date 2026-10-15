@@ -20,7 +20,8 @@ createServer(async (req, res) => {
   for await (const c of req) chunks.push(c as Buffer)
   const headers = new Headers()
   for (const [k, v] of Object.entries(req.headers)) if (typeof v === "string") headers.set(k, v)
-  if (!headers.has("x-forwarded-for")) headers.set("x-forwarded-for", req.socket.remoteAddress ?? "unknown")
+  // Always the socket address: a client-sent X-Forwarded-For must not choose its own rate-limit bucket.
+  headers.set("x-forwarded-for", req.socket.remoteAddress ?? "unknown")
   const body = chunks.length && req.method !== "GET" && req.method !== "HEAD" ? Buffer.concat(chunks) : undefined
   const r = await handle(new Request(`http://localhost:${port}${req.url}`, { method: req.method, headers, body }))
   res.writeHead(r.status, Object.fromEntries(r.headers))

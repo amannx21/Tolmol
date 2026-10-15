@@ -13,6 +13,8 @@ const run = (req: Request) => {
       ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
       IP_SALT: process.env.IP_SALT,
       RPC_URL: process.env.RPC_URL,
+      // Vercel sets x-real-ip itself; a visitor-supplied cf-connecting-ip must not be trusted here.
+      IP_HEADER: process.env.IP_HEADER ?? "x-real-ip",
       VERIFIER_PRIVATE_KEY: process.env.VERIFIER_PRIVATE_KEY,
       CARD_TAG_SECRET: process.env.CARD_TAG_SECRET,
     },

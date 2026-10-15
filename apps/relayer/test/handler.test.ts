@@ -41,6 +41,23 @@ describe("relayer rate limits", () => {
     const r = await makeHandler(env, full)(post({ address: "0x000000000000000000000000000000000000bEEF" }))
     expect(r.status).toBe(429)
   })
+  it("keys the per-IP limit on the platform's header only; a visitor-sent IP header is ignored", async () => {
+    const seen: string[] = []
+    // the global budget is "used up", so each request stops right after the per-IP count (no chain access)
+    const store: CounterStore = { incr: async (k) => (seen.push(k), k.startsWith("total:") ? 10_000 : 1) }
+    const h = makeHandler({ ...env, IP_HEADER: "x-real-ip" }, store)
+    const req = (spoof: string) =>
+      new Request("https://relayer.example/drip", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-real-ip": "203.0.113.9", "cf-connecting-ip": spoof, "x-forwarded-for": spoof },
+        body: JSON.stringify({ address: "0x000000000000000000000000000000000000bEEF" }),
+      })
+    expect((await h(req("198.51.100.1"))).status).toBe(429)
+    expect((await h(req("198.51.100.2"))).status).toBe(429)
+    const ipKeys = seen.filter((k) => k.startsWith("ip:"))
+    expect(ipKeys).toHaveLength(2)
+    expect(ipKeys[0]).toBe(ipKeys[1]) // same bucket despite different spoofed headers
+  })
   it("memory store counts per key and expires", async () => {
     const s = new MemoryStore()
     expect(await s.incr("a", 60)).toBe(1)
