@@ -20,7 +20,7 @@ import { getPrefs } from "./prefs"
 import { useVerified } from "./verified"
 import { device } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
-import { IssueList, IssuePicker } from "./extras"
+import { IssueList, IssuePicker, PublicPreview, SENSITIVE_ISSUES } from "./extras"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { DeviceCard, ErrorBox, Loading, loadShops } from "./ui"
@@ -46,6 +46,11 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
   const [lifetimeDays, setLifetimeDays] = useState(90)
   const [allowExtension, setAllowExtension] = useState(true)
   const [separateId, setSeparateId] = useState(() => getPrefs().separateIds)
+  // A report of being threatened or having the card kept gets a separate ID by default (the person can switch it off).
+  const [idTouched, setIdTouched] = useState(false)
+  useEffect(() => {
+    if (!idTouched && (issues & SENSITIVE_ISSUES) !== 0) setSeparateId(true)
+  }, [issues, idTouched])
   const verified = useVerified()
   const phoneVerified = !!verified?.has(device().account.address.toLowerCase())
 
@@ -148,6 +153,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           </dd>
         </dl>
         <IssueList mask={issues} />
+        <PublicPreview separateId={separateId} issues={issues} />
         <p class="notice">{t("permanentWarning")}</p>
         {queued && (
           <p class="ok" role="status">
@@ -260,7 +266,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           <input type="checkbox" checked={allowExtension} onChange={(e) => setAllowExtension(e.currentTarget.checked)} /> {t("allowExtend")}
         </label>
         <label class="inline check">
-          <input type="checkbox" checked={separateId} onChange={(e) => setSeparateId(e.currentTarget.checked)} /> {t("separateIdLabel")}
+          <input type="checkbox" checked={separateId} onChange={(e) => (setIdTouched(true), setSeparateId(e.currentTarget.checked))} /> {t("separateIdLabel")}
         </label>
         {separateId && phoneVerified && <p class="small muted">{t("separateIdNotVerified")}</p>}
       </fieldset>

@@ -2,6 +2,7 @@ import { ActionIcon } from "./ActionIcon"
 // Shops answer, reporters confirm (community score card). Read straight from Arkiv; writes are sealed entities.
 import { useEffect, useState } from "preact/hooks"
 import {
+  explorerAddressUrl,
   answerStats,
   followUpReport,
   latestFollowups,
@@ -133,13 +134,26 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
 export function ShopScoreCard({ shopId, counted }: { shopId: string; counted: Report[] }) {
   const { t } = useLang()
   const dealers = useDealers()
-  const [data, setData] = useState<{ answers: Map<string, Response[]>; followups: Map<string, Followup> } | null>(null)
+  const [data, setData] = useState<{ answers: Map<string, Response[]>; followups: Map<string, Followup>; ignored: string[] } | null>(null)
   useEffect(() => {
     if (!dealers) return
     let live = true
     Promise.all([shopResponses(reader, shopId), shopFollowups(reader, shopId)])
-      .then(([rs, fs]) => live && setData({ answers: validResponses(counted, rs.items, dealers), followups: latestFollowups(counted, fs.items) }))
-      .catch(() => live && setData({ answers: new Map(), followups: new Map() }))
+      .then(([rs, fs]) => {
+        if (!live) return
+        const answers = validResponses(counted, rs.items, dealers)
+        const followups = latestFollowups(counted, fs.items)
+        // Anyone can write an entity that looks like a dealer's answer. Only who signed it ($creator) decides if it counts;
+        // show how many were ignored and by whom, so the filter is visible rather than silent.
+        const kept = new Set([...answers.values()].flat().map((x) => x.key.toLowerCase()))
+        const creatorOf = new Map(counted.map((r) => [r.key.toLowerCase(), r.creator.toLowerCase()]))
+        const ignored = [
+          ...rs.items.filter((x) => !kept.has(x.key.toLowerCase()) && dealers.get(x.creator.toLowerCase())?.shopId !== shopId).map((x) => x.creator),
+          ...fs.items.filter((f) => creatorOf.has(f.reportKey) && creatorOf.get(f.reportKey) !== f.creator.toLowerCase()).map((f) => f.creator),
+        ]
+        setData({ answers, followups, ignored })
+      })
+      .catch(() => live && setData({ answers: new Map(), followups: new Map(), ignored: [] }))
     return () => {
       live = false
     }
@@ -156,6 +170,21 @@ export function ShopScoreCard({ shopId, counted }: { shopId: string; counted: Re
       <p>{t("scoreLine", { a: s.answered, n: s.reports, f: s.fixed, nf: s.notFixed, d: s.disputed })}</p>
       <p class="small muted">{shopDealers.length ? t("dealerLine", { d: shopDealers.map((d) => short(d.device)).join(", ") }) : t("noDealer")}</p>
       <p class="small muted">{t("scoreHelp")}</p>
+      {data.ignored.length > 0 && (
+        <details class="small">
+          <summary>{t("ignoredWriters", { n: data.ignored.length })}</summary>
+          <p class="muted">{t("ignoredWritersHelp")}</p>
+          <ul class="list">
+            {[...new Set(data.ignored.map((c) => c.toLowerCase()))].map((c) => (
+              <li>
+                <a class="mono" href={explorerAddressUrl(c)} target="_blank" rel="noopener">
+                  {short(c)} ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
       {iAmDealer && (
         <div class="notice">
           <p>{t("youAreDealer", { n: waiting.length })}</p>

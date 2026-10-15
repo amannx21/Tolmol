@@ -1,4 +1,4 @@
-import { render } from "preact"
+import { Component, render, type ComponentChildren } from "preact"
 import { Dashboard } from "./Dashboard"
 import { EasyHome, EasyReport, Welcome } from "./Easy"
 import { usePrefs } from "./prefs"
@@ -34,6 +34,29 @@ function QueueBanner() {
       {n} {t("queuedCount")}
     </p>
   ) : null
+}
+
+/** One broken record or component must not blank the whole site: show a message for this page only. */
+class PageGuard extends Component<{ children: ComponentChildren }, { failed: boolean }> {
+  override state = { failed: false }
+  override componentDidCatch(error: unknown) {
+    console.error("[Tolmol] page error", error)
+    this.setState({ failed: true })
+  }
+  override render() {
+    return this.state.failed ? <PageFailed /> : this.props.children
+  }
+}
+function PageFailed() {
+  const { t } = useLang()
+  return (
+    <section class="card" role="alert">
+      <p class="err">{t("pageFailed")}</p>
+      <p>
+        <a href="#/">{t("navHome")}</a> · <a href={location.hash} onClick={() => location.reload()}>{t("tryAgain")}</a>
+      </p>
+    </section>
+  )
 }
 
 function App() {
@@ -80,7 +103,7 @@ function App() {
   return (
     <Layout route={route}>
       <QueueBanner />
-      {page}
+      <PageGuard key={location.hash}>{page}</PageGuard>
     </Layout>
   )
 }

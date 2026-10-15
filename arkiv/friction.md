@@ -198,6 +198,12 @@ This file is updated as we build. Entries only describe things we actually hit o
 - **Workaround:** fewer reads per write in the seed, one seed run at a time (lock file), and an
   access key for scripts. In the app, every visitor reads from their own IP, readers use `retryCount: 0`,
   and the UI shows "free read limit used up, try again in N min" from `Retry-After`.
+- **Update 2026-10-15:** the RPC exposes `RateLimit`, `Retry-After`, `Arkiv-Cost` and `Arkiv-Quota-Used-Percent`
+  to browsers (`access-control-expose-headers`), and every `arkiv_query` answers `arkiv-cost: 100`. That made a
+  better fix possible in the browser: the web app now uses its own fetch transport (`apps/web/src/rpc.ts`) that
+  shows each query, its cost and the reads left in a footer inspector, merges identical queries in flight, and
+  answers from the last good copy (saved on the phone, labelled "saved copy") when Arkiv returns 429. Suggestion
+  for Arkiv: document these headers next to the query budget; they are the only way a browser app can see it.
 - **Fix suggestion:** surface 429 + `Retry-After` as a typed `QuotaExceededError` in the SDK (no
   silent retry for a 13-minute window), and document the anonymous budget (10,000 cost units per
   window) next to the access-key page.

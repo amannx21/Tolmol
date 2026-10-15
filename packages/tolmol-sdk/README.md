@@ -52,6 +52,7 @@ npx tolmol-sdk shops --state BR
 npx tolmol-sdk query --shop SYN-BR-0042 --format csv          # evidence export
 npx tolmol-sdk query --shop SYN-BR-0042 --at-block 518000     # what was public at that block
 npx tolmol-sdk dashboard --state BR
+npx tolmol-sdk answers --shop SYN-BR-0042   # since 0.2.0: dealer answers and "fixed" that count, and the ignored fakes
 ```
 
 ## Main exports

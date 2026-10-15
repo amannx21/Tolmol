@@ -383,15 +383,27 @@ watcher as a fallback.
 | The ration card used for verification, and its serial | Only `card_tag`, a keyed fingerprint of a random serial, goes on Arkiv. The card is checked by the verifier and never stored anywhere |
 | Free text of any kind | Free text invites personal details. Every field is a number or a fixed choice |
 | Photos of receipts, weighing scales or shops | Too large (the public RPC caps requests at 262,144 bytes), and photos identify people and places |
-| Household size and card type | They would make reports easier to link to a household. The device uses them only to compute `entitled_g` |
+| Household size and card type, as fields | They would make reports easier to link to a household. The device uses them only to compute `entitled_g`. **Honest limit:** `entitled_g` itself is public, and the entitlement rule is public too (5 kg per person for a priority household, 35 kg for an Antyodaya card), so a reader can often work backwards to the family size or to "this is an Antyodaya card". We keep the exact amount because rounding it would distort the shortfall by up to 25 percentage points, and the shortfall is the evidence. Many households at one shop share the same size, so this narrows a reporter down only a little. The report screens say this in plain words before anything is sent ("what becomes public" preview) |
 | The exact time of a report | `reported_at` is rounded to the day. The block time is public anyway, but we add no extra clock |
-| What went wrong, in words | Only a 7-bit number (`issues`). No text box, so no names or phone numbers can slip in |
+| What went wrong, in words | Only two small numbers (`issues`, `issues2`). No text box, so no names or phone numbers can slip in |
 | Device private keys | Kept in the browser's local storage on that device only, never sent anywhere |
 | Reports waiting for a connection | The offline queue holds shop, month, grain and grams in the browser's local storage until there is signal; only then are they signed and written |
 | Name and address on an RTI application | The "Draft my RTI" letter leaves them as blanks to fill in by hand; they never reach Tolmol or Arkiv |
 | Rate-limit counters and IP addresses for the gas top-up | Operational data about real people. Kept in the relayer's short-lived store, never on chain |
 | Aggregates (dashboard rankings, percentages per district) | Derived data. Anyone can recompute it from the raw entities, so storing it would only add a second, trustable copy |
 | Real shop registries and beneficiary lists | Out of scope by design. Tolmol uses a synthetic registry |
+
+**Why there is no encryption.** Some Arkiv apps encrypt part of each entry with a password. Tolmol has nothing to
+encrypt: every field on Arkiv must be public for the evidence to work (anyone has to be able to recount a shop's
+shortfall without asking us), and everything private stays on the phone and is never sent at all. Encrypting a
+field that must stay readable would hide the evidence; encrypting personal data would still put it on a permanent
+public chain where a weak password, or a future break, exposes it. Not sending it is stronger than encrypting it.
+
+**Before anything is sent**, both report screens show a "what becomes public" box: the public fields in plain words,
+what stays on the phone, the note that the entitlement can hint at family size, and whether this report goes out
+under the phone's usual ID or a separate one. Reports that say the reporter was threatened or that the dealer kept
+the card switch on a separate ID by default (the person can switch it off), because those are the reporters a dealer
+is most likely to retaliate against.
 
 ## Wallets
 

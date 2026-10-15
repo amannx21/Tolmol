@@ -351,3 +351,30 @@ export function PatternsCard({ reports, witnesses, withdrawn }: { reports: Repor
     </section>
   )
 }
+
+// ------------------------------------------------------------------ privacy: what becomes public, shown BEFORE sending
+/** Issues after which a reporter may face retaliation: a separate ID is switched on for them by default. */
+export const SENSITIVE_ISSUES = ISSUES.threatened | ISSUES.card_kept
+
+export function PublicPreview({ separateId, issues }: { separateId: boolean; issues: number }) {
+  const { t } = useLang()
+  return (
+    <section class="public-preview" aria-labelledby="public-preview-title">
+      <h3 id="public-preview-title">{t("previewTitle")}</h3>
+      <div class="preview-cols">
+        <div>
+          <h4>{t("previewPublic")}</h4>
+          <p class="small">{t("previewPublicItems")}</p>
+        </div>
+        <div>
+          <h4>{t("previewPrivate")}</h4>
+          <p class="small">{t("previewPrivateItems")}</p>
+        </div>
+      </div>
+      <p class="small muted">{t("previewFamily")}</p>
+      <p class="small">{separateId ? t("previewSeparate") : t("previewUsual")}</p>
+      {separateId && (issues & SENSITIVE_ISSUES) !== 0 && <p class="small notice">{t("previewSensitive")}</p>}
+      <p class="small muted">{t("previewNoEncrypt")}</p>
+    </section>
+  )
+}
