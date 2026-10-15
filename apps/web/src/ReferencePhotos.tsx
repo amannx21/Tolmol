@@ -1,11 +1,9 @@
 import { ActionIcon } from "./ActionIcon"
 import { useLang } from "./i18n"
-import { useState } from "preact/hooks"
 import { useReveal } from "./motion"
 
 export function ReferencePhoto({ kind }: { kind: "shop" | "distribution" | "weighing" | "community" }) {
   const { lang } = useLang()
-  const [missing, setMissing] = useState(false)
   const hi = lang === "hi"
   const photos = {
     shop: { name: "pds-shop", height: 540, source: "https://news.cornell.edu/stories/2022/10/new-project-will-reveal-true-cost-indias-food-subsidies", credit: "PradeepGaurs / Shutterstock · Cornell Chronicle", alt: "People gathered outside a yellow public distribution shop", hi: "पीली राशन दुकान के बाहर अनाज लेने आए लोग" },
@@ -14,10 +12,8 @@ export function ReferencePhoto({ kind }: { kind: "shop" | "distribution" | "weig
     community: { name: "ration-community", height: 635, source: "https://krishijagran.com/news/one-nation-one-ration-card-all-you-need-to-know-about-government-s-new-scheme-how-to-avail-its-benefit/", credit: "Source: Krishi Jagran", alt: "Card holders waiting together while grain is measured at a ration shop", hi: "राशन दुकान में अनाज लेते और अपनी बारी का इंतज़ार करते कार्ड धारक" },
   }
   const photo = photos[kind]
-  // Photos are optional decoration: if a file is not deployed (e.g. pending a licence), show nothing rather than a broken image.
-  if (missing) return null
   return <figure class={`reference-photo photo-${kind}`}>
-    <img src={`images/${photo.name}-960.webp`} srcSet={`images/${photo.name}-640.webp 640w, images/${photo.name}-960.webp 960w`} sizes="(max-width: 720px) calc(100vw - 32px), 520px" width="960" height={photo.height} loading="lazy" decoding="async" alt={hi ? photo.hi : photo.alt} onError={() => setMissing(true)} />
+    <img src={`images/${photo.name}-960.webp`} srcSet={`images/${photo.name}-640.webp 640w, images/${photo.name}-960.webp 960w`} sizes="(max-width: 720px) calc(100vw - 32px), 520px" width="960" height={photo.height} loading="lazy" decoding="async" alt={hi ? photo.hi : photo.alt} />
     <figcaption><span>{hi ? "राशन व्यवस्था का प्रतिनिधि फ़ोटो" : "Representative PDS photograph"}</span><a href={photo.source} target="_blank" rel="noopener">{photo.credit} ↗</a></figcaption>
   </figure>
 }
