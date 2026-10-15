@@ -43,6 +43,14 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
           <button class="lang" onClick={toggle} aria-label="Switch language / भाषा बदलें">
             {t("language")}
           </button>
+          <button
+            class="lang"
+            onClick={() => setPrefs({ theme: prefs.theme === "dark" ? "light" : "dark" })}
+            aria-label={prefs.theme === "dark" ? t("themeLight") : t("themeDark")}
+            title={prefs.theme === "dark" ? t("themeLight") : t("themeDark")}
+          >
+            {prefs.theme === "dark" ? "☀️" : "🌙"}
+          </button>
         </div>
       </header>
       {prefs.mode === "easy" && (

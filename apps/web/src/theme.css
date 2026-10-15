@@ -1,0 +1,26 @@
+/* "only light" stops browsers (Chrome's auto dark theme for web contents, Samsung Internet, some in-app browsers)
+   from force-darkening the page; a plain "color-scheme: light" does not. */
+:root[data-theme="light"] {
+  color-scheme: only light;
+}
+
+/* Light is the default (data-theme="light" is set on <html> unless the person picks dark, see prefs.ts).
+   This file only lets "dark" work even when the phone itself is in light mode: the same dark colours as the
+   prefers-color-scheme blocks in styles.css, design.css and landing.css, applied by choice instead. */
+:root[data-theme="dark"] {
+  --bg: #121614;
+  --card: #1b211e;
+  --ink: #e8ece9;
+  --muted: #a3ada8;
+  --line: #2f3833;
+  --brand: #4caf7a;
+  --brand-ink: #0b1410;
+  --notice: #3a3218;
+  --soft: #24372c;
+  --ok: #8dd4a6;
+  --warn: #edbf77;
+  --bad: #ff9990;
+  --shadow: none;
+  --landing-halo: #354b30;
+  color-scheme: dark;
+}
