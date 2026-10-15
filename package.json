@@ -24,9 +24,9 @@
     "tolmol": "node packages/tolmol-sdk/dist/cli.js"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.5",
-    "@types/node": "22.20.5",
-    "eslint": "9.39.5",
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.5",
+    "eslint": "10.12.0",
     "globals": "17.13.0",
     "prettier": "3.9.10",
     "tsx": "4.23.15",
