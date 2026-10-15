@@ -4,7 +4,7 @@ Read (and write) **Tolmol** ration-shortfall reports on [Arkiv](https://arkiv.ne
 Tiramisu testnet (chain `7738577`). Tolmol is a community-witnessed, tamper-evident record of how much grain
 people say they received at India's fair-price shops. All data on Tiramisu is **synthetic**.
 
-- App: https://amannx21.github.io/Tolmol/
+- App: https://tolmol-web-kappa.vercel.app
 - Source and data contract: https://github.com/amannx21/Tolmol ([`arkiv/schema.md`](https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md),
   [`docs/data-contract.schema.json`](https://github.com/amannx21/Tolmol/blob/main/docs/data-contract.schema.json))
 

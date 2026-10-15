@@ -29,7 +29,7 @@ flowchart LR
 
 | Part | Where | Holds secrets? | Talks to |
 |---|---|---|---|
-| `apps/web` | Static files on GitHub Pages, mirrored on Vercel (https://tolmol-web-kappa.vercel.app); any static host works | The device key, in that browser only | Arkiv RPC directly (the public one, or any endpoint set in Settings), the relayer |
+| `apps/web` | Static files on Vercel (main: https://tolmol-web-kappa.vercel.app), with the same build on GitHub Pages as a backup (https://amannx21.github.io/Tolmol/); any static host works | The device key, in that browser only | Arkiv RPC directly (the public one, or any endpoint set in Settings), the relayer |
 | `apps/web/public/mirror.html` | One self-contained file, served with the app or saved anywhere | No | Any Arkiv RPC, with plain `fetch` |
 | `packages/tolmol-sdk` | npm workspace package, used by the app, the seed script and the CLI | No | Arkiv RPC |
 | `apps/relayer` | Vercel serverless function, https://tolmol-relayer.vercel.app, auto-deployed from `main` with Vercel root directory `apps/relayer` (also runs on Cloudflare Workers / Node) | Relayer key (test GLM only) | Arkiv RPC |
