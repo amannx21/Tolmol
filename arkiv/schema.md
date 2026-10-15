@@ -18,6 +18,7 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | Type | Created by | Owner after creation | Flags | Lifetime | Payload |
 |---|---|---|---|---|---|
 | `tolmol.shop` | Registry wallet (one fixed address) | Registry wallet | readonly, permissionlessExtension | 180 days | small JSON: synthetic display labels (EN/HI) |
+| `tolmol.outlet` | Registry wallet | Registry wallet | readonly, permissionlessExtension | 180 days | same JSON as a shop. A school (school meals) or gram panchayat (MGNREGA wages), see [Other schemes](#other-schemes-on-the-same-ledger) |
 | `tolmol.report` | The reporter's own device wallet | `0x000000000000000000000000000000000000dEaD` (burn) | readonly; permissionlessExtension unless the reporter opts out | **reporter chooses 30, 90 (default) or 180 days**; extended by corroboration if allowed (see below) | empty |
 | `tolmol.witness` | A different device wallet | burn address | readonly, permissionlessExtension | Same deadline as its report | empty |
 | `tolmol.correction` | The report's own device wallet (honoured only then) | burn address | readonly, permissionlessExtension | until the report's `createdAt` + 365 days | empty |
@@ -26,6 +27,7 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | `tolmol.response` | A device verified as that shop's dealer (counted only then) | burn address | readonly | until the report's `createdAt` + 365 days | empty |
 | `tolmol.followup` | The report's own device (counted only then) | burn address | readonly | until the report's `createdAt` + 365 days | empty |
 | `tolmol.action` | A device verified as an official of the shop's district (counted only then) | burn address | readonly | 365 days | empty |
+| `tolmol.stock` | The shop's verified dealer (counted only then) | burn address | readonly | 365 days | empty |
 
 ### Why these flags and owners
 
@@ -250,6 +252,85 @@ from 2+ devices, money charged for free grain, or a reporter saying "not fixed")
 shortfall reports and verified card holders add weight. Recording an action does not remove a shop from the list;
 only better numbers do.
 
+## `tolmol.stock` (the dealer's monthly stock board)
+
+The board every fair-price shop must display (TPDS (Control) Order 2015, cl. 10(4)(ii)), posted by the shop's verified
+dealer. Sealed (readonly + `0x…dEaD` in the creating batch), 365 days. It cannot be edited: a correction is a new
+board, and readers show every version of a month.
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.stock`, `1` | |
+| `shop_id`, `state`, `district` | str | `SYN-BR-0042`, `BR`, `gaya` | |
+| `month`, `month_num` | str, i32 | `2026-10`, `202610` | `month_num` must equal `month` |
+| `rice_g`, `wheat_g`, `millet_g` | i32 | `1200000` | grams received for distribution, 0 to 100,000,000 (100 t) each; not all 0 |
+| `cards` | i32 | `92` | ration cards served, 1 to 5,000 |
+| `from_day`, `to_day` | i32 | `1`, `10` | distribution days of the month, 1 to 31, `from_day <= to_day` |
+| `reported_at` | u64 | `1791936000000` | start of the UTC day, ms |
+| `synthetic` | bool | `true` | |
+
+**Rules.** A board counts only if its `$creator` holds a `dealer` attestation for that `shop_id`. *Leakage estimate*:
+the latest board's total grain times the grain-weighted shortfall card holders reported that month (an estimate from
+a sample, labelled as such). *No board*: after the 5th, a month with no counted board is shown as missing.
+
+**Verdicts every reader computes the same way** (`packages/tolmol-sdk/src/stock.ts`):
+
+- *Fair shop* (this month and last): 3+ counted reports from 2+ devices, grain-weighted shortfall under 5%, every
+  shortfall report answered by the verified operator, no reporter's latest follow-up `not_fixed`, and (ration shops)
+  a board this month. Nothing is stored: the badge is recomputed on every read, so it lapses on its own.
+- *Check my shop*: grey under 2 reports; red at 15%+ or on the attention list; amber at 5%+ or with no board; green
+  otherwise (last two months).
+
+**Proof of authorship (nothing stored).** `#/proof` and `checkProof` in `proof.ts`: the reporter's phone signs
+`Tolmol: I created report <key>\ncode <6 digits>\ntime <unix s>` with the key that created the report; the official
+recovers the signer and compares it with the report's `$creator`. The code is one-time and the proof expires after
+15 minutes. Nothing is written to Arkiv.
+
+## Other schemes on the same ledger
+
+The evidence model fits any scheme where a person is owed a fixed amount at a known place. Since 2026-10-16 the same
+ledger also records **school meals** (PM POSHAN, at a school) and **MGNREGA wages** (at a gram panchayat). Nothing in
+the ration data changed; the additions are built so that a reader that only knows rations (the npm package 0.1.0,
+`mirror.html` before this change, any other team's reader) keeps seeing exactly what it saw before:
+
+| Scheme | `scheme` value | Outlet (registry type) | `item` | Unit of `entitled_g` / `received_g` / `shortfall_g` | Max |
+|---|---|---|---|---|---|
+| Ration (NFSA 2013) | absent (= `pds`) | `tolmol.shop` | `rice`, `wheat`, `millet`, `total` | grams | 100,000 |
+| School meals (PM POSHAN) | `mdm` | `tolmol.outlet` | `meal_days` | school days (open days / days a hot meal was served) | 31 |
+| Rural work (MGNREGA 2005) | `nrega` | `tolmol.outlet` | `wage_inr` | whole rupees (wages owed for days worked / wages paid) | 100,000 |
+
+- **Outlets** are `tolmol.outlet` entities from the same registry wallet, with the shop attributes plus `scheme`
+  (`mdm` or `nrega`). A separate type, so `listShops` (Q1, `type = tolmol.shop`) never returns a school; `listOutlets`
+  (Q1b) reads both types in one query with `OR`.
+- **Reports** for another scheme carry `scheme` and use that scheme's `item`. A reader drops a report whose `scheme`
+  does not match its item, or whose item is a meal or wage item without `scheme`. Old readers drop them anyway, because
+  they do not know the item: they can never misread rupees as grams.
+- An outlet counts only reports of its own scheme (`forScheme`), and the dashboard shows one scheme at a time, so units
+  are never mixed.
+- **`issues`** holds the scheme's own flags (at most 7, so `issues2` is ration-only):
+
+| Bit | School meals (`mdm`) | MGNREGA wages (`nrega`) |
+|---|---|---|
+| 1 | `poor_meal`: food spoilt, undercooked, insects or stones | `wage_late`: wages not paid within 15 days (MGNREGA s.3(3)) |
+| 2 | `less_food`: too little food for the child | `paid_less`: paid for fewer days, or a lower rate, than worked |
+| 4 | `menu_ignored`: the notified menu not followed | `job_card_kept`: someone else keeps the household's job card |
+| 8 | `unsafe_kitchen`: dirty kitchen or no clean drinking water | `work_denied`: work asked for, not given within 15 days (s.7) |
+| 16 | `seated_apart`: children made to sit or eat separately | `no_site_facilities`: no drinking water, shade or first aid (Schedule II) |
+| 32 | `money_asked`: parents asked to pay for the meal | `bribe_asked`: asked to pay to get work or wages |
+| 64 | `children_work`: children made to cook, clean or serve | `fake_names`: the muster roll lists people who did not work |
+
+- **Who answers.** The outlet's operator, verified with a test ID: a school head teacher (`SCH`) or a gram panchayat
+  employment assistant (`GPO`). Both get the attestation role `dealer` for that outlet, so the existing rule holds: an
+  answer counts only from the verified operator of that outlet. Extra answers: `meals_resumed`, `menu_followed`,
+  `kitchen_cleaned`, `equal_seating`, `no_child_labour` (schools); `wages_paid`, `work_allotted`, `job_card_returned`,
+  `site_facilities` (panchayats).
+- **Officials.** The same `tolmol.action`, limited per scheme (no licence actions for a school), plus `dues_restored`
+  (meals or wages due ordered to be given). The attention list adds `records_mismatch` (wages paid short or names on
+  the muster roll who did not work) and `discrimination` (children seated apart).
+- **Letters.** School meals: RTI to the district education office for the meal register; complaint to the District
+  Education Officer. MGNREGA: RTI to the block Programme Officer for muster rolls and payment orders; complaint to the
+  Programme Officer with a copy to the district's MGNREGA Ombudsperson.
+
 ## Rules the app enforces
 
 1. **One report per (device, shop, month, item).** Before creating, the app queries
@@ -297,6 +378,8 @@ Tiramisu blocks are 2 s, so 1 day = 43,200 blocks. Durations use whole days only
 | `tolmol.attestation` | 365 days | a card holder re-verifies once a year |
 | `tolmol.response`, `tolmol.followup` | until report `createdAt` + 365 days | outlive the report they are about |
 | `tolmol.action` | 365 days | a year of a shop's enforcement history |
+| `tolmol.stock` | 365 days | a year of a shop's boards, to compare with a year of reports |
+| `tolmol.outlet` | 180 days, any wallet can extend | like a shop |
 
 **Corroboration renews the lease.** When a witness corroborates a report that will then have
 **2 or more distinct witnesses**, the witness's device sends one atomic batch:

@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact"
 import { useState } from "preact/hooks"
-import { explorerAddressUrl, explorerEntityUrl, listShops, quotaError, type Shop } from "tolmol-sdk"
+import { explorerAddressUrl, explorerEntityUrl, listOutlets, quotaError, type Shop } from "tolmol-sdk"
 import { device, MIN_WRITE_WEI, reader, requestGas, short, useBalance } from "./arkiv"
 import { useLang } from "./i18n"
 import { usePrefs } from "./prefs"
@@ -10,6 +10,7 @@ import type { Route } from "./router"
 import { Mark } from "./Identity"
 import { ActionIcon } from "./ActionIcon"
 import { ReadInspector, SavedCopyBanner } from "./inspector"
+import { trustedRegistry, usingCustomRegistry } from "./trust"
 
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
   const { t, toggle, lang } = useLang()
@@ -78,10 +79,19 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
         {t("synthetic")}
       </p>
       <SavedCopyBanner />
+      {usingCustomRegistry() && (
+        <p class="banner saved-copy" role="alert">
+          {t("trustBanner", { reg: trustedRegistry().slice(0, 10) })} <a href="#/trust">{t("trustBannerLink")}</a>
+        </p>
+      )}
       <main id="main-content" tabIndex={-1} class={`page-${route.name} mode-${prefs.mode}`}>{children}</main>
       <footer class="foot">
         <a href="https://github.com/amannx21/Tolmol">{t("sourceCode")}</a> · <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">{t("dataSchema")}</a> ·{" "}
         <span>{t("network")} · chain 7738577</span>
+        {" · "}
+        <a href="#/trust">{t("trustLink")}</a>
+        {" · "}
+        <a href="#/raw">{t("rawLink")}</a>
         <ReadInspector />
       </footer>
     </>
@@ -171,9 +181,12 @@ export function ErrorBox({ error }: { error: unknown }) {
   )
 }
 
-// --- Shop registry cache (Q1, trusted by creator). Loaded once per session.
-let shopsPromise: Promise<Shop[]> | undefined
-export const loadShops = () => (shopsPromise ??= listShops(reader, {}).then((r) => r.items.sort((a, b) => (a.shopId < b.shopId ? -1 : 1))))
+// --- Registry cache (Q1, trusted by creator). Loaded once per session.
+// The registry lists every outlet: ration shops, schools and gram panchayats. Ration screens use loadShops (ration
+// shops only), so they never offer a school as a ration shop; pages that serve any scheme use loadOutlets.
+let outletsPromise: Promise<Shop[]> | undefined
+export const loadOutlets = () => (outletsPromise ??= listOutlets(reader, {}, { registry: trustedRegistry() }).then((r) => r.items.sort((a, b) => (a.shopId < b.shopId ? -1 : 1))))
+export const loadShops = () => loadOutlets().then((all) => all.filter((s) => s.scheme === "pds"))
 
 export const ShortfallBar = ({ bp }: { bp: number }) => (
   <span class="bar" aria-hidden="true">

@@ -26,12 +26,14 @@ import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 import { RaisedReportNotice } from "./RaisedReportNotice"
 import { useVerified, VerifiedBadge } from "./verified"
 import { ShopAnswer } from "./answersUI"
+import { HearingKit } from "./proofUI"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const { t } = useLang()
   const [prefs] = usePrefs()
   const f = useFmt()
-  const kg = f.kg
+  // Amounts in the report's own unit (kg, days or rupees).
+  const kg = (n: number) => (data?.report ? f.amt(data.report.item, n) : f.kg(n))
   const [data, setData] = useState<{ report: Report | null; raw: RawEntity | null; witnesses: Witness[]; withdrawnBy: boolean; head: bigint } | null>(null)
   const [confirmWithdraw, setConfirmWithdraw] = useState(false)
   const [err, setErr] = useState<unknown>(null)
@@ -172,7 +174,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             {r.owner.toLowerCase() === BURN_ADDRESS.toLowerCase() && <span class="small muted"> · {t("undeletable")}</span>}
           </dd>
         </dl>
-        <IssueList mask={r.issues} />
+        <IssueList mask={r.issues} scheme={r.scheme} />
         {withdrawBox}
       </section>
       <section class="card">
@@ -226,7 +228,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         </section>
       )}
         {fullView}
-        {mine && <NextSteps shopId={r.shopId} mask={r.issues} />}
+        {mine && <NextSteps shopId={r.shopId} mask={r.issues} scheme={r.scheme} />}
+        {mine && <HearingKit report={r} />}
       </>
     )
   }
@@ -268,7 +271,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           <div class={r.shortfallG > 0 ? "bad" : "ok"}><span>{t("summaryLess")}</span><strong>{kg(r.shortfallG)}</strong></div>
         </div>
         {data.withdrawnBy && <p class="tag big-tag">{t("withdrawn")}</p>}
-        <IssueList mask={r.issues} />
+        <IssueList mask={r.issues} scheme={r.scheme} />
         <p class="lead">{t("confirmedBy", { n: valid.length })}</p>
         {!mine && !iWitnessed && (
           <button class="big-action" onClick={confirmEasy} disabled={busy}>
@@ -280,7 +283,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
       <ShopAnswer report={r} mine={mine} big />
-      {mine && <NextSteps shopId={r.shopId} mask={r.issues} />}
+      {mine && <NextSteps shopId={r.shopId} mask={r.issues} scheme={r.scheme} />}
+        {mine && <HearingKit report={r} />}
       <details class="card auditors">
         <summary>{t("detailsAuditors")}</summary>
         {fullView}

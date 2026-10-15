@@ -6,7 +6,7 @@ const k = (n: number) => `0x${n.toString(16).padStart(64, "0")}` as `0x${string}
 const dev = (n: number) => `0x${n.toString(16).padStart(40, "0")}` as `0x${string}`
 const report = (n: number, creator: number, createdAt: bigint, shopId = "SYN-BR-0042"): Report => ({
   shopId, month: "2026-10", item: "rice", entitledG: 25_000, receivedG: 20_000, key: k(n), state: "BR", district: "gaya",
-  monthNum: 202610, shortfallG: 5_000, shortfallBp: 2000, issues: 0, extendable: true, reportedAt: 1n, synthetic: true,
+  monthNum: 202610, shortfallG: 5_000, shortfallBp: 2000, issues: 0, scheme: "pds", extendable: true, reportedAt: 1n, synthetic: true,
   creator: dev(creator), owner: "0x000000000000000000000000000000000000dEaD", createdAt, expiresAt: 10_000_000n,
 })
 const witness = (n: number, of: Report, creator: number, createdAt: bigint): Witness => ({

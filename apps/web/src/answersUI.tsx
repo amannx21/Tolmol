@@ -114,7 +114,7 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
           <h4>{t("answerAsDealer")}</h4>
           <p class="small">{t("answerHelp")}</p>
           <div class="issue-grid">
-            {suggestedActions(report.issues).map((a) => (
+            {suggestedActions(report.issues, report.scheme).map((a) => (
               <button class={`chip ${pick === a ? "selected" : ""}`} aria-pressed={pick === a} onClick={() => setPick(a)}>
                 {t(actKey(a))}
               </button>

@@ -1,4 +1,5 @@
-import { ALL_ISSUES_MASK, ITEMS, MAX_ENTITLED_G, type Item } from "./constants.js"
+import { ITEMS, type Item } from "./constants.js"
+import { ALL_ITEMS, ITEM_INFO, schemeIssueMask, schemeOfItem, type AnyItem, type Scheme } from "./schemes.js"
 
 /** Synthetic shop IDs only: `SYN-<state code>-<4 digits>`. Anything else is rejected, so no real registry ID can slip in. */
 export const SHOP_ID_RE = /^SYN-[A-Z]{2}-\d{4}$/
@@ -13,6 +14,8 @@ export type Shop = {
   district: string
   labelEn: string
   labelHi: string
+  /** Which scheme this outlet serves (a ration shop, a school, a gram panchayat). Absent on older records = "pds". */
+  scheme: Scheme
   creator: `0x${string}`
   expiresAt: bigint
 }
@@ -20,15 +23,19 @@ export type Shop = {
 export type ReportInput = {
   shopId: string
   month: string
-  item: Item
+  /** A ration item (grams), or a scheme item: `meal_days` (days) or `wage_inr` (rupees). See ITEM_INFO. */
+  item: AnyItem
+  /** Whole units of the item: grams for ration items, days or rupees for the other schemes. */
   entitledG: number
   receivedG: number
-  /** Bitmask of ISSUES (what else went wrong). Optional; 0 = none. */
+  /** Bitmask of the scheme's issue flags (ISSUES for ration, SCHEME_ISSUES otherwise). Optional; 0 = none. */
   issues?: number
 }
 
 export type Report = Omit<ReportInput, "issues"> & {
   issues: number
+  /** The scheme of the item (an outlet's reports count only if this matches the outlet's scheme). */
+  scheme: Scheme
   key: `0x${string}`
   state: string
   district: string
@@ -62,7 +69,7 @@ export type Witness = {
   shopId: string
   state: string
   month: string
-  item: Item
+  item: AnyItem
   reportedAt: bigint
   creator: `0x${string}`
   owner: `0x${string}`
@@ -80,7 +87,10 @@ export class ValidationError extends Error {
   }
 }
 
-export const isItem = (v: unknown): v is Item => typeof v === "string" && (ITEMS as readonly string[]).includes(v)
+/** Any known item, of any scheme. */
+export const isItem = (v: unknown): v is AnyItem => typeof v === "string" && (ALL_ITEMS as readonly string[]).includes(v)
+/** A ration (PDS) item, counted in grams. */
+export const isPdsItem = (v: unknown): v is Item => typeof v === "string" && (ITEMS as readonly string[]).includes(v)
 
 /** `2026-10` -> `202610`. */
 export function monthToNum(month: string): number {
@@ -146,18 +156,19 @@ export function validateReportInput(input: unknown, now: Date = new Date()): Rep
   const oldest = monthToNum(addMonths(currentMonth(now), -12))
   if (monthNum > nowMonth) throw new ValidationError("month", "cannot be in the future")
   if (monthNum < oldest) throw new ValidationError("month", "cannot be more than 12 months ago")
-  if (!isItem(r.item)) throw new ValidationError("item", `must be one of ${ITEMS.join(", ")}`)
+  if (!isItem(r.item)) throw new ValidationError("item", `must be one of ${ALL_ITEMS.join(", ")}`)
+  const info = ITEM_INFO[r.item]
   const e = r.entitledG
   const rec = r.receivedG
-  if (typeof e !== "number" || !Number.isSafeInteger(e) || e <= 0 || e > MAX_ENTITLED_G) {
-    throw new ValidationError("entitledG", `must be a whole number of grams between 1 and ${MAX_ENTITLED_G}`)
+  if (typeof e !== "number" || !Number.isSafeInteger(e) || e <= 0 || e > info.max) {
+    throw new ValidationError("entitledG", `must be a whole number between 1 and ${info.max} (${info.unit})`)
   }
   if (typeof rec !== "number" || !Number.isSafeInteger(rec) || rec < 0 || rec > e) {
-    throw new ValidationError("receivedG", "must be a whole number of grams between 0 and the entitlement")
+    throw new ValidationError("receivedG", "must be a whole number between 0 and the entitlement")
   }
   const iss = r.issues ?? 0
-  if (typeof iss !== "number" || !Number.isSafeInteger(iss) || iss < 0 || (iss & ~ALL_ISSUES_MASK) !== 0) {
-    throw new ValidationError("issues", "must be a combination of the known issue flags")
+  if (typeof iss !== "number" || !Number.isSafeInteger(iss) || iss < 0 || (iss & ~schemeIssueMask(schemeOfItem(r.item))) !== 0) {
+    throw new ValidationError("issues", "must be a combination of the known issue flags for this scheme")
   }
   return { shopId: r.shopId, month: r.month, item: r.item, entitledG: e, receivedG: rec, issues: iss }
 }

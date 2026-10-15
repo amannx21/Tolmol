@@ -1,10 +1,11 @@
 import { useEffect, useState } from "preact/hooks"
+import { isScheme, type Scheme } from "tolmol-sdk"
 
 /** Hash routes work on any static host with no server rewrites: #/report, #/shop/SYN-BR-0042, #/r/0xabc… */
 export type Route =
   | { name: "home" }
-  | { name: "report"; shopId?: string; view?: "easy" | "full" }
-  | { name: "dashboard"; state?: string }
+  | { name: "report"; shopId?: string; view?: "easy" | "full"; scheme?: Scheme }
+  | { name: "dashboard"; state?: string; scheme?: Scheme }
   | { name: "shop"; shopId: string; month?: string; atBlock?: string; letter?: "rti" | "complaint" }
   | { name: "verify" }
   | { name: "r"; key: string }
@@ -14,6 +15,14 @@ export type Route =
   | { name: "designPreview" }
   | { name: "me" }
   | { name: "tour" }
+  | { name: "proof"; p?: string }
+  | { name: "trust" }
+  | { name: "raw" }
+
+const schemeParam = (q: URLSearchParams): Scheme | undefined => {
+  const s = q.get("scheme")
+  return isScheme(s) ? s : undefined
+}
 
 export function parse(hash: string): Route {
   const [path = "", query = ""] = hash.replace(/^#/, "").split("?")
@@ -26,10 +35,16 @@ export function parse(hash: string): Route {
       return { name: "me" }
     case "tour":
       return { name: "tour" }
+    case "trust":
+      return { name: "trust" }
+    case "raw":
+      return { name: "raw" }
+    case "proof":
+      return { name: "proof", p: q.get("p") ?? undefined }
     case "report":
-      return { name: "report", shopId: q.get("shop") ?? undefined, view: q.get("v") === "full" ? "full" : q.get("v") === "easy" ? "easy" : undefined }
+      return { name: "report", shopId: q.get("shop") ?? undefined, view: q.get("v") === "full" ? "full" : q.get("v") === "easy" ? "easy" : undefined, scheme: schemeParam(q) }
     case "dashboard":
-      return { name: "dashboard", state: q.get("state") ?? undefined }
+      return { name: "dashboard", state: q.get("state") ?? undefined, scheme: schemeParam(q) }
     case "shop":
       if (parts[1]) {
         const letter = q.get("letter")

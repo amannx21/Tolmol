@@ -13,6 +13,7 @@ import { eq } from "@arkiv-network/sdk/query"
 import type { AttributeInputs } from "@arkiv-network/sdk"
 import { BURN_ADDRESS, PROJECT, SCHEMA_VERSION } from "./constants.js"
 import { dayStartMs, DISTRICT_RE, SHOP_ID_RE, STATE_RE } from "./model.js"
+import type { Scheme } from "./schemes.js"
 import type { RawEntity } from "./attributes.js"
 import type { Reader, ReadOptions, ReadResult } from "./queries.js"
 import type { ShopStats } from "./rules.js"
@@ -33,6 +34,7 @@ export const OFFICIAL_ACTIONS = [
   "licence_cancelled", // cl. 10(7); a new licence within a month, cl. 10(9)
   "case_registered", // cl. 13: punishment under s.7 of the Essential Commodities Act 1955
   "grain_restored", // card holders' due grain to be supplied
+  "dues_restored", // school meals or wages due to be given (the other schemes' "grain restored")
 ] as const
 export type OfficialAction = (typeof OFFICIAL_ACTIONS)[number]
 /** How serious an action is, for the latest-status line (higher = stronger). */
@@ -45,6 +47,14 @@ export const ACTION_WEIGHT: Record<OfficialAction, number> = {
   case_registered: 5,
   licence_suspended: 6,
   licence_cancelled: 7,
+  dues_restored: 2,
+}
+
+/** The actions that apply to an outlet of each scheme (a school has no ration licence). */
+export const OFFICIAL_ACTIONS_FOR_SCHEME: Record<Scheme, readonly OfficialAction[]> = {
+  pds: OFFICIAL_ACTIONS.filter((a) => a !== "dues_restored"),
+  mdm: ["inspection_ordered", "inspected_shortage_found", "inspected_no_issue", "show_cause_notice", "case_registered", "dues_restored"],
+  nrega: ["inspection_ordered", "inspected_shortage_found", "inspected_no_issue", "show_cause_notice", "case_registered", "dues_restored"],
 }
 
 export type OfficialRecord = { key: Hex; creator: Hex; shopId: string; state: string; district: string; action: OfficialAction; createdAt: bigint }
@@ -136,7 +146,7 @@ export function strongestAction(list: readonly OfficialRecord[] | undefined): Of
   return best
 }
 
-export const ATTENTION_REASONS = ["high_shortfall", "slip_mismatch", "charged_money", "threatened", "not_fixed", "confirmed", "unanswered", "verified"] as const
+export const ATTENTION_REASONS = ["high_shortfall", "slip_mismatch", "charged_money", "threatened", "not_fixed", "confirmed", "unanswered", "verified", "records_mismatch", "discrimination"] as const
 export type AttentionReason = (typeof ATTENTION_REASONS)[number]
 export type Attention = { shopId: string; district: string; reasons: AttentionReason[]; score: number; latest: OfficialRecord | null }
 
@@ -163,16 +173,21 @@ export function needsAttention(
     const a = answers.get(s.shopId)
     const reasons: AttentionReason[] = []
     if (s.shortfallBp >= 2000 && s.reports >= 3 && s.reporters >= 2) reasons.push("high_shortfall")
-    if (s.issueCounts.slip_mismatch > 0) reasons.push("slip_mismatch")
-    if (s.issueCounts.charged_money > 0 || s.issueCounts.tied_sale > 0) reasons.push("charged_money")
-    if (s.issueCounts.threatened > 0) reasons.push("threatened")
+    const n = (k: string) => s.issueCounts[k] ?? 0
+    if (n("slip_mismatch") > 0) reasons.push("slip_mismatch")
+    if (n("charged_money") + n("tied_sale") + n("money_asked") + n("bribe_asked") > 0) reasons.push("charged_money")
+    if (n("threatened") > 0) reasons.push("threatened")
+    // School meals and rural work: records that do not match what people got, and discrimination at the school.
+    if (n("paid_less") + n("fake_names") > 0) reasons.push("records_mismatch")
+    if (n("seated_apart") > 0) reasons.push("discrimination")
     if ((a?.notFixed ?? 0) > 0) reasons.push("not_fixed")
     if (s.corroborated >= 2) reasons.push("confirmed")
     if (s.shortReports - (a?.answered ?? 0) >= 3) reasons.push("unanswered")
     if ((verifiedReports.get(s.shopId) ?? 0) >= 2) reasons.push("verified")
     // Evidence of a problem is needed; supporting signals alone do not put a shop on the list.
-    if (!reasons.some((r) => r === "high_shortfall" || r === "slip_mismatch" || r === "charged_money" || r === "threatened" || r === "not_fixed")) continue
-    const weight: Record<AttentionReason, number> = { high_shortfall: 3, slip_mismatch: 3, charged_money: 3, threatened: 2, not_fixed: 2, confirmed: 2, unanswered: 1, verified: 1 }
+    const evidence: AttentionReason[] = ["high_shortfall", "slip_mismatch", "charged_money", "threatened", "not_fixed", "records_mismatch", "discrimination"]
+    if (!reasons.some((r) => evidence.includes(r))) continue
+    const weight: Record<AttentionReason, number> = { high_shortfall: 3, slip_mismatch: 3, charged_money: 3, threatened: 2, not_fixed: 2, confirmed: 2, unanswered: 1, verified: 1, records_mismatch: 3, discrimination: 3 }
     out.push({ shopId: s.shopId, district: s.district, reasons, score: reasons.reduce((t, r) => t + weight[r], 0) + Math.floor(s.shortfallBp / 1000), latest: strongestAction(actions.get(s.shopId)) })
   }
   return out.sort((x, y) => y.score - x.score || (x.shopId < y.shopId ? -1 : 1))

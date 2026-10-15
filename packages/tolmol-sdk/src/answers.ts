@@ -12,6 +12,7 @@ import { eq } from "@arkiv-network/sdk/query"
 import type { AttributeInputs } from "@arkiv-network/sdk"
 import { BLOCKS_PER_DAY, BURN_ADDRESS, ISSUES, LIFETIME_DAYS, PROJECT, SCHEMA_VERSION, type IssueName } from "./constants.js"
 import { dayStartMs, MONTH_RE, SHOP_ID_RE, STATE_RE, type Report } from "./model.js"
+import { SCHEME_ISSUES, type Scheme } from "./schemes.js"
 import type { RawEntity } from "./attributes.js"
 import type { Reader, ReadOptions, ReadResult } from "./queries.js"
 import type { Attestation } from "./verify.js"
@@ -42,6 +43,17 @@ export const RESPONSE_ACTIONS = [
   "card_returned", // ration cards are returned after every sale (cl. 10(3))
   "respectful_service", // card holders who ask or complain will not be scolded or turned away
   "disputed", // the shop disputes this report
+  // School meals (the head teacher answers)
+  "meals_resumed", // a hot cooked meal is served on every school day again
+  "menu_followed", // the notified menu is followed
+  "kitchen_cleaned", // kitchen cleaned, clean drinking water provided
+  "equal_seating", // all children eat together, nobody is seated apart
+  "no_child_labour", // children no longer cook, clean or serve
+  // Rural work (the panchayat's employment assistant answers)
+  "wages_paid", // the wages due have been paid
+  "job_card_returned", // the job card has been handed back to the household
+  "work_allotted", // work has been given
+  "site_facilities", // drinking water, shade and first aid are now at the worksite
 ] as const
 export type ResponseAction = (typeof RESPONSE_ACTIONS)[number]
 
@@ -66,10 +78,27 @@ export const ACTIONS_FOR_ISSUE: Record<IssueName, ResponseAction[]> = {
   member_left_out: [], // a department matter: the dealer cannot add a member to a card
 }
 
-/** Suggested answers for a report: issue-specific first, then the general shortfall answers, then the rest. */
-export function suggestedActions(issues: number): ResponseAction[] {
-  const first = (Object.keys(ACTIONS_FOR_ISSUE) as IssueName[]).filter((n) => issues & ISSUES[n]).flatMap((n) => ACTIONS_FOR_ISSUE[n])
-  return [...new Set<ResponseAction>([...first, "full_quantity", "stock_arrived", "scale_checked", ...RESPONSE_ACTIONS])]
+/** The answers an outlet of each scheme can give (a school cannot answer "stock arrived"). */
+export const ACTIONS_FOR_SCHEME: Record<Scheme, readonly ResponseAction[]> = {
+  pds: RESPONSE_ACTIONS.slice(0, RESPONSE_ACTIONS.indexOf("disputed") + 1),
+  mdm: ["meals_resumed", "menu_followed", "kitchen_cleaned", "equal_seating", "no_child_labour", "money_returned", "respectful_service", "disputed"],
+  nrega: ["wages_paid", "work_allotted", "job_card_returned", "site_facilities", "money_returned", "respectful_service", "disputed"],
+}
+
+/** Issue-specific answers for the other schemes. */
+const SCHEME_ACTIONS_FOR_ISSUE: Record<Exclude<Scheme, "pds">, Record<string, ResponseAction[]>> = {
+  mdm: { poor_meal: ["meals_resumed"], less_food: ["meals_resumed"], menu_ignored: ["menu_followed"], unsafe_kitchen: ["kitchen_cleaned"], seated_apart: ["equal_seating"], money_asked: ["money_returned"], children_work: ["no_child_labour"] },
+  nrega: { wage_late: ["wages_paid"], paid_less: ["wages_paid"], job_card_kept: ["job_card_returned"], work_denied: ["work_allotted"], no_site_facilities: ["site_facilities"], bribe_asked: ["money_returned"], fake_names: ["disputed"] },
+}
+
+/** Suggested answers for a report: issue-specific first, then the scheme's general answers, then the rest of the scheme's list. */
+export function suggestedActions(issues: number, scheme: Scheme = "pds"): ResponseAction[] {
+  if (scheme === "pds") {
+    const first = (Object.keys(ACTIONS_FOR_ISSUE) as IssueName[]).filter((n) => issues & ISSUES[n]).flatMap((n) => ACTIONS_FOR_ISSUE[n])
+    return [...new Set<ResponseAction>([...first, "full_quantity", "stock_arrived", "scale_checked", ...ACTIONS_FOR_SCHEME.pds])]
+  }
+  const first = Object.entries(SCHEME_ISSUES[scheme]).filter(([, bit]) => issues & bit).flatMap(([n]) => SCHEME_ACTIONS_FOR_ISSUE[scheme][n] ?? [])
+  return [...new Set<ResponseAction>([...first, ...ACTIONS_FOR_SCHEME[scheme]])]
 }
 
 export const FOLLOWUP_STATUSES = ["fixed", "not_fixed"] as const

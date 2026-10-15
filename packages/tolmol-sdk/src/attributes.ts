@@ -1,6 +1,7 @@
 import type { AttributeInputs } from "@arkiv-network/sdk"
 import { bool, i32, key, str, u64 } from "@arkiv-network/sdk/attr"
-import { ALL_ISSUES_MASK, ISSUES2_MASK, ISSUES_LOW_BITS, ISSUES_LOW_MASK, PROJECT, SCHEMA_VERSION, TYPE } from "./constants.js"
+import { ISSUES2_MASK, ISSUES_LOW_BITS, ISSUES_LOW_MASK, PROJECT, SCHEMA_VERSION, TYPE } from "./constants.js"
+import { isScheme, ITEM_INFO, schemeIssueMask, schemeOfItem, type Scheme } from "./schemes.js"
 import {
   DISTRICT_RE,
   isItem,
@@ -32,12 +33,16 @@ export type RawEntity = {
   toJson?: () => unknown
 }
 
-export function shopAttributes(s: { shopId: string; state: string; district: string }): AttributeInputs {
+export function shopAttributes(s: { shopId: string; state: string; district: string; scheme?: Scheme }): AttributeInputs {
   if (!SHOP_ID_RE.test(s.shopId)) throw new Error(`invalid synthetic shop id ${s.shopId}`)
   if (!STATE_RE.test(s.state) || !DISTRICT_RE.test(s.district)) throw new Error(`invalid state/district for ${s.shopId}`)
+  if (s.scheme !== undefined && !isScheme(s.scheme)) throw new Error(`unknown scheme for ${s.shopId}`)
+  const other = s.scheme !== undefined && s.scheme !== "pds"
   return {
+    // Ration shops are `tolmol.shop` with no `scheme` (as before); schools and gram panchayats are `tolmol.outlet`.
+    ...(other ? { scheme: str(s.scheme!) } : {}),
     project: str(PROJECT),
-    type: str(TYPE.shop),
+    type: str(other ? TYPE.outlet : TYPE.shop),
     schema_version: i32(SCHEMA_VERSION),
     shop_id: str(s.shopId),
     state: str(s.state),
@@ -52,7 +57,10 @@ export function reportAttributes(
   opts: { synthetic: boolean; reportedAtMs: bigint },
 ): AttributeInputs {
   if (!STATE_RE.test(shop.state) || !DISTRICT_RE.test(shop.district)) throw new Error("invalid state or district for this shop")
+  const scheme = schemeOfItem(input.item)
   return {
+    // Ration reports are unchanged; reports for another scheme say which one, so it can be queried directly.
+    ...(scheme !== "pds" ? { scheme: str(scheme) } : {}),
     project: str(PROJECT),
     type: str(TYPE.report),
     schema_version: i32(SCHEMA_VERSION),
@@ -138,13 +146,17 @@ function common(e: RawEntity, type: string) {
 }
 
 export function parseShop(e: RawEntity): Shop | null {
-  const c = common(e, TYPE.shop)
+  const outlet = s(e, "type") === TYPE.outlet
+  const c = common(e, outlet ? TYPE.outlet : TYPE.shop)
   if (!c) return null
   const shopId = s(e, "shop_id")
   const state = s(e, "state")
   const district = s(e, "district")
   if (!shopId || !SHOP_ID_RE.test(shopId) || !state || !STATE_RE.test(state) || !district || !DISTRICT_RE.test(district)) return null
   if (b(e, "synthetic") !== true) return null
+  // A ration shop has no `scheme`; an outlet must name a scheme other than ration.
+  const schemeAttr = e.attributes?.scheme === undefined ? "pds" : s(e, "scheme")
+  if (!isScheme(schemeAttr) || (schemeAttr === "pds") === outlet) return null
   let labelEn = shopId
   let labelHi = shopId
   try {
@@ -154,7 +166,7 @@ export function parseShop(e: RawEntity): Shop | null {
   } catch {
     /* payload not selected or not JSON: fall back to the ID */
   }
-  return { ...c, shopId, state, district, labelEn, labelHi, expiresAt: e.expiresAt ?? 0n }
+  return { ...c, shopId, state, district, labelEn, labelHi, scheme: schemeAttr, expiresAt: e.expiresAt ?? 0n }
 }
 
 export function parseReport(e: RawEntity): Report | null {
@@ -174,6 +186,10 @@ export function parseReport(e: RawEntity): Report | null {
   if (!shopId || !SHOP_ID_RE.test(shopId) || !month || !MONTH_RE.test(month) || !isItem(item)) return null
   if (!state || !STATE_RE.test(state) || !district || !DISTRICT_RE.test(district) || monthNum !== monthToNum(month)) return null
   if (entitledG === undefined || receivedG === undefined || sg === undefined || sbp === undefined || reportedAt === undefined) return null
+  // The scheme comes from the item; a `scheme` attribute, when present, must agree (absent only on ration items).
+  const scheme = schemeOfItem(item)
+  const schemeAttr = e.attributes?.scheme === undefined ? "pds" : s(e, "scheme")
+  if (schemeAttr !== scheme || entitledG > ITEM_INFO[item].max) return null
   // Recompute derived fields instead of trusting them.
   let bp: number
   try {
@@ -188,7 +204,7 @@ export function parseReport(e: RawEntity): Report | null {
   if (low === undefined || low < 0 || (low & ~ISSUES_LOW_MASK) !== 0) return null
   if (high === undefined || high < 0 || (high & ~ISSUES2_MASK) !== 0) return null
   const issues = low | (high << ISSUES_LOW_BITS)
-  if ((issues & ~ALL_ISSUES_MASK) !== 0) return null
+  if ((issues & ~schemeIssueMask(scheme)) !== 0) return null
   return {
     ...c,
     owner: e.owner,
@@ -203,6 +219,7 @@ export function parseReport(e: RawEntity): Report | null {
     shortfallG: sg,
     shortfallBp: sbp,
     issues,
+    scheme,
     reportedAt,
     synthetic: b(e, "synthetic") === true,
     createdAt: e.createdAt,

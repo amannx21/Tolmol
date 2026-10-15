@@ -6,6 +6,7 @@ import {
   dedupeReports,
   evidenceRows,
   explorerAddressUrl,
+  forScheme,
   formatBp,
   describeShopQueries,
   shopCorrections,
@@ -27,8 +28,9 @@ import { IssueCounts, PatternsCard } from "./extras"
 import { ShopScoreCard } from "./answersUI"
 import { OfficialActionsCard } from "./officialUI"
 import { draftComplaint, draftRti, type RtiInput } from "./rti"
-import { ErrorBox, Explorer, Loading, loadShops, ShortfallBar } from "./ui"
+import { ErrorBox, Explorer, Loading, loadOutlets, ShortfallBar } from "./ui"
 import { useVerified, VerifiedBadge } from "./verified"
+import { StockAndFairness } from "./stockUI"
 
 /** A QR code (inline SVG) for this shop's public page, to print and stick up near the shop. */
 function ShopQr({ url }: { url: string }) {
@@ -66,12 +68,15 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
       const head = await reader.getBlockNumber({ cacheTime: 0 })
       const at = atBlock && /^\d+$/.test(atBlock) && BigInt(atBlock) <= head ? BigInt(atBlock) : head
       const [shops, reps, wits, corr] = await Promise.all([
-        loadShops(),
+        loadOutlets(),
         shopReports(reader, shopId, month, { atBlock: at }),
         shopWitnesses(reader, shopId, month, { atBlock: at }),
         shopCorrections(reader, shopId, month, { atBlock: at }),
       ])
-      setData({ shop: shops.find((s) => s.shopId === shopId), reports: reps.items, witnesses: wits.items, withdrawn: withdrawnKeys(reps.items, corr.items), atBlock: at, head })
+      const shop = shops.find((s) => s.shopId === shopId)
+      // An outlet counts only reports of its own scheme (a school counts meal reports, never grain).
+      const reports = forScheme(reps.items, shop?.scheme ?? "pds")
+      setData({ shop, reports, witnesses: wits.items, withdrawn: withdrawnKeys(reports, corr.items), atBlock: at, head })
     })().catch(setErr)
   }, [shopId, month, atBlock])
 
@@ -167,7 +172,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
           <p class="muted">{t("empty")}</p>
         )}
         {stats && verified && <p class="small">{t("verifiedCount", { n: kept.filter((r) => verified.has(r.creator.toLowerCase())).length, total: kept.length })}</p>}
-        {stats && <IssueCounts counts={stats.issueCounts} labels />}
+        {stats && <IssueCounts counts={stats.issueCounts} labels scheme={data.shop?.scheme ?? "pds"} />}
         <div class="row wrap shop-primary-actions">
           <select value={month ?? ""} onChange={(e) => go(q({ month: e.currentTarget.value || undefined }))} aria-label={t("month")}>
             <option value="">{t("allMonths")}</option>
@@ -180,6 +185,8 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
           </a>
         </div>
       </section>
+
+      {data.shop && !historic && <StockAndFairness shop={data.shop} counted={kept} month={month} />}
 
       {months.length > 1 && (
         <section class="card">
@@ -221,7 +228,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
                   <td>{t(r.item)}</td>
                   <td>
                     <a href={`#/r/${r.key}`}>
-                      {f.kg(r.shortfallG)} · {formatBp(r.shortfallBp)}
+                      {f.amt(r.item, r.shortfallG)} · {formatBp(r.shortfallBp)}
                     </a>
                     {data.withdrawn.has(r.key.toLowerCase()) ? <span class="tag">{t("withdrawn")}</span> : !counted && <span class="tag">{t("duplicateIgnored")}</span>}
                   </td>

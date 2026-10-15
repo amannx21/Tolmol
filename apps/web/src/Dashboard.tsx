@@ -31,21 +31,29 @@ import {
   type LiveStatus,
   type Report,
   type Witness,
+  type AnyItem,
+  type Scheme,
 } from "tolmol-sdk"
 import { liveReader, reader } from "./arkiv"
-import { STATE_NAMES, useFmt, useLang } from "./i18n"
+import { STATE_NAMES, useFmt, useLang, type Key } from "./i18n"
 import { go } from "./router"
 import { IssueCounts } from "./extras"
-import { ErrorBox, Loading, loadShops, ShortfallBar } from "./ui"
+import { ErrorBox, Loading, loadOutlets, ShortfallBar } from "./ui"
 import { useDealers, useOfficials, useVerified } from "./verified"
 import { AttentionList, offKey, useShopDistricts } from "./officialUI"
 
 const STATES = ["BR", "UP", "JH"]
+const SCHEMES_SHOWN: Scheme[] = ["pds", "mdm", "nrega"]
+/** An item whose unit matches the scheme, for formatting totals ("kg", "days", "₹"). */
+const UNIT_ITEM: Record<Scheme, AnyItem> = { pds: "rice", mdm: "meal_days", nrega: "wage_inr" }
 
-export function Dashboard({ initialState }: { initialState?: string }) {
+export function Dashboard({ initialState, scheme: initialScheme }: { initialState?: string; scheme?: Scheme }) {
   const { t, lang } = useLang()
   const f = useFmt()
   const [state, setState] = useState(initialState && STATES.includes(initialState) ? initialState : "BR")
+  // One ledger, several schemes: the dashboard shows one scheme at a time (units are not mixed).
+  const [scheme, setScheme] = useState<Scheme>(initialScheme ?? "pds")
+  const [outletScheme, setOutletScheme] = useState<Map<string, Scheme>>(new Map())
   const toMonth = currentMonth()
   const [fromMonth, setFromMonth] = useState(addMonths(toMonth, -2))
   const [reports, setReports] = useState<Map<string, Report> | null>(null)
@@ -98,9 +106,10 @@ export function Dashboard({ initialState }: { initialState?: string }) {
       const [rs, ws, shops, corr] = await Promise.all([
         dashboardReports(reader, { state, fromMonth, toMonth }, { atBlock: head }),
         dashboardWitnesses(reader, { state, months }, { atBlock: head }),
-        loadShops(),
+        loadOutlets(),
         stateCorrections(reader, state, { atBlock: head }),
       ])
+      setOutletScheme(new Map(shops.map((s) => [s.shopId, s.scheme])))
       setLabels(new Map(shops.map((s) => [s.shopId, lang === "hi" ? s.labelHi : s.labelEn])))
       setCorrections(corr.items)
       setWitnesses(new Map(ws.items.map((w) => [w.key.toLowerCase(), w])))
@@ -136,50 +145,57 @@ export function Dashboard({ initialState }: { initialState?: string }) {
     return stop
   }, [])
 
+  // Only this scheme's reports, at outlets the registry lists under this scheme (a meal report filed against a ration
+  // shop's ID, by mistake or on purpose, is not counted anywhere).
+  const scoped = useMemo(
+    () => (reports ? new Map([...reports].filter(([, r]) => r.scheme === scheme && outletScheme.get(r.shopId) === scheme)) : null),
+    [reports, scheme, outletScheme],
+  )
+
   // Trust-weighted view: optionally count only reports that at least one other device has confirmed.
   // Public-data pattern: reports filed by 3+ phones within one minute at the same shop (see rapidGroups).
   const rapid = useMemo(() => {
-    if (!reports) return new Set<string>()
-    const all = [...reports.values()]
+    if (!scoped) return new Set<string>()
+    const all = [...scoped.values()]
     return rapidReportKeys(all, withdrawnKeys(all, corrections))
-  }, [reports, corrections])
+  }, [scoped, corrections])
   const rapidByShop = useMemo(() => {
     const m = new Map<string, number>()
-    for (const r of reports?.values() ?? []) if (rapid.has(r.key.toLowerCase())) m.set(r.shopId, (m.get(r.shopId) ?? 0) + 1)
+    for (const r of scoped?.values() ?? []) if (rapid.has(r.key.toLowerCase())) m.set(r.shopId, (m.get(r.shopId) ?? 0) + 1)
     return m
-  }, [reports, rapid])
+  }, [scoped, rapid])
   const ranked = useMemo(() => {
-    if (!reports) return []
+    if (!scoped) return []
     const ws = [...witnesses.values()]
-    const rs = [...reports.values()]
+    const rs = [...scoped.values()]
       .filter((r) => !onlyConfirmed || validWitnesses(r, ws).length > 0)
       .filter((r) => !hideRapid || !rapid.has(r.key.toLowerCase()))
       .filter((r) => !onlyVerified || !!verified?.has(r.creator.toLowerCase()))
     return shopStats(rs, ws, withdrawnKeys(rs, corrections))
-  }, [reports, witnesses, onlyConfirmed, hideRapid, rapid, corrections, onlyVerified, verified])
+  }, [scoped, witnesses, onlyConfirmed, hideRapid, rapid, corrections, onlyVerified, verified])
   const verifiedByShop = useMemo(() => {
     const m = new Map<string, number>()
-    if (!reports || !verified) return m
-    const all = [...reports.values()]
+    if (!scoped || !verified) return m
+    const all = [...scoped.values()]
     for (const r of dedupeReports(all, withdrawnKeys(all, corrections))) if (verified.has(r.creator.toLowerCase())) m.set(r.shopId, (m.get(r.shopId) ?? 0) + 1)
     return m
-  }, [reports, verified, corrections])
+  }, [scoped, verified, corrections])
   const answersByShop = useMemo(() => {
     const m = new Map<string, AnswerStats>()
-    if (!reports || !answers || !dealers) return m
-    const all = [...reports.values()]
+    if (!scoped || !answers || !dealers) return m
+    const all = [...scoped.values()]
     const counted = dedupeReports(all, withdrawnKeys(all, corrections))
     const valid = validResponses(counted, answers.rs, dealers)
     const fus = latestFollowups(counted, answers.fs)
     for (const shop of new Set(counted.map((r) => r.shopId))) m.set(shop, answerStats(counted.filter((r) => r.shopId === shop), valid, fus))
     return m
-  }, [reports, answers, dealers, corrections])
+  }, [scoped, answers, dealers, corrections])
   const actionsByShop = useMemo(() => (offActs && officials && districts ? validOfficialActions(offActs, officials, districts) : new Map<string, OfficialRecord[]>()), [offActs, officials, districts])
   const attention = useMemo(() => {
-    if (!reports || !answers || !dealers || !verified) return null
-    const all = [...reports.values()]
+    if (!scoped || !answers || !dealers || !verified) return null
+    const all = [...scoped.values()]
     return needsAttention(shopStats(all, [...witnesses.values()], withdrawnKeys(all, corrections)), answersByShop, verifiedByShop, actionsByShop)
-  }, [reports, witnesses, corrections, answers, dealers, verified, answersByShop, verifiedByShop, actionsByShop])
+  }, [scoped, witnesses, corrections, answers, dealers, verified, answersByShop, verifiedByShop, actionsByShop])
 
   return (
     <>
@@ -191,7 +207,12 @@ export function Dashboard({ initialState }: { initialState?: string }) {
           </span>
         </div>
         <div class="row wrap">
-          <select value={state} onChange={(e) => (setState(e.currentTarget.value), go(`#/dashboard?state=${e.currentTarget.value}`))} aria-label={t("state")}>
+          <select value={scheme} onChange={(e) => { const s = e.currentTarget.value as Scheme; setScheme(s); go(`#/dashboard?state=${state}${s === "pds" ? "" : `&scheme=${s}`}`) }} aria-label={t("schemeDashboard")}>
+            {SCHEMES_SHOWN.map((s) => (
+              <option value={s}>{t(`scheme_${s}` as Key)}</option>
+            ))}
+          </select>
+          <select value={state} onChange={(e) => (setState(e.currentTarget.value), go(`#/dashboard?state=${e.currentTarget.value}${scheme === "pds" ? "" : `&scheme=${scheme}`}`))} aria-label={t("state")}>
             {STATES.map((s) => (
               <option value={s}>{STATE_NAMES[s]?.[lang]}</option>
             ))}
@@ -238,7 +259,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                     <strong>{formatBp(s.shortfallBp)}</strong>
                   </div>
                   <ShortfallBar bp={s.shortfallBp} />
-                  <IssueCounts counts={s.issueCounts} />
+                  <IssueCounts counts={s.issueCounts} scheme={scheme} />
                   {strongestAction(actionsByShop.get(s.shopId)) && <span class="tag warn">⚖ {t(offKey(strongestAction(actionsByShop.get(s.shopId))!.action))}</span>}
                   {(answersByShop.get(s.shopId)?.answered ?? 0) > 0 && (
                     <span class="tag">{t("answeredRow", { a: answersByShop.get(s.shopId)!.answered, n: answersByShop.get(s.shopId)!.reports, f: answersByShop.get(s.shopId)!.fixed })}</span>
@@ -246,7 +267,7 @@ export function Dashboard({ initialState }: { initialState?: string }) {
                   {(verifiedByShop.get(s.shopId) ?? 0) > 0 && <span class="tag ok-tag">{t("verifiedRow", { n: verifiedByShop.get(s.shopId) ?? 0 })}</span>}
                   {!hideRapid && (rapidByShop.get(s.shopId) ?? 0) > 0 && <span class="tag warn">{t("rapidBadge", { n: rapidByShop.get(s.shopId) ?? 0 })}</span>}
                   <div class="small muted">
-                    {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {f.kg(s.totalShortfallG)} {t("shortfall")} · {f.district(s.district)}
+                    {s.reports} {t("reports")} · {s.corroborated} {t("corroboratedReports")} · {f.amt(UNIT_ITEM[scheme], s.totalShortfallG)} {t("shortfall")} · {f.district(s.district)}
                   </div>
                 </a>
               </li>

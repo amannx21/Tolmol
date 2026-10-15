@@ -22,10 +22,11 @@ export const VERIFY_PER_IP_PER_DAY = 5
 export type VerifierEnv = { VERIFIER_PRIVATE_KEY?: string; CARD_TAG_SECRET?: string; CARD_ISSUER?: string; RPC_URL?: string }
 /**
  * PHH / AAY: a ration card (verifies a card holder). FPS: a fair-price-shop dealer licence (the shop's dealer). GOV: an
- * official's ID (jurisdiction = the district of the shop named on it).
+ * official's ID (jurisdiction = the district of the shop named on it). SCH / GPO: a school head teacher's or a gram
+ * panchayat employment assistant's ID: the operator ("dealer" role) of the school or panchayat named on it.
  */
-export type Card = { v: 1; state: string; shopId: string; type: "PHH" | "AAY" | "FPS" | "GOV"; serial: string; sig: Hex }
-const roleOf = (t: Card["type"]) => (t === "FPS" ? "dealer" : t === "GOV" ? "official" : "card_holder")
+export type Card = { v: 1; state: string; shopId: string; type: "PHH" | "AAY" | "FPS" | "GOV" | "SCH" | "GPO"; serial: string; sig: Hex }
+const roleOf = (t: Card["type"]) => (t === "FPS" || t === "SCH" || t === "GPO" ? "dealer" : t === "GOV" ? "official" : "card_holder")
 
 export const cardMessage = (c: Omit<Card, "sig">) => `Tolmol TEST ration card (synthetic, not a real card)\nv1|${c.state}|${c.shopId}|${c.type}|${c.serial}`
 export const deviceProofMessage = (serial: string, device: string) => `Tolmol: verify this phone with test card ${serial}\ndevice ${device.toLowerCase()}`
@@ -36,9 +37,9 @@ export function decodeCard(s: unknown): Card | null {
     const c = JSON.parse(atob(s.replace(/-/g, "+").replace(/_/g, "/"))) as Partial<Card>
     if (c.v !== 1 || typeof c.state !== "string" || !/^[A-Z]{2}$/.test(c.state)) return null
     if (typeof c.shopId !== "string" || !/^SYN-[A-Z]{2}-\d{4}$/.test(c.shopId) || !c.shopId.startsWith(`SYN-${c.state}-`)) return null
-    if (c.type !== "PHH" && c.type !== "AAY" && c.type !== "FPS" && c.type !== "GOV") return null
+    if (!["PHH", "AAY", "FPS", "GOV", "SCH", "GPO"].includes(c.type as string)) return null
     if (typeof c.serial !== "string" || !/^[0-9a-f]{32}$/.test(c.serial) || typeof c.sig !== "string" || !/^0x[0-9a-fA-F]{130}$/.test(c.sig)) return null
-    return { v: 1, state: c.state, shopId: c.shopId, type: c.type, serial: c.serial, sig: c.sig as Hex }
+    return { v: 1, state: c.state, shopId: c.shopId, type: c.type as Card["type"], serial: c.serial, sig: c.sig as Hex }
   } catch {
     return null
   }

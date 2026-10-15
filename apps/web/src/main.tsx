@@ -14,6 +14,10 @@ import { MyActivityPage, TourPage } from "./roleUI"
 import { useLang } from "./i18n"
 import { Layout } from "./ui"
 import { DesignPreview } from "./DesignPreview"
+import { ReportEntry } from "./SchemeEntry"
+import { ProofPage } from "./proofUI"
+import { TrustPage } from "./trust"
+import { RawPage } from "./rawPage"
 import "./styles.css"
 import "./design.css"
 import "./flow.css"
@@ -67,10 +71,14 @@ function App() {
   let page
   switch (route.name) {
     case "report":
-      page = (route.view ?? (easy ? "easy" : "full")) === "easy" ? <EasyReport initialShop={route.shopId} /> : <ReportForm initialShop={route.shopId} />
+      page = (
+        <ReportEntry shopId={route.shopId} scheme={route.scheme}>
+          {(route.view ?? (easy ? "easy" : "full")) === "easy" ? <EasyReport initialShop={route.shopId} /> : <ReportForm initialShop={route.shopId} />}
+        </ReportEntry>
+      )
       break
     case "dashboard":
-      page = <Dashboard initialState={route.state} />
+      page = <Dashboard initialState={route.state} scheme={route.scheme} />
       break
     case "shop":
       page = <ShopPage shopId={route.shopId} month={route.month} atBlock={route.atBlock} letter={route.letter} />
@@ -86,6 +94,15 @@ function App() {
       break
     case "tour":
       page = <TourPage />
+      break
+    case "proof":
+      page = <ProofPage p={route.p} />
+      break
+    case "trust":
+      page = <TrustPage />
+      break
+    case "raw":
+      page = <RawPage />
       break
     case "card":
       page = <CardPage c={route.c} />

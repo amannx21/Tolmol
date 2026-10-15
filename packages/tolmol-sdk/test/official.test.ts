@@ -14,7 +14,7 @@ const act = (n: number, creator: number, shopId: string, district: string, actio
   ({ key: k(n), creator: dev(creator), shopId, state: "BR", district, action, createdAt })
 const shopDistrict = new Map([["SYN-BR-0042", "gaya"], ["SYN-BR-0002", "gaya"], ["SYN-BR-0003", "patna"]])
 const stats = (shopId: string, over: Partial<ShopStats>): ShopStats => ({
-  shopId, state: "BR", district: shopDistrict.get(shopId) ?? "gaya", reports: 5, reporters: 3, corroborated: 0, witnesses: 0, totalEntitledG: 100_000,
+  shopId, scheme: "pds", state: "BR", district: shopDistrict.get(shopId) ?? "gaya", reports: 5, reporters: 3, corroborated: 0, witnesses: 0, totalEntitledG: 100_000,
   totalShortfallG: 10_000, shortfallBp: 1000, shortReports: 1, months: ["2026-10"], issueCounts: Object.fromEntries(ISSUE_NAMES.map((n) => [n, 0])) as ShopStats["issueCounts"], ...over,
 })
 

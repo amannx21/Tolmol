@@ -115,6 +115,38 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    11(1) and 13. Actions are sealed, so nobody, the department included, can quietly remove them. A shop leaves the
    list only when its numbers improve, so recording an action cannot whitewash a shop, and inaction stays visible.
 
+12. **The dealer's stock board, read against what people got.** The verified dealer posts the month's grain received
+   and distribution days (the board every fair-price shop must display, TPDS Control Order 2015 cl. 10(4)(ii)) as a
+   sealed `tolmol.stock` entity. The shop page sets it against the reports: *"the board says 2,000 kg; 14 card holders
+   got 22% less; about 440 kg unaccounted for (an estimate)"*. A board cannot be edited, only re-posted, and every
+   version stays visible. No board after the 5th is shown loudly, so silence is evidence too.
+13. **Fair shop badge, earned and lapsing.** A shop earns it from public evidence only: 3+ reports from 2+ phones
+   under 5% short, every shortfall report answered, no reporter saying "not fixed", a stock board this month. It is
+   checked live each time the page opens, and the dealer can print a QR that opens the live check, so a printed
+   badge cannot outlast the evidence. Dealers get a reason to want Tolmol, not only to fear it.
+14. **Check my shop.** One box on the home page: type or pick any shop, school or panchayat and get red / amber /
+   green / grey in plain words, from three queries and the same rule for everyone (`shopVerdict`).
+15. **One ledger, three schemes.** The same evidence model now also records **school meals** (PM POSHAN: school days
+   with a hot meal, at a school) and **MGNREGA wages** (rupees owed vs paid, at a gram panchayat), each with its own
+   questions, answers from the head teacher or employment assistant, official actions, and letters to the right
+   authority (District Education Officer; MGNREGA Programme Officer and Ombudsperson). Ration data did not change, and
+   older readers simply do not see the new records ([`arkiv/schema.md`](arkiv/schema.md#other-schemes-on-the-same-ledger)).
+16. **Privacy you can feel.** Before sending, a box shows what becomes public and what stays on the phone. Reports
+   can be held on the phone and sent at a **random time 1 to 6 hours later**, so the moment a report lands cannot be
+   matched to who was at the counter; this switches on by itself for risky reports and for shops where few people have
+   reported this month (which also gets a warning). **"Prove this report is mine"** lets a reporter back their
+   complaint at a hearing: the official reads out a one-time code, the phone signs it with the key that wrote the
+   report, the official checks it against `$creator` (`#/proof`). Nothing new goes public.
+17. **Choose whom to trust.** `#/trust` shows the one registry address every trust decision starts from, checks it
+   against the address published in this repository (outside Arkiv and outside the site), lists the verifiers it
+   names and when each approval lapses, and lets anyone switch to a registry they trust more (`?registry=0x…`), with a
+   warning banner on every page while a custom registry is in use.
+18. **Read it without Tolmol, and see what it costs.** `#/raw` lists every query the app makes for an outlet,
+   generated from the app's own code, ready to copy as curl, JavaScript or Python. The footer inspector shows each
+   query this page sent, its `Arkiv-Cost` and the reads left; when the free read budget runs out, pages show the
+   last good copy, labelled, instead of going blank. A dependency-free Python reader
+   ([`examples/tolmol_reader.py`](examples/tolmol_reader.py)) is written only from the data contract.
+
 **One site for everyone.** Card holders, shop dealers, officials and visitors use the same link and the same menu
 (Home, Shops, My activity, Verify, Get verified, About, Report). The home page shows what each person can do: a
 verified dealer sees "N reports waiting for your answer", a verified official sees the attention list, a card holder

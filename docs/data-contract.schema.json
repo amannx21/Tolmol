@@ -163,12 +163,15 @@
                 "rice",
                 "wheat",
                 "millet",
-                "total"
+                "total",
+                "meal_days",
+                "wage_inr"
               ]
             }
           }
         }
-      ]
+      ],
+      "description": "rice/wheat/millet/total: ration, amounts in grams. meal_days: school meals, amounts in school days. wage_inr: MGNREGA wages, amounts in whole rupees."
     },
     "grams": {
       "allOf": [
@@ -180,6 +183,24 @@
             "value": {
               "minimum": 0,
               "maximum": 100000
+            }
+          }
+        }
+      ]
+    },
+    "scheme": {
+      "description": "The scheme of a non-ration outlet or report. Absent on ration shops and ration reports (= pds).",
+      "allOf": [
+        {
+          "$ref": "#/$defs/str"
+        },
+        {
+          "properties": {
+            "value": {
+              "enum": [
+                "mdm",
+                "nrega"
+              ]
             }
           }
         }
@@ -248,8 +269,72 @@
       }
     },
     {
+      "title": "tolmol.outlet",
+      "description": "An outlet of another scheme on the same ledger: a school (scheme mdm, school meals) or a gram panchayat (scheme nrega, MGNREGA wages). Same attributes and payload as tolmol.shop, plus scheme. Trusted only from the registry creator.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "shop_id",
+        "state",
+        "district",
+        "synthetic",
+        "scheme"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.outlet"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "synthetic": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/bool"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": true
+                }
+              }
+            }
+          ]
+        },
+        "scheme": {
+          "$ref": "#/$defs/scheme"
+        }
+      }
+    },
+    {
       "title": "tolmol.report",
-      "description": "One device's claim for one shop, month and grain. Created readonly (+ permissionlessExtension unless the reporter opted out) and transferred to 0x...dEaD in the same batch. Empty payload. Readers recompute shortfall_g, shortfall_bp and month_num and drop entities that disagree.",
+      "description": "One device's claim for one shop, month and grain. Created readonly (+ permissionlessExtension unless the reporter opted out) and transferred to 0x...dEaD in the same batch. Empty payload. Readers recompute shortfall_g, shortfall_bp and month_num and drop entities that disagree. Reports for another scheme carry scheme (mdm with item meal_days, nrega with item wage_inr) and that scheme's issue flags; readers drop a report whose scheme and item disagree.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -371,6 +456,9 @@
             }
           ],
           "description": "Optional (since 2026-10-15), written only when non-zero: the further issue flags, shifted down by 7: 1 slip_mismatch, 2 no_weighing, 4 tied_sale, 8 card_kept, 16 no_board, 32 told_lapsed, 64 many_trips, 128 wrong_grain, 256 threatened, 512 member_left_out. Readers that only know `issues` still count the report."
+        },
+        "scheme": {
+          "$ref": "#/$defs/scheme"
         }
       }
     },
@@ -672,7 +760,7 @@
               }
             }
           ],
-          "description": "card_holder (ration card), dealer (fair-price-shop licence, FPS) or official (official ID, GOV; jurisdiction = the district of shop_id). Absent on attestations made before 2026-10-15 = card_holder."
+          "description": "card_holder (ration card), dealer (the outlet's operator: fair-price-shop licence FPS, school head teacher ID SCH, or gram panchayat employment assistant ID GPO) or official (official ID, GOV; jurisdiction = the district of shop_id). Absent on attestations made before 2026-10-15 = card_holder."
         }
       }
     },
@@ -754,7 +842,16 @@
                     "no_tied_sale",
                     "card_returned",
                     "respectful_service",
-                    "disputed"
+                    "disputed",
+                    "meals_resumed",
+                    "menu_followed",
+                    "kitchen_cleaned",
+                    "equal_seating",
+                    "no_child_labour",
+                    "wages_paid",
+                    "job_card_returned",
+                    "work_allotted",
+                    "site_facilities"
                   ]
                 }
               }
@@ -900,7 +997,8 @@
                     "licence_suspended",
                     "licence_cancelled",
                     "case_registered",
-                    "grain_restored"
+                    "grain_restored",
+                    "dues_restored"
                   ]
                 }
               }

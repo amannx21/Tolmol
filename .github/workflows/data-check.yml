@@ -1,0 +1,29 @@
+# Daily public check of the live data: reads EVERY project="tolmol" entity on Arkiv Tiramisu (anonymously, read-only,
+# no secrets) and checks it against the data contract and the privacy rules (scripts/privacy-audit.ts): no unknown
+# attribute, no free text, no personal data, empty payloads. The result is the job summary of each run, so anyone can
+# see, without trusting us, that what is on Arkiv still matches arkiv/schema.md.
+name: Data check
+on:
+  schedule:
+    - cron: "40 2 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Audit every Tolmol entity on Arkiv
+        run: |
+          set -o pipefail
+          node --import tsx scripts/privacy-audit.ts | tee audit.txt
+      - name: Summary
+        if: always()
+        run: |
+          { echo '## Tolmol data check'; echo; echo '```'; cat audit.txt 2>/dev/null; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

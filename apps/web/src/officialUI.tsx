@@ -3,17 +3,18 @@ import { ActionIcon } from "./ActionIcon"
 // that district) and the dashboard's public "Needs official attention" list. All read straight from Arkiv.
 import { useEffect, useState } from "preact/hooks"
 import {
-  OFFICIAL_ACTIONS,
+  OFFICIAL_ACTIONS_FOR_SCHEME,
   recordOfficialAction,
   shopOfficialActions,
   validOfficialActions,
   type Attention,
   type OfficialAction,
   type OfficialRecord,
+  type Scheme,
 } from "tolmol-sdk"
 import { device, ensureGas, reader, short } from "./arkiv"
 import { useFmt, useLang, type Key } from "./i18n"
-import { loadShops } from "./ui"
+import { loadOutlets } from "./ui"
 import { useOfficials } from "./verified"
 
 export const offKey = (a: OfficialAction) => `off_${a}` as Key
@@ -22,12 +23,12 @@ export const offKey = (a: OfficialAction) => `off_${a}` as Key
 export function useShopDistricts(): Map<string, string> | null {
   const [m, setM] = useState<Map<string, string> | null>(null)
   useEffect(() => {
-    loadShops().then((shops) => setM(new Map(shops.map((s) => [s.shopId, s.district]))), () => setM(new Map()))
+    loadOutlets().then((shops) => setM(new Map(shops.map((s) => [s.shopId, s.district]))), () => setM(new Map()))
   }, [])
   return m
 }
 
-export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: string; district: string } }) {
+export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: string; district: string; scheme?: Scheme } }) {
   const { t } = useLang()
   const f = useFmt()
   const officials = useOfficials()
@@ -88,7 +89,7 @@ export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: s
         <div class="dealer-answer">
           <h4>{t("actAsOfficial", { district: f.district(shop.district) })}</h4>
           <div class="issue-grid">
-            {OFFICIAL_ACTIONS.map((a) => (
+            {OFFICIAL_ACTIONS_FOR_SCHEME[shop.scheme ?? "pds"].map((a) => (
               <button class={`chip ${pick === a ? "selected" : ""}`} aria-pressed={pick === a} onClick={() => setPick(a)}>
                 {t(offKey(a))}
               </button>

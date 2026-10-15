@@ -7,7 +7,7 @@ const B = "0xbBbB000000000000000000000000000000000002" as const
 const k = (n: number) => `0x${n.toString(16).padStart(64, "0")}` as `0x${string}`
 const report = (over: Partial<Report> = {}): Report => ({
   key: k(1), shopId: "SYN-BR-0042", month: "2026-10", item: "rice", entitledG: 15_000, receivedG: 12_500,
-  state: "BR", district: "gaya", monthNum: 202610, shortfallG: 2_500, shortfallBp: 1666, issues: 0, reportedAt: 1n, synthetic: true,
+  state: "BR", district: "gaya", monthNum: 202610, shortfallG: 2_500, shortfallBp: 1666, issues: 0, scheme: "pds", extendable: true, reportedAt: 1n, synthetic: true,
   creator: A, owner: "0x000000000000000000000000000000000000dEaD", createdAt: 100n, expiresAt: 999n, ...over,
 })
 const witness: Witness = {

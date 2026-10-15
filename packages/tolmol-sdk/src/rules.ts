@@ -1,4 +1,5 @@
-import { BLOCKS_PER_DAY, ISSUE_NAMES, ISSUES, LIFETIME_DAYS, MIN_WITNESSES_TO_EXTEND, type IssueName } from "./constants.js"
+import { BLOCKS_PER_DAY, ISSUE_NAMES, LIFETIME_DAYS, MIN_WITNESSES_TO_EXTEND, type IssueName } from "./constants.js"
+import { SCHEME_ISSUES, type Scheme } from "./schemes.js"
 import type { Correction, Report, Witness } from "./model.js"
 
 const lc = (s: string) => s.toLowerCase()
@@ -62,6 +63,8 @@ export function extensionTarget(
 
 export type ShopStats = {
   shopId: string
+  /** The scheme of the counted reports (pass reports of one scheme only; see forScheme). */
+  scheme: Scheme
   state: string
   district: string
   reports: number
@@ -75,9 +78,12 @@ export type ShopStats = {
   /** Reports with a positive shortfall. */
   shortReports: number
   months: string[]
-  /** How many counted reports flagged each issue. */
-  issueCounts: Record<IssueName, number>
+  /** How many counted reports flagged each issue (ration issue names are always present, at 0 if unused). */
+  issueCounts: Record<IssueName, number> & Record<string, number>
 }
+
+/** Only the reports of one scheme (an outlet counts only reports whose item belongs to its scheme). */
+export const forScheme = <T extends { scheme: Scheme }>(reports: readonly T[], scheme: Scheme): T[] => reports.filter((r) => r.scheme === scheme)
 
 /** Aggregates deduplicated reports (and their witnesses) per shop, worst shortfall first. */
 export function shopStats(reports: readonly Report[], witnesses: readonly Witness[], withdrawn: ReadonlySet<string> = new Set()): ShopStats[] {
@@ -94,6 +100,7 @@ export function shopStats(reports: readonly Report[], witnesses: readonly Witnes
     if (!s) {
       s = {
         shopId: r.shopId,
+        scheme: r.scheme,
         state: r.state,
         district: r.district,
         reports: 0,
@@ -118,7 +125,7 @@ export function shopStats(reports: readonly Report[], witnesses: readonly Witnes
     s.witnesses += wc
     if (wc >= 1) s.corroborated++
     if (r.shortfallG > 0) s.shortReports++
-    for (const n of ISSUE_NAMES) if (r.issues & ISSUES[n]) s.issueCounts[n]++
+    for (const [n, bit] of Object.entries(SCHEME_ISSUES[r.scheme])) if (r.issues & bit) s.issueCounts[n] = (s.issueCounts[n] ?? 0) + 1
     s.totalEntitledG += r.entitledG
     s.totalShortfallG += r.shortfallG
   }

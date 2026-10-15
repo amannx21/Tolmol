@@ -20,8 +20,8 @@ import { getPrefs } from "./prefs"
 import { useVerified } from "./verified"
 import { device } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
-import { IssueList, IssuePicker, PublicPreview, SENSITIVE_ISSUES } from "./extras"
-import { enqueueReport, isOffline } from "./queue"
+import { IssueList, IssuePicker, PublicPreview, QueuedNote, SENSITIVE_ISSUES } from "./extras"
+import { enqueueReport, getSendLater, isOffline } from "./queue"
 import { go } from "./router"
 import { DeviceCard, ErrorBox, Loading, loadShops } from "./ui"
 import { ReportIntro } from "./ReferencePhotos"
@@ -100,8 +100,8 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
     setStep("sending")
     setError(null)
     const input = { shopId: shop.shopId, month, item, entitledG: parsed.e, receivedG: parsed.r, issues }
-    if (!navigator.onLine) {
-      enqueueReport(input, shop)
+    if (!navigator.onLine || getSendLater()) {
+      enqueueReport(input, shop, { opts: { lifetimeDays, allowExtension, separateId }, delayed: getSendLater() })
       setQueued(true)
       setStep("confirm")
       return
@@ -115,7 +115,7 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
       else if (e instanceof SeparateIdError) setError(t("separateIdFailed"))
       else if (e instanceof GasError) setError(t("gasFailed"))
       else if (isOffline(e)) {
-        enqueueReport(input, shop)
+        enqueueReport(input, shop, { opts: { lifetimeDays, allowExtension, separateId } })
         setQueued(true)
       } else setError(t("errGeneric"))
     }
@@ -153,11 +153,11 @@ export function ReportForm({ initialShop }: { initialShop?: string }) {
           </dd>
         </dl>
         <IssueList mask={issues} />
-        <PublicPreview separateId={separateId} issues={issues} />
+        <PublicPreview separateId={separateId} issues={issues} shopId={shop?.shopId} month={month} />
         <p class="notice">{t("permanentWarning")}</p>
         {queued && (
           <p class="ok" role="status">
-            {t("queued")}
+            <QueuedNote />
           </p>
         )}
         <DeviceCard compact />

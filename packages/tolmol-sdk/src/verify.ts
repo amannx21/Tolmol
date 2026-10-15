@@ -30,15 +30,17 @@ export const VERIFY_LIFETIME_DAYS = { verifier: 180, attestation: 365 } as const
 /**
  * PHH / AAY: ration cards (card holders). FPS: a fair-price-shop dealer licence (the shop's dealer). GOV: an official's ID
  * (food department / District Grievance Redressal Officer); its jurisdiction is the district of the shop named on it.
+ * SCH: a school head teacher's ID (answers for a school's meals). GPO: a gram panchayat employment assistant's ID (answers
+ * for a panchayat's rural work). Both make the device the outlet's operator, the "dealer" role, for the outlet named on it.
  */
-export const CARD_TYPES = ["PHH", "AAY", "FPS", "GOV"] as const
+export const CARD_TYPES = ["PHH", "AAY", "FPS", "GOV", "SCH", "GPO"] as const
 export type CardType = (typeof CARD_TYPES)[number]
 export const ATTEST_METHODS = ["test_card", "camp"] as const
 export type AttestMethod = (typeof ATTEST_METHODS)[number]
 export const ROLES = ["card_holder", "dealer", "official"] as const
 export type Role = (typeof ROLES)[number]
 /** A dealer licence verifies the shop's dealer; a ration card verifies a card holder. */
-export const roleForCard = (type: CardType): Role => (type === "FPS" ? "dealer" : type === "GOV" ? "official" : "card_holder")
+export const roleForCard = (type: CardType): Role => (type === "FPS" || type === "SCH" || type === "GPO" ? "dealer" : type === "GOV" ? "official" : "card_holder")
 
 // ------------------------------------------------------------------ test ration cards
 /** A synthetic ration card: no name, no card number, no family details. `serial` is random, `sig` is the issuer's. */

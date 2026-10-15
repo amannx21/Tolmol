@@ -864,3 +864,95 @@ details.more-options summary {
   min-height: 0;
   width: auto;
 }
+
+/* ---------------- other schemes on the same ledger ---------------- */
+.scheme-chooser {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 12px;
+}
+.scheme-chooser .chip {
+  text-decoration: none;
+}
+label.field {
+  display: block;
+  margin: 12px 0;
+  font-weight: 600;
+}
+.big-input {
+  display: block;
+  width: 100%;
+  font-size: 1.4rem;
+  padding: 10px 12px;
+  margin-top: 6px;
+}
+.schemes-card .scheme-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+}
+
+/* ---------------- Fair shop badge and stock board ---------------- */
+.fair-badge.is-fair {
+  border: 2px solid var(--ok);
+}
+.fair-badge .checks {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+.fair-badge .checks li {
+  margin: 4px 0;
+}
+.fair-badge .checks li.ok {
+  color: var(--ok);
+}
+.fair-badge .checks li.bad {
+  color: var(--bad);
+}
+
+/* ---------------- Check my shop ---------------- */
+.check-shop input {
+  flex: 1 1 180px;
+}
+.verdict {
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  border: 2px solid var(--line);
+}
+.verdict-red {
+  border-color: var(--bad);
+}
+.verdict-amber {
+  border-color: var(--warn);
+}
+.verdict-green {
+  border-color: var(--ok);
+}
+.verdict-line {
+  font-size: 1.2rem;
+  margin: 0 0 6px;
+}
+
+/* ---------------- hearing kit and proof ---------------- */
+.proof-code {
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  margin: 8px 0;
+}
+.proof-text {
+  overflow-wrap: anywhere;
+}
+
+/* ---------------- read it without Tolmol ---------------- */
+.raw-q pre.code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

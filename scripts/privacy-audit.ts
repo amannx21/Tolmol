@@ -18,14 +18,18 @@ const oneOf = (...xs: unknown[]): Rule => (v) => xs.includes(v)
 const any: Rule = () => true
 
 const COMMON = { project: oneOf("tolmol"), schema_version: oneOf(1), synthetic: oneOf(true, false), reported_at: any }
+// Items of every scheme on the ledger: ration (grams), school meals (days), MGNREGA wages (rupees).
+const ITEM = oneOf("rice", "wheat", "millet", "total", "meal_days", "wage_inr")
 const CONTRACT: Record<string, Record<string, Rule>> = {
   "tolmol.shop": { project: oneOf("tolmol"), schema_version: oneOf(1), type: oneOf("tolmol.shop"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), synthetic: oneOf(true) },
+  // Outlets of the other schemes (schools, gram panchayats): a shop's attributes plus `scheme`.
+  "tolmol.outlet": { project: oneOf("tolmol"), schema_version: oneOf(1), type: oneOf("tolmol.outlet"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), synthetic: oneOf(true), scheme: oneOf("mdm", "nrega") },
   "tolmol.report": {
     ...COMMON, type: oneOf("tolmol.report"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912),
-    item: oneOf("rice", "wheat", "millet", "total"), entitled_g: isInt(1, 100_000), received_g: isInt(0, 100_000), shortfall_g: isInt(0, 100_000),
-    shortfall_bp: isInt(0, 10_000), issues: isInt(0, 127), issues2: isInt(1, 1023),
+    item: ITEM, entitled_g: isInt(1, 100_000), received_g: isInt(0, 100_000), shortfall_g: isInt(0, 100_000),
+    shortfall_bp: isInt(0, 10_000), issues: isInt(0, 127), issues2: isInt(1, 1023), scheme: oneOf("mdm", "nrega"),
   },
-  "tolmol.witness": { ...COMMON, type: oneOf("tolmol.witness"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), item: oneOf("rice", "wheat", "millet", "total") },
+  "tolmol.witness": { ...COMMON, type: oneOf("tolmol.witness"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), item: ITEM },
   "tolmol.correction": { ...COMMON, type: oneOf("tolmol.correction"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), action: oneOf("withdraw") },
   // Verification (simple version): the registry names verifiers; a verifier attests a device. No card data, only a
   // keyed fingerprint (card_tag) that cannot be turned back into the card.
@@ -36,10 +40,14 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   },
   // Shops answer (fixed choices only) and reporters confirm; no free text on either side.
   "tolmol.response": { ...COMMON, type: oneOf("tolmol.response"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH),
-    action: oneOf("full_quantity", "stock_arrived", "scale_checked", "open_as_displayed", "board_updated", "receipt_given", "money_returned", "auth_help", "quality_replaced", "portability_served", "no_tied_sale", "card_returned", "respectful_service", "disputed") },
+    action: oneOf("full_quantity", "stock_arrived", "scale_checked", "open_as_displayed", "board_updated", "receipt_given", "money_returned", "auth_help", "quality_replaced", "portability_served", "no_tied_sale", "card_returned", "respectful_service", "disputed",
+      "meals_resumed", "menu_followed", "kitchen_cleaned", "equal_seating", "no_child_labour", "wages_paid", "job_card_returned", "work_allotted", "site_facilities") },
   // Official actions on a shop, from a fixed list (TPDS Control Order 2015 cl. 10(7), 11(1), 13).
   "tolmol.action": { ...COMMON, type: oneOf("tolmol.action"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT),
-    action: oneOf("inspection_ordered", "inspected_shortage_found", "inspected_no_issue", "show_cause_notice", "licence_suspended", "licence_cancelled", "case_registered", "grain_restored") },
+    action: oneOf("inspection_ordered", "inspected_shortage_found", "inspected_no_issue", "show_cause_notice", "licence_suspended", "licence_cancelled", "case_registered", "grain_restored", "dues_restored") },
+  // The dealer's monthly stock board: grain received and distribution days, numbers only.
+  "tolmol.stock": { ...COMMON, type: oneOf("tolmol.stock"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912),
+    rice_g: isInt(0, 100_000_000), wheat_g: isInt(0, 100_000_000), millet_g: isInt(0, 100_000_000), cards: isInt(1, 5000), from_day: isInt(1, 31), to_day: isInt(1, 31) },
   "tolmol.followup": { ...COMMON, type: oneOf("tolmol.followup"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), status: oneOf("fixed", "not_fixed") },
 }
 
@@ -71,7 +79,7 @@ for (const e of all) {
     else if (!rule(a?.value)) problems.push(`${e.key} (${type}): attribute "${name}" has a value outside the contract`)
   }
   const payload = e.payload as Uint8Array
-  if (type === "tolmol.shop") {
+  if (type === "tolmol.shop" || type === "tolmol.outlet") {
     try {
       const j = JSON.parse(new TextDecoder().decode(payload)) as Record<string, unknown>
       const keys = Object.keys(j).sort().join(",")

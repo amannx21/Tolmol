@@ -6,10 +6,10 @@ import { addMonths, currentMonth, DuplicateError, ISSUE_GROUPS, ISSUES, NFSA, RE
 import { ensureGas, fileReport, GasError, SeparateIdError } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang, type Key } from "./i18n"
 import { getPrefs, setPrefs, usePrefs } from "./prefs"
-import { enqueueReport, isOffline } from "./queue"
+import { enqueueReport, getSendLater, isOffline } from "./queue"
 import { go } from "./router"
 import { speak } from "./speak"
-import { IssueList, IssuePicker, NextSteps, PublicPreview, SENSITIVE_ISSUES } from "./extras"
+import { IssueList, IssuePicker, NextSteps, PublicPreview, QueuedNote, SENSITIVE_ISSUES } from "./extras"
 import { ErrorBox, Loading, loadShops } from "./ui"
 import { HomeFlow } from "./HomeFlow"
 import { RoleHub } from "./roleUI"
@@ -332,8 +332,8 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
     const save = async () => {
       setError(null)
       const input = { shopId: shop.shopId, month, item: "total" as const, entitledG, receivedG, issues }
-      if (!navigator.onLine) {
-        enqueueReport(input, shop)
+      if (!navigator.onLine || getSendLater()) {
+        enqueueReport(input, shop, { opts: { lifetimeDays, allowExtension, separateId }, delayed: getSendLater() })
         setQueued(true)
         return
       }
@@ -347,7 +347,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
         else if (e instanceof SeparateIdError) setError(t("separateIdFailed"))
         else if (e instanceof GasError) setError(t("gasFailed"))
         else if (isOffline(e)) {
-          enqueueReport(input, shop)
+          enqueueReport(input, shop, { opts: { lifetimeDays, allowExtension, separateId } })
           setQueued(true)
         } else setError(t("errGeneric"))
       } finally {
@@ -384,10 +384,10 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
             <input type="checkbox" checked={separateId} onChange={(e) => (setIdTouched(true), setSeparateId(e.currentTarget.checked))} /> {t("separateIdLabel")}
           </label>
         </details>
-        <PublicPreview separateId={separateId} issues={issues} />
+        <PublicPreview separateId={separateId} issues={issues} shopId={shop.shopId} month={month} />
         <p class="notice">{t("permanentWarning")}</p>
         {queued ? (
-          <p class="ok" role="status">{t("queued")}</p>
+          <p class="ok" role="status"><QueuedNote /></p>
         ) : (
           <button class="big-action" disabled={busy !== null} onClick={save}>
             <ActionIcon name="send" />{busy === "preparing" ? t("preparing") : busy === "sending" ? t("sending") : `✓ ${t("sendEasy")}`}

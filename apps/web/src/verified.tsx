@@ -16,6 +16,7 @@ import {
   type Verifier,
 } from "tolmol-sdk"
 import { device, reader, RELAYER_URL } from "./arkiv"
+import { trustedRegistry } from "./trust"
 import { STATE_NAMES, useLang } from "./i18n"
 
 // ------------------------------------------------------------------ who is verified (cached per page load)
@@ -24,7 +25,7 @@ let attP: Promise<Attestation[]> | null = null
 
 function load(fresh: boolean) {
   if (fresh) attP = null
-  verifiersP ??= listVerifiers(reader).then((r) => r.items)
+  verifiersP ??= listVerifiers(reader, { registry: trustedRegistry() }).then((r) => r.items)
   attP ??= listAttestations(reader).then((r) => r.items)
   const both = Promise.all([verifiersP, attP])
   both.catch(() => {
@@ -119,30 +120,32 @@ export function CardPage({ c }: { c: string }) {
       setState(r.already ? "already" : "done")
     } else setState(r.error === "card_used" ? "used" : "failed")
   }
-  const isDealer = card.type === "FPS"
+  const isDealer = card.type === "FPS" || card.type === "SCH" || card.type === "GPO"
+  // A school head teacher's or panchayat employment assistant's ID: the outlet's operator, worded for that outlet.
+  const op = card.type === "SCH" || card.type === "GPO" ? card.type : null
   const isOfficial = card.type === "GOV"
   return (
     <section class="card">
-      <h2>{t(isOfficial ? "officialIdTitle" : isDealer ? "dealerLicenceTitle" : "cardTitle")}</h2>
-      <p class="notice small">{isOfficial ? t("officialIdHelp", { shop: card.shopId }) : isDealer ? t("dealerLicenceHelp", { shop: card.shopId }) : t("cardSynthetic")}</p>
+      <h2>{t(op ? `operatorIdTitle_${op}` : isOfficial ? "officialIdTitle" : isDealer ? "dealerLicenceTitle" : "cardTitle")}</h2>
+      <p class="notice small">{op ? t(`operatorIdHelp_${op}`, { shop: card.shopId }) : isOfficial ? t("officialIdHelp", { shop: card.shopId }) : isDealer ? t("dealerLicenceHelp", { shop: card.shopId }) : t("cardSynthetic")}</p>
       <dl class="facts">
         <dt>{t("state")}</dt>
         <dd>{STATE_NAMES[card.state]?.[lang] ?? card.state}</dd>
         <dt>{t("shop")}</dt>
         <dd class="mono">{card.shopId}</dd>
         <dt>{t("cardTypeLabel")}</dt>
-        <dd>{isOfficial ? t("officialIdTitle") : isDealer ? t("dealerLicenceTitle") : t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
+        <dd>{op ? t(`operatorIdTitle_${op}`) : isOfficial ? t("officialIdTitle") : isDealer ? t("dealerLicenceTitle") : t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
       </dl>
       <p class="small">{t("verifyPrivacy", { shop: card.shopId })}</p>
       {state === "done" || state === "already" ? (
         <p class="ok" role="status">
-          {isOfficial && state === "done" ? t("officialDone", { shop: card.shopId }) : isDealer && state === "done" ? t("dealerDone", { shop: card.shopId }) : t(state === "done" ? "verifyDone" : "verifyAlready")}{" "}
+          {isOfficial && state === "done" ? t("officialDone", { shop: card.shopId }) : op && state === "done" ? t("operatorDone", { shop: card.shopId }) : isDealer && state === "done" ? t("dealerDone", { shop: card.shopId }) : t(state === "done" ? "verifyDone" : "verifyAlready")}{" "}
           <a href={isDealer || isOfficial ? `#/shop/${card.shopId}` : `#/report?shop=${card.shopId}`}>{isDealer || isOfficial ? card.shopId : t("ctaReport")} →</a>
         </p>
       ) : (
         <button class="big-action" onClick={go} disabled={state === "busy"}>
           <ActionIcon name="card" />
-          {state === "busy" ? t("verifying") : t(isOfficial ? "verifyAsOfficial" : isDealer ? "verifyAsDealer" : "verifyWithCard")}
+          {state === "busy" ? t("verifying") : t(isOfficial ? "verifyAsOfficial" : op ? "verifyAsOperator" : isDealer ? "verifyAsDealer" : "verifyWithCard")}
         </button>
       )}
       {state === "used" && <p class="error" role="alert">{t("verifyUsed")} <a href="#/test-cards">{t("testCardsTitle")}</a></p>}
@@ -164,10 +167,11 @@ export function TestCardsPage() {
   const [cards, setCards] = useState<{ text: string; card: TestCard }[] | null>(null)
   const [dealers, setDealers] = useState<{ text: string; card: TestCard }[]>([])
   const [officials, setOfficials] = useState<{ text: string; card: TestCard }[]>([])
+  const [operators, setOperators] = useState<{ text: string; card: TestCard }[]>([])
   const [err, setErr] = useState(false)
   useEffect(() => {
     fetch("test-cards.json")
-      .then((r) => r.json() as Promise<{ cards: string[]; dealers?: string[]; officials?: string[] }>)
+      .then((r) => r.json() as Promise<{ cards: string[]; dealers?: string[]; officials?: string[]; operators?: string[] }>)
       .then((j) => {
         const dec = (list: string[]) => list.flatMap((text) => {
           const card = decodeCard(text)
@@ -176,6 +180,7 @@ export function TestCardsPage() {
         setCards(dec(j.cards))
         setDealers(dec(j.dealers ?? []))
         setOfficials(dec(j.officials ?? []))
+        setOperators(dec(j.operators ?? []))
       })
       .catch(() => setErr(true))
   }, [])
@@ -213,6 +218,27 @@ export function TestCardsPage() {
                   <br />
                   <a class="button secondary" href={`#/card?c=${text}`}>
                   <ActionIcon name="card" />{t("useCard")}
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      {operators.length > 0 && (
+        <>
+          <h3>{t("testOperatorsTitle")}</h3>
+          <p class="small">{t("testOperatorsHelp")}</p>
+          <ul class="cards">
+            {operators.map(({ text, card }, i) => (
+              <li>
+                <Qr url={`${base}#/card?c=${text}`} />
+                <div>
+                  <strong>S{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t(card.type === "SCH" ? "operatorIdTitle_SCH" : "operatorIdTitle_GPO")}
+                  <br />
+                  <a class="button secondary" href={`#/card?c=${text}`}>
+                    <ActionIcon name="card" />
+                    {t("useCard")}
                   </a>
                 </div>
               </li>

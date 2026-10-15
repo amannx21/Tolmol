@@ -1,6 +1,6 @@
 import type { PublicArkivClient } from "@arkiv-network/sdk"
 import { i32, key, str } from "@arkiv-network/sdk/attr"
-import { eq, gte, lte, type Expression } from "@arkiv-network/sdk/query"
+import { eq, gte, lte, or, type Expression } from "@arkiv-network/sdk/query"
 import { DEFAULT_REGISTRY, PROJECT, TYPE } from "./constants.js"
 import { parseCorrection, parseReport, parseShop, parseWitness, type RawEntity } from "./attributes.js"
 import { monthToNum, type Correction, type Report, type Shop, type Witness } from "./model.js"
@@ -62,6 +62,21 @@ export function listShops(
   opts: ReadOptions & { registry?: Hex } = {},
 ): Promise<ReadResult<Shop>> {
   const w = base(TYPE.shop)
+  if (filter.state) w.push(eq("state", str(filter.state)))
+  if (filter.district) w.push(eq("district", str(filter.district)))
+  return walk(client, w, parseShop, { ...opts, createdBy: opts.registry ?? DEFAULT_REGISTRY, payload: true })
+}
+
+/**
+ * Q1b: every outlet of every scheme (ration shops, schools, gram panchayats), trusted only from the registry creator.
+ * One query: `type = tolmol.shop OR type = tolmol.outlet`.
+ */
+export function listOutlets(
+  client: Reader,
+  filter: { state?: string; district?: string } = {},
+  opts: ReadOptions & { registry?: Hex } = {},
+): Promise<ReadResult<Shop>> {
+  const w: Expression[] = [eq("project", str(PROJECT)), or([eq("type", str(TYPE.shop)), eq("type", str(TYPE.outlet))])]
   if (filter.state) w.push(eq("state", str(filter.state)))
   if (filter.district) w.push(eq("district", str(filter.district)))
   return walk(client, w, parseShop, { ...opts, createdBy: opts.registry ?? DEFAULT_REGISTRY, payload: true })

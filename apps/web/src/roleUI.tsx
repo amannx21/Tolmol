@@ -28,6 +28,7 @@ import {
   type Response,
   type Witness,
 } from "tolmol-sdk"
+import { CheckShop } from "./checkUI"
 import { ActionIcon, type ActionIconName } from "./ActionIcon"
 import { device, myAddresses, reader } from "./arkiv"
 import { useFmt, useLang, type Key } from "./i18n"
@@ -98,8 +99,13 @@ export function RoleHub() {
     { icon: "check", title: t("verifyTitle"), body: t("hubCheckBody"), action: t("hubCheckAction"), href: "#/verify" },
     ...(roleCard ? [] : [{ icon: "shield" as const, title: t("navGetVerified"), body: t("hubVerifyBody"), action: t("hubVerifyAction"), href: "#/test-cards" }]),
     { icon: "next", title: t("tourTitle"), body: t("hubTourBody"), action: t("hubTourAction"), href: "#/tour" },
+    // The same ledger for other schemes: school meals and rural work wages.
+    { icon: "people", title: t("scheme_mdm"), body: t("schemeHelp_mdm"), action: t("schemeReportBtn"), href: "#/report?scheme=mdm" },
+    { icon: "calendar", title: t("scheme_nrega"), body: t("schemeHelp_nrega"), action: t("schemeReportBtn"), href: "#/report?scheme=nrega" },
   ]
   return (
+    <>
+    <CheckShop />
     <section class="flow-section role-hub" aria-labelledby="role-title">
       <div class="section-heading">
         <div>
@@ -110,6 +116,7 @@ export function RoleHub() {
       </div>
       <ToolCards cards={roleCard ? [roleCard, ...everyone] : everyone} />
     </section>
+    </>
   )
 }
 

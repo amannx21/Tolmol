@@ -184,6 +184,36 @@ duties in the TPDS (Control) Order 2015, clauses 10(3) and 10(4)(ii) (§10 above
 "not weighed in front of me", "a different grain" and "a family member's share left out" are everyday complaints we
 chose ourselves; we cite no statistic for them.
 
+## State PDS helplines (next steps screen)
+
+Read on the state food departments' own sites on 2026-10-16: Bihar, "For Information / Suggestions / Grievances,
+Please Contact 1800-3456-194 (Toll Free)" (https://epos.bihar.gov.in/); Uttar Pradesh, "TollFree No: 1800 1800 150 or
+1967" (https://fcs.up.gov.in/Important/ContactUs-en.aspx); Jharkhand, "HELPLINE NUMBER :- 18003456598"
+(https://aahar.jharkhand.gov.in/). 1967 is the national food helpline number.
+
+## 14. School meals (PM POSHAN, earlier the mid-day meal scheme)
+
+The National Food Security Act 2013, Section 5(1)(b), entitles every child up to class VIII (age 6 to 14) to one free
+meal every school day in government and government-aided schools. PM POSHAN (Pradhan Mantri Poshan Shakti Nirman,
+2021) is the scheme that delivers it as a hot cooked meal. Used for: the item `meal_days` (school days open vs days
+with a meal), and the right to the meal on every school day.
+
+The questions about spoilt food, small portions, the menu, the kitchen, children seated apart, parents asked to pay and
+children made to cook or clean are everyday complaints we chose ourselves; we cite no statistic for them.
+
+## 15. MGNREGA wages
+
+The Mahatma Gandhi National Rural Employment Guarantee Act 2005: Section 3(1) guarantees at least 100 days of wage
+employment a year to every rural household whose adult members ask for unskilled manual work; Section 3(3) says
+wages are paid weekly and in any case not later than a fortnight after the work; Section 7(1) gives an unemployment
+allowance when work is not provided within 15 days of the application; Schedule II sets the worksite facilities
+(safe drinking water, shade and a first-aid kit). Used for: the item `wage_inr`, and the questions `wage_late`,
+`work_denied` and `no_site_facilities`.
+
+The questions about short payment, job cards kept by someone else, bribes and names on the muster roll who did not
+work are complaints that social audits look for; we cite no statistic for them. The demo's daily wage (Rs 250) is
+synthetic, not a notified rate: the app asks for the rate written on the person's own job card or muster roll.
+
 ## What we do not claim
 
 - We do not claim any specific dealer or shop short-weighs. All shops in Tolmol are synthetic.

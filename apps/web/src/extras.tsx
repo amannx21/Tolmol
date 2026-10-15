@@ -2,7 +2,8 @@ import { ActionIcon } from "./ActionIcon"
 // Features grounded in documented PDS problems: issue tags, next steps
 // (helpline, grievance letter, RTI), the "what is public" panel, settings (server, new ID, offline reader)
 // and the evidence-file checker.
-import { useState } from "preact/hooks"
+import { useEffect, useState } from "preact/hooks"
+import { nextDelayed, useSendLater } from "./queue"
 import { str } from "@arkiv-network/sdk/attr"
 import { eq, or } from "@arkiv-network/sdk/query"
 import {
@@ -14,6 +15,13 @@ import {
   parseWitness,
   patternSignals,
   PROJECT,
+  evidenceRows,
+  shopWitnesses,
+  shopReports,
+  SCHEME_ISSUES,
+  schemeIssueList,
+  schemeIssueNames,
+  type Scheme,
   TIRAMISU_HTTP,
   TIRAMISU_WS,
   type IssueName,
@@ -27,7 +35,22 @@ import { usePrefs } from "./prefs"
 import { useLang, type Key } from "./i18n"
 import { ErrorBox } from "./ui"
 
-const ICON: Record<IssueName, string> = {
+const ICON: Record<string, string> = {
+  // School meals and rural work
+  poor_meal: "🍲",
+  less_food: "🥄",
+  menu_ignored: "📋",
+  unsafe_kitchen: "🚰",
+  seated_apart: "🚸",
+  money_asked: "₹",
+  children_work: "🧹",
+  wage_late: "⏳",
+  paid_less: "🧮",
+  job_card_kept: "🪪",
+  work_denied: "🚫",
+  no_site_facilities: "⛱️",
+  bribe_asked: "₹",
+  fake_names: "📝",
   charged_money: "₹",
   auth_failed: "☝️",
   thumb_no_grain: "👍",
@@ -46,7 +69,7 @@ const ICON: Record<IssueName, string> = {
   threatened: "⚠️",
   member_left_out: "👪",
 }
-const issueKey = (n: IssueName) => `issue_${n}` as Key
+const issueKey = (n: string) => `issue_${n}` as Key
 
 /** Toggle buttons for "what else went wrong". `big` = Easy mode. */
 export function IssuePicker({ value, onChange, big = false, only }: { value: number; onChange: (v: number) => void; big?: boolean; only?: IssueName[] }) {
@@ -74,9 +97,9 @@ export function IssuePicker({ value, onChange, big = false, only }: { value: num
   )
 }
 
-export function IssueList({ mask }: { mask: number }) {
+export function IssueList({ mask, scheme = "pds" }: { mask: number; scheme?: Scheme }) {
   const { t } = useLang()
-  const list = issueList(mask)
+  const list = scheme === "pds" ? issueList(mask) : schemeIssueList(scheme, mask)
   if (!list.length) return null
   return (
     <ul class="issues">
@@ -91,9 +114,9 @@ export function IssueList({ mask }: { mask: number }) {
 
 /** Small per-shop summary: "₹ 5 · 🔒 2 …" for issues reported at least once. */
 /** Issue counts: compact icons in lists, icon + words where there is room (phones have no hover tooltips). */
-export function IssueCounts({ counts, labels = false }: { counts: Record<IssueName, number>; labels?: boolean }) {
+export function IssueCounts({ counts, labels = false, scheme = "pds" }: { counts: Record<string, number>; labels?: boolean; scheme?: Scheme }) {
   const { t } = useLang()
-  const seen = ISSUE_NAMES.filter((n) => counts[n] > 0)
+  const seen = (scheme === "pds" ? (ISSUE_NAMES as string[]) : schemeIssueNames(scheme)).filter((n) => (counts[n] ?? 0) > 0)
   if (!seen.length) return null
   if (labels) {
     return (
@@ -118,18 +141,37 @@ export function IssueCounts({ counts, labels = false }: { counts: Record<IssueNa
 }
 
 /** "What you can do now": helpline, grievance officer letter, RTI, portability note. */
-export function NextSteps({ shopId, mask = 0 }: { shopId: string; mask?: number }) {
+/**
+ * State food departments' toll-free PDS grievance lines, as published on their own sites (checked 2026-10-16):
+ * Bihar epos.bihar.gov.in, Uttar Pradesh fcs.up.gov.in, Jharkhand aahar.jharkhand.gov.in. 1967 is the national number.
+ */
+export const STATE_HELPLINES: Record<string, { tel: string; show: string }> = {
+  BR: { tel: "18003456194", show: "1800-3456-194" },
+  UP: { tel: "18001800150", show: "1800-1800-150" },
+  JH: { tel: "18003456598", show: "1800-345-6598" },
+}
+
+export function NextSteps({ shopId, mask = 0, scheme = "pds" }: { shopId: string; mask?: number; scheme?: Scheme }) {
   const { t } = useLang()
   return (
     <section class="card next">
       <h3>{t("nextTitle")}</h3>
       <ol>
-        <li>
+        {scheme === "pds" && <li>
           {t("nextHelpline")}{" "}
           <a class="button secondary" href="tel:1967">
             <ActionIcon name="phone" />{t("callHelpline")}
           </a>
-        </li>
+          {STATE_HELPLINES[shopId.slice(4, 6)] && (
+            <>
+              {" "}
+              <a class="button secondary" href={`tel:${STATE_HELPLINES[shopId.slice(4, 6)]!.tel}`}>
+                <ActionIcon name="phone" />
+                {t("callStateHelpline", { n: STATE_HELPLINES[shopId.slice(4, 6)]!.show })}
+              </a>
+            </>
+          )}
+        </li>}
         <li>
           {t("nextComplaint")}{" "}
           <a class="button secondary" href={`#/shop/${shopId}?letter=complaint`}>
@@ -142,7 +184,7 @@ export function NextSteps({ shopId, mask = 0 }: { shopId: string; mask?: number 
             <ActionIcon name="letter" />{t("openRti")}
           </a>
         </li>
-        {(mask & ISSUES.portability_refused) !== 0 && <li>{t("nextPortability")}</li>}
+        {scheme === "pds" && (mask & ISSUES.portability_refused) !== 0 && <li>{t("nextPortability")}</li>}
       </ol>
     </section>
   )
@@ -298,12 +340,41 @@ export function VerifyPage() {
       setBusy(false)
     }
   }
+  // "Try tampering": a real export of the demo shop, with one number changed in this browser, checked against Arkiv.
+  const [tampered, setTampered] = useState<string | null>(null)
+  const tamperDemo = async () => {
+    setErr(null)
+    setChecks(null)
+    setBusy(true)
+    try {
+      const [reps, wits] = await Promise.all([shopReports(reader, "SYN-BR-0042"), shopWitnesses(reader, "SYN-BR-0042")])
+      const rows = evidenceRows(reps.items, wits.items, reps.atBlock).filter((r) => r.kind === "report").slice(0, 4)
+      if (!rows.length) throw new Error("no rows")
+      const victim = rows[rows.length - 1]!
+      // The edit a dishonest copy would make: "they got more than they did".
+      const forged = { ...victim, received_g: typeof victim.received_g === "number" ? Math.min(Number(victim.entitled_g), victim.received_g + 2000) : victim.received_g }
+      setTampered(victim.entity_key)
+      setChecks(await verifyRows([...rows.slice(0, -1), forged] as Row[]))
+    } catch (e) {
+      setErr(e)
+    } finally {
+      setBusy(false)
+    }
+  }
   const ok = checks?.filter((c) => c.status === "match").length ?? 0
   return (
     <section class="card">
       <h2>{t("verifyTitle")}</h2>
       <p>{t("verifyHelp")}</p>
-      <input type="file" accept="application/json,.json" onChange={(e) => void onFile(e.currentTarget.files?.[0])} />
+      <input type="file" accept="application/json,.json" onChange={(e) => (setTampered(null), void onFile(e.currentTarget.files?.[0]))} />
+      <p class="small">
+        {t("tamperHelp")}{" "}
+        <button class="secondary" onClick={() => void tamperDemo()} disabled={busy}>
+          <ActionIcon name="check" />
+          {t("tamperBtn")}
+        </button>
+      </p>
+      {tampered && checks && <p class="small notice">{t("tamperNote", { key: tampered.slice(0, 10) })}</p>}
       {busy && <p class="muted">{t("loading")}</p>}
       {err ? <ErrorBox error={err} /> : null}
       {checks && (
@@ -356,25 +427,87 @@ export function PatternsCard({ reports, witnesses, withdrawn }: { reports: Repor
 /** Issues after which a reporter may face retaliation: a separate ID is switched on for them by default. */
 export const SENSITIVE_ISSUES = ISSUES.threatened | ISSUES.card_kept
 
-export function PublicPreview({ separateId, issues }: { separateId: boolean; issues: number }) {
+/** Below this many different phones reporting a shop in a month, the dealer could guess who reported. */
+export const FEW_REPORTERS = 3
+
+/** How many different phones reported this shop this month (one query), for the small-shop warning. */
+function useReporterCount(shopId?: string, month?: string) {
+  const [n, setN] = useState<number | null>(null)
+  useEffect(() => {
+    if (!shopId || !month) return
+    let live = true
+    shopReports(reader, shopId, month)
+      .then((r) => live && setN(new Set(r.items.map((x) => x.creator.toLowerCase())).size))
+      .catch(() => live && setN(null))
+    return () => {
+      live = false
+    }
+  }, [shopId, month])
+  return n
+}
+
+export function PublicPreview({ separateId, issues, scheme = "pds", sensitive, shopId, month }: { separateId: boolean; issues: number; scheme?: Scheme; sensitive?: boolean; shopId?: string; month?: string }) {
   const { t } = useLang()
+  const risky = sensitive ?? (scheme === "pds" && (issues & SENSITIVE_ISSUES) !== 0)
+  const pds = scheme === "pds"
+  const others = useReporterCount(shopId, month)
+  const few = others !== null && others < FEW_REPORTERS
+  // Send at a random later time: on by default when the report is risky or few people reported here (can be switched off).
+  const [later, setLater] = useSendLater()
+  const [touched, setTouched] = useState(false)
+  useEffect(() => {
+    if (!touched) setLater(risky || few)
+  }, [risky, few, touched])
+  useEffect(() => () => setLater(false), [])
   return (
     <section class="public-preview" aria-labelledby="public-preview-title">
       <h3 id="public-preview-title">{t("previewTitle")}</h3>
       <div class="preview-cols">
         <div>
           <h4>{t("previewPublic")}</h4>
-          <p class="small">{t("previewPublicItems")}</p>
+          <p class="small">{t(pds ? "previewPublicItems" : "previewPublicItemsScheme")}</p>
         </div>
         <div>
           <h4>{t("previewPrivate")}</h4>
-          <p class="small">{t("previewPrivateItems")}</p>
+          <p class="small">{t(pds ? "previewPrivateItems" : "previewPrivateItemsScheme")}</p>
         </div>
       </div>
-      <p class="small muted">{t("previewFamily")}</p>
+      {pds && <p class="small muted">{t("previewFamily")}</p>}
       <p class="small">{separateId ? t("previewSeparate") : t("previewUsual")}</p>
-      {separateId && (issues & SENSITIVE_ISSUES) !== 0 && <p class="small notice">{t("previewSensitive")}</p>}
+      {separateId && risky && <p class="small notice">{t(pds ? "previewSensitive" : "previewSensitiveScheme")}</p>}
+      {few && <p class="small notice">{t("previewFewReporters", { n: others ?? 0 })}</p>}
+      <label class="inline check">
+        <input type="checkbox" checked={later} onChange={(e) => (setTouched(true), setLater(e.currentTarget.checked))} /> {t("sendLaterLabel")}
+      </label>
+      <p class="small muted">{t("sendLaterHelp")}</p>
       <p class="small muted">{t("previewNoEncrypt")}</p>
     </section>
   )
+}
+
+/** Toggle buttons for one scheme's issues (school meals, rural work). Ration keeps IssuePicker above. */
+export function SchemeIssuePicker({ scheme, value, onChange, only, big = true }: { scheme: Scheme; value: number; onChange: (v: number) => void; only: string[]; big?: boolean }) {
+  const { t } = useLang()
+  const bits = SCHEME_ISSUES[scheme]
+  return (
+    <div class={big ? "bigcol" : "issue-grid"}>
+      {only.map((n) => {
+        const bit = bits[n] ?? 0
+        const on = (value & bit) !== 0
+        return (
+          <button type="button" class={`${big ? "big-choice" : "chip"} ${on ? "selected" : ""}`} aria-pressed={on} onClick={() => onChange(value ^ bit)}>
+            <span class="icon" aria-hidden="true">{ICON[n]}</span> {on ? "✓ " : ""}
+            {t(issueKey(n))}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/** After saving offline or with "send at a random time": what will happen, in plain words. */
+export function QueuedNote() {
+  const { t } = useLang()
+  const at = nextDelayed()
+  return at ? <>{t("queuedLater", { time: new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })}</> : <>{t("queued")}</>
 }

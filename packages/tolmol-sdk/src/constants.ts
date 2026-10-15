@@ -4,6 +4,11 @@ export const SCHEMA_VERSION = 1
 
 export const TYPE = {
   shop: "tolmol.shop",
+  /**
+   * An outlet of another scheme (a school for school meals, a gram panchayat for MGNREGA wages). Same attributes as a
+   * shop plus `scheme`. A separate type, so readers that only know ration shops never list a school as a ration shop.
+   */
+  outlet: "tolmol.outlet",
   report: "tolmol.report",
   witness: "tolmol.witness",
   /** Filed by a report's own creator to withdraw it. Honoured only when $creator matches the report's. */
