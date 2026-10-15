@@ -807,3 +807,60 @@ details.more-options summary {
   cursor: pointer;
   font-weight: 600;
 }
+
+/* ---------------- privacy preview before sending ---------------- */
+.public-preview {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 12px 0;
+}
+.public-preview h3 {
+  margin-top: 0;
+}
+.public-preview .preview-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.public-preview h4 {
+  margin: 4px 0;
+  font-size: 0.95rem;
+}
+
+/* ---------------- Arkiv query inspector and saved-copy banner ---------------- */
+.saved-copy {
+  border-left: 4px solid var(--warn);
+}
+.inspector {
+  margin-top: 10px;
+  text-align: left;
+}
+.inspector summary {
+  cursor: pointer;
+}
+.inspector-list {
+  padding-left: 1.2em;
+  max-height: 320px;
+  overflow: auto;
+}
+.inspector-list li {
+  margin: 6px 0;
+  overflow-wrap: anywhere;
+}
+.inspector .tag-saved {
+  color: var(--warn);
+}
+.inspector .tag-failed {
+  color: var(--bad);
+}
+.linkish {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: 0;
+  width: auto;
+}

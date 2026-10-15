@@ -9,7 +9,7 @@ import { getPrefs, setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, isOffline } from "./queue"
 import { go } from "./router"
 import { speak } from "./speak"
-import { IssueList, IssuePicker, NextSteps } from "./extras"
+import { IssueList, IssuePicker, NextSteps, PublicPreview, SENSITIVE_ISSUES } from "./extras"
 import { ErrorBox, Loading, loadShops } from "./ui"
 import { HomeFlow } from "./HomeFlow"
 import { RoleHub } from "./roleUI"
@@ -104,6 +104,11 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
   const [lifetimeDays, setLifetimeDays] = useState(90)
   const [allowExtension, setAllowExtension] = useState(true)
   const [separateId, setSeparateId] = useState(() => getPrefs().separateIds)
+  // A report of being threatened or having the card kept gets a separate ID by default (the person can switch it off).
+  const [idTouched, setIdTouched] = useState(false)
+  useEffect(() => {
+    if (!idTouched && (issues & SENSITIVE_ISSUES) !== 0) setSeparateId(true)
+  }, [issues, idTouched])
   const [busy, setBusy] = useState<null | "preparing" | "sending">(null)
   const [error, setError] = useState<string | null>(null)
   const [queued, setQueued] = useState(false)
@@ -376,9 +381,10 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
             <input type="checkbox" checked={allowExtension} onChange={(e) => setAllowExtension(e.currentTarget.checked)} /> {t("allowExtend")}
           </label>
           <label class="inline check">
-            <input type="checkbox" checked={separateId} onChange={(e) => setSeparateId(e.currentTarget.checked)} /> {t("separateIdLabel")}
+            <input type="checkbox" checked={separateId} onChange={(e) => (setIdTouched(true), setSeparateId(e.currentTarget.checked))} /> {t("separateIdLabel")}
           </label>
         </details>
+        <PublicPreview separateId={separateId} issues={issues} />
         <p class="notice">{t("permanentWarning")}</p>
         {queued ? (
           <p class="ok" role="status">{t("queued")}</p>

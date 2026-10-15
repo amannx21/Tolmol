@@ -9,6 +9,7 @@ import { PhoneVerification } from "./verified"
 import type { Route } from "./router"
 import { Mark } from "./Identity"
 import { ActionIcon } from "./ActionIcon"
+import { ReadInspector, SavedCopyBanner } from "./inspector"
 
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
   const { t, toggle, lang } = useLang()
@@ -76,10 +77,12 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
       <p class="banner" role="note">
         {t("synthetic")}
       </p>
+      <SavedCopyBanner />
       <main id="main-content" tabIndex={-1} class={`page-${route.name} mode-${prefs.mode}`}>{children}</main>
       <footer class="foot">
         <a href="https://github.com/amannx21/Tolmol">{t("sourceCode")}</a> · <a href="https://github.com/amannx21/Tolmol/blob/main/arkiv/schema.md">{t("dataSchema")}</a> ·{" "}
         <span>{t("network")} · chain 7738577</span>
+        <ReadInspector />
       </footer>
     </>
   )

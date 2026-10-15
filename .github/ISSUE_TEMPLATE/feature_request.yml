@@ -1,0 +1,20 @@
+name: Idea or new question for the report
+description: A problem ration card holders face that Tolmol should capture, or a new feature
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Who has this problem, and what happens to them?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Source
+      description: A news report, government order or study that shows it happens (see docs/SOURCES.md for the style).
+  - type: textarea
+    id: arkiv
+    attributes:
+      label: How should it be stored on Arkiv?
+      description: Optional. New attribute, new flag, new entity type? See arkiv/schema.md.

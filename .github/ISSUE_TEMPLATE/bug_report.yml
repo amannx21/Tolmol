@@ -1,0 +1,25 @@
+name: Bug report
+description: Something in the app, the SDK, the CLI or the relayer does not work
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: "Use synthetic data only. Never paste a private key, a real name, phone number, Aadhaar or ration card number."
+  - type: dropdown
+    id: part
+    attributes:
+      label: Which part?
+      options: [Web app (Easy mode), Web app (Full mode), tolmol-sdk / CLI, Relayer, Mirror page, Docs]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: Steps to reproduce. Include the page link (for example `#/shop/SYN-BR-0042`) and any report key.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Phone or browser, and language (English / Hindi)

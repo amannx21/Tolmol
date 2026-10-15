@@ -3,7 +3,6 @@ import { formatEther } from "viem"
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts"
 import {
   DuplicateError,
-  httpReader,
   myExistingReport,
   reportCorrections,
   submitReport,
@@ -15,6 +14,7 @@ import {
   type Writer,
 } from "tolmol-sdk"
 import { getPrefs } from "./prefs"
+import { meteredReader } from "./rpc"
 
 /** Shared read-only clients. Reads go straight from the browser to the public Arkiv RPC: no Tolmol backend. */
 // --- Arkiv server: the public Tiramisu RPC by default; the user can point the app at any other Arkiv server
@@ -40,7 +40,8 @@ export function setRpc(http: string | null, wsUrl: string | null) {
   }
   location.reload()
 }
-export const reader: Reader = httpReader(rpcSetting.http)
+// Metered: logs each query for the inspector and answers from the last good copy when the free read budget runs out.
+export const reader: Reader = meteredReader(rpcSetting.http)
 let ws: Reader | undefined
 export const liveReader = () => (ws ??= wsReader(rpcSetting.ws))
 

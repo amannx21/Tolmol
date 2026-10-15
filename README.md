@@ -25,6 +25,19 @@ Tracks: **Best Indian Use Case** (primary), Censorship Resistance, Open Source, 
 |---|---|---|---|
 | ![Dashboard](docs/media/dashboard-en.jpg) | ![Dashboard in Hindi](docs/media/dashboard-hi.jpg) | ![Shop page](docs/media/shop-page.jpg) | ![Report](docs/media/report.jpg) |
 
+## Try it in two minutes (judges)
+
+No login, no wallet, works on a phone. Every step reads Arkiv straight from your browser.
+
+| Open | You should see |
+|---|---|
+| [`#/tour`](https://tolmol-web-kappa.vercel.app/#/tour) | The whole story in six steps: report, neighbours confirm, the dealer answers, the reporter says "fixed" or "not fixed", an official acts, the record stays |
+| [`#/shop/SYN-BR-0042`](https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-0042) | Shortfall per month, the dealer's answers, how many reporters said "fixed", and **"2 answers or follow-ups ignored"**: a planted fake dealer answer and a fake "fixed" written by a stranger's wallet. Same attributes as the real ones; only `$creator` differs, so they do not count |
+| [`#/report`](https://tolmol-web-kappa.vercel.app/#/report) → the last screen | **"Before you send: what becomes public"**: the public fields in plain words, what stays on the phone, and that the entitlement can hint at family size. Tick "scolded or threatened" and a separate anonymous ID switches on by itself |
+| [`#/dashboard?state=BR`](https://tolmol-web-kappa.vercel.app/#/dashboard?state=BR) | Districts ranked by shortfall, the "needs official attention" list, filters for each of the 17 problems |
+| Footer → **Arkiv queries on this page** | Every query the page sent, exactly as sent, its cost (`Arkiv-Cost`) and the reads you have left (`RateLimit`). **Copy as curl** and run it: the same answer without this site |
+| [`mirror.html`](https://tolmol-web-kappa.vercel.app/mirror.html) or `npx tolmol-sdk` | The same data with no Tolmol code in the way |
+
 ## The problem
 
 India's Public Distribution System gives free grain to **81.35 crore people** through **over 5 lakh fair-price
@@ -148,9 +161,15 @@ What Tolmol relies on, and gets only from Arkiv:
   not) on record at a given time.
 
 **Kept off Arkiv on purpose:** names, phone numbers, Aadhaar, ration card numbers, addresses (hashing does not
-help, they are guessable), free text, photos of receipts or scales, household size, the exact time of a report
+help, they are guessable), free text, photos of receipts or scales, household size as a field (but see below), the exact time of a report
 (rounded to the day), device private keys, relayer rate-limit data and IPs, and aggregates (anyone can recompute
 them). Details in [`arkiv/schema.md`](arkiv/schema.md#what-stays-off-arkiv-on-purpose).
+
+**Honest limit, shown before sending.** The amount you were due (`entitled_g`) is public, and so is the rule that
+sets it (5 kg a person, 35 kg for an Antyodaya card), so it can hint at your family size. We keep the exact amount
+because rounding it would distort the shortfall, which is the evidence. Every report screen shows a "what becomes
+public" box before you send, and reports about threats or a kept card go out under a separate ID by default.
+There is no encryption because nothing private is ever sent: not sending it beats encrypting it.
 
 ## How we use Arkiv
 
@@ -200,6 +219,7 @@ npm run tolmol -- query --shop SYN-BR-0042                    # reports, witness
 npm run tolmol -- query --shop SYN-BR-0042 --format csv      # evidence export
 npm run tolmol -- query --shop SYN-BR-0042 --at-block 518000 # what was public at that block
 npm run tolmol -- dashboard --state BR                        # worst shops in Bihar (synthetic)
+npm run tolmol -- answers --shop SYN-BR-0042                  # dealer answers and "fixed" that count, and the planted fakes that do not
 ```
 
 ### 2. Run it from a clean clone
@@ -262,8 +282,8 @@ The site itself is on two hosts, any Arkiv RPC can be set in Settings, and `mirr
 can keep and open offline.
 
 **Privacy.** Who is exposed if this data leaks? A card holder who complains about the dealer they depend on every
-month. So the explorer shows nothing personal: no name, phone, Aadhaar, card number, address, household size or
-free text (not even hashed); 16 small attributes; empty payloads; the time rounded to the day. The user controls
+month. So the explorer shows nothing personal: no name, phone, Aadhaar, card number, address, household size field or
+free text (not even hashed; the entitlement can hint at family size, and the report screen says so before sending); 16 small attributes; empty payloads; the time rounded to the day. The user controls
 expiry: 30, 90 or 180 days, and whether neighbours may extend it. With **a separate anonymous ID for each
 report** turned on, every report is signed by a fresh key funded by the relayer (which funds every fresh wallet), so
 nobody can link one person's reports, not even through who paid the gas. Letters keep name and card number as paper

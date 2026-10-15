@@ -1,6 +1,6 @@
 {
   "name": "tolmol-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read and write Tolmol ration-shortfall reports on Arkiv, the Web3 database (Tiramisu testnet). Synthetic data only.",
   "license": "MIT",
   "author": "Aman Arora",
