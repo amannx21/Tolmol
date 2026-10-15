@@ -147,6 +147,11 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    last good copy, labelled, instead of going blank. A dependency-free Python reader
    ([`examples/tolmol_reader.py`](examples/tolmol_reader.py)) is written only from the data contract.
 
+19. **Officials send inspectors, with authority that only narrows.** A verified district official can delegate a field
+   inspector to one outlet for 1 to 30 days (`tolmol.delegation`). The inspector's phone can then record only
+   inspection findings, only for that outlet, only inside the window; anything else it writes is ignored, and every
+   finding shows "inspector, delegated by 0x…". The official can revoke it by deleting the delegation.
+
 **One site for everyone.** Card holders, shop dealers, officials and visitors use the same link and the same menu
 (Home, Shops, My activity, Verify, Get verified, About, Report). The home page shows what each person can do: a
 verified dealer sees "N reports waiting for your answer", a verified official sees the attention list, a card holder

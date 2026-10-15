@@ -48,6 +48,8 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   // The dealer's monthly stock board: grain received and distribution days, numbers only.
   "tolmol.stock": { ...COMMON, type: oneOf("tolmol.stock"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912),
     rice_g: isInt(0, 100_000_000), wheat_g: isInt(0, 100_000_000), millet_g: isInt(0, 100_000_000), cards: isInt(1, 5000), from_day: isInt(1, 31), to_day: isInt(1, 31) },
+  // A district official sends an inspector to one outlet for a few days; numbers and addresses only.
+  "tolmol.delegation": { ...COMMON, type: oneOf("tolmol.delegation"), inspector: re(/^0x[0-9a-f]{40}$/), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), until_block: any },
   "tolmol.followup": { ...COMMON, type: oneOf("tolmol.followup"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), status: oneOf("fixed", "not_fixed") },
 }
 

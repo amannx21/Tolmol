@@ -20,6 +20,7 @@ import type { ShopStats } from "./rules.js"
 import type { AnswerStats } from "./answers.js"
 import type { Attestation } from "./verify.js"
 import type { Writer } from "./writes.js"
+import { activeDelegation, INSPECTOR_ACTIONS, type Delegation } from "./delegation.js"
 
 type Hex = `0x${string}`
 const lc = (x: string) => x.toLowerCase()
@@ -57,7 +58,7 @@ export const OFFICIAL_ACTIONS_FOR_SCHEME: Record<Scheme, readonly OfficialAction
   nrega: ["inspection_ordered", "inspected_shortage_found", "inspected_no_issue", "show_cause_notice", "case_registered", "dues_restored"],
 }
 
-export type OfficialRecord = { key: Hex; creator: Hex; shopId: string; state: string; district: string; action: OfficialAction; createdAt: bigint }
+export type OfficialRecord = { key: Hex; creator: Hex; shopId: string; state: string; district: string; action: OfficialAction; createdAt: bigint; /** Set when recorded by a delegated inspector: the official who delegated. */ via?: Hex }
 
 export function officialActionAttributes(shop: { shopId: string; state: string; district: string }, action: OfficialAction, o: { synthetic: boolean; atMs: bigint }): AttributeInputs {
   if (!OFFICIAL_ACTIONS.includes(action)) throw new Error(`unknown action ${action}`)
@@ -124,12 +125,23 @@ export function validOfficialActions(
   actions: readonly OfficialRecord[],
   officials: ReadonlyMap<string, Attestation>,
   shopDistrict: ReadonlyMap<string, string>,
+  delegations: readonly Delegation[] = [],
 ): Map<string, OfficialRecord[]> {
   const best = new Map<string, OfficialRecord>()
-  for (const a of actions) {
+  const inDistrict = (official: string, district: string) => {
+    const off = officials.get(lc(official))
+    return !!off && shopDistrict.get(off.shopId) === district
+  }
+  for (const raw of actions) {
+    let a = raw
     const district = shopDistrict.get(a.shopId)
-    const off = officials.get(lc(a.creator))
-    if (!district || district !== a.district || !off || shopDistrict.get(off.shopId) !== district) continue
+    if (!district || district !== a.district) continue
+    if (!inDistrict(a.creator, district)) {
+      // A delegated inspector: only inspection findings, only for that outlet, inside the window, from an official of this district.
+      const d = INSPECTOR_ACTIONS.includes(a.action) ? activeDelegation(delegations, a.creator, a.shopId, a.createdAt) : null
+      if (!d || !inDistrict(d.creator, district)) continue
+      a = { ...a, via: d.creator }
+    }
     const id = `${a.shopId}|${a.action}`
     const cur = best.get(id)
     if (!cur || earlier(a, cur)) best.set(id, a)

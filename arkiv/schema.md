@@ -28,6 +28,7 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | `tolmol.followup` | The report's own device (counted only then) | burn address | readonly | until the report's `createdAt` + 365 days | empty |
 | `tolmol.action` | A device verified as an official of the shop's district (counted only then) | burn address | readonly | 365 days | empty |
 | `tolmol.stock` | The shop's verified dealer (counted only then) | burn address | readonly | 365 days | empty |
+| `tolmol.delegation` | A verified official of the outlet's district (counted only then) | that official (it can delete it to revoke) | readonly | the window (1 to 30 days) + 365 days | empty |
 
 ### Why these flags and owners
 
@@ -286,6 +287,26 @@ a sample, labelled as such). *No board*: after the 5th, a month with no counted 
 recovers the signer and compares it with the report's `$creator`. The code is one-time and the proof expires after
 15 minutes. Nothing is written to Arkiv.
 
+## `tolmol.delegation` (an official sends an inspector)
+
+How a district office works: the District Supply Officer sends a field inspector to a shop for a few days. The
+verified official creates the delegation; the inspector's phone then records findings as ordinary `tolmol.action`
+entities. **Authority only narrows**: an inspector's action counts only if it is `inspected_shortage_found` or
+`inspected_no_issue`, for that `shop_id`, created between the delegation's creation block and `until_block`, and the
+delegation's `$creator` is a verified official whose district is the outlet's district. Readers show the action as
+"inspector, delegated by 0x…".
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.delegation`, `1` | |
+| `inspector` | str | `0xab…` | the inspector's device, lowercase |
+| `shop_id`, `state`, `district` | str | `SYN-BR-0002`, `BR`, `gaya` | one outlet per delegation |
+| `until_block` | u64 | `690000` | last block of the window; at most 30 days after creation |
+| `reported_at`, `synthetic` | u64, bool | | |
+
+The entity is owned by the official, who can delete it to revoke the delegation early (an owner can still delete a
+readonly entity). It lives a year past the window, so findings made in time stay attributable after it ends.
+
 ## Other schemes on the same ledger
 
 The evidence model fits any scheme where a person is owed a fixed amount at a known place. Since 2026-10-16 the same
@@ -431,6 +452,15 @@ Pages are at most 200. Multi-page walks are pinned with `.atBlock(head)` and use
 | Q19 | Shop page: official actions | `project AND type = "tolmol.action" AND shop_id = <id>` |
 | Q20 | Dashboard: official actions, attention list | `project AND type = "tolmol.action" AND state = <s>` |
 | Q18 | Dashboard answered / fixed | `project AND type = "tolmol.response" AND state = <s>`, and the same for `tolmol.followup` |
+| Q1b | Every outlet of every scheme | `project = "tolmol" AND (type = "tolmol.shop" OR type = "tolmol.outlet")`, `.createdBy(REGISTRY)` (one query) |
+| Q21 | Shop page: stock boards | `project AND type = "tolmol.stock" AND shop_id = <id>` |
+| Q22 | Dashboard: stock boards | `project AND type = "tolmol.stock" AND state = <s>` |
+| Q23 | Shop page: inspector delegations | `project AND type = "tolmol.delegation" AND shop_id = <id>` |
+| Q24 | Dashboard: inspector delegations | `project AND type = "tolmol.delegation" AND state = <s>` |
+| Q25 | Small-shop warning (before sending) | Q2 for this month: how many different `$creator` reported this outlet |
+
+`#/raw` in the app lists the exact query string and JSON-RPC body of each of these for any outlet, generated from
+the app's own code, ready to copy as curl, JavaScript or Python.
 
 Fields selected: `key`, `creator`, `owner`, `createdAt`, `expiresAt`, `creationFlags`, `attributes` (never the
 payload for reports, which is empty anyway). Shop and dashboard pages have a "How this is computed" panel that

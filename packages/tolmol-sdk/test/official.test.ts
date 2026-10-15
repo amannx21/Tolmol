@@ -54,3 +54,18 @@ describe("official actions", () => {
     expect(list[1]!.reasons).toEqual(["charged_money"])
   })
 })
+
+describe("inspector delegation", () => {
+  it("counts an inspector's finding only for the delegated outlet, inside the window, from an official of the district", async () => {
+    const { validOfficialActions } = await import("../src/official.js")
+    const official = new Map([[dev(1).toLowerCase(), { shopId: "SYN-BR-0042" } as never]])
+    const d = { key: k(50), creator: dev(1), inspector: dev(7), shopId: "SYN-BR-0002", state: "BR", district: "gaya", untilBlock: 500n, createdAt: 100n }
+    const at = (n: number, shopId: string, action: OfficialRecord["action"], createdAt: bigint) => act(n, 7, shopId, "gaya", action, createdAt)
+    const ok = validOfficialActions([at(60, "SYN-BR-0002", "inspected_shortage_found", 200n)], official, shopDistrict, [d])
+    expect(ok.get("SYN-BR-0002")?.[0]?.via).toBe(dev(1))
+    expect(validOfficialActions([at(61, "SYN-BR-0042", "inspected_shortage_found", 200n)], official, shopDistrict, [d]).size).toBe(0) // other outlet
+    expect(validOfficialActions([at(62, "SYN-BR-0002", "inspected_shortage_found", 600n)], official, shopDistrict, [d]).size).toBe(0) // after the window
+    expect(validOfficialActions([at(63, "SYN-BR-0002", "licence_cancelled", 200n)], official, shopDistrict, [d]).size).toBe(0) // not a finding
+    expect(validOfficialActions([at(64, "SYN-BR-0003", "inspected_no_issue", 200n)], official, shopDistrict, [{ ...d, shopId: "SYN-BR-0003", district: "patna" }]).size).toBe(0) // official of another district
+  })
+})

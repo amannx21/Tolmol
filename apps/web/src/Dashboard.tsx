@@ -3,6 +3,8 @@ import {
   answerStats,
   needsAttention,
   stateOfficialActions,
+  stateDelegations,
+  type Delegation,
   strongestAction,
   validOfficialActions,
   type OfficialRecord,
@@ -70,11 +72,12 @@ export function Dashboard({ initialState, scheme: initialScheme }: { initialStat
   const officials = useOfficials()
   const districts = useShopDistricts()
   const [offActs, setOffActs] = useState<OfficialRecord[] | null>(null)
+  const [dels, setDels] = useState<Delegation[]>([])
   useEffect(() => {
     let live = true
     setOffActs(null)
-    stateOfficialActions(reader, state)
-      .then((r) => live && setOffActs(r.items))
+    Promise.all([stateOfficialActions(reader, state), stateDelegations(reader, state)])
+      .then(([r, d]) => live && (setDels(d.items), setOffActs(r.items)))
       .catch(() => live && setOffActs([]))
     return () => {
       live = false
@@ -190,7 +193,7 @@ export function Dashboard({ initialState, scheme: initialScheme }: { initialStat
     for (const shop of new Set(counted.map((r) => r.shopId))) m.set(shop, answerStats(counted.filter((r) => r.shopId === shop), valid, fus))
     return m
   }, [scoped, answers, dealers, corrections])
-  const actionsByShop = useMemo(() => (offActs && officials && districts ? validOfficialActions(offActs, officials, districts) : new Map<string, OfficialRecord[]>()), [offActs, officials, districts])
+  const actionsByShop = useMemo(() => (offActs && officials && districts ? validOfficialActions(offActs, officials, districts, dels) : new Map<string, OfficialRecord[]>()), [offActs, officials, districts, dels])
   const attention = useMemo(() => {
     if (!scoped || !answers || !dealers || !verified) return null
     const all = [...scoped.values()]

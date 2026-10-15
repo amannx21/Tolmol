@@ -218,6 +218,24 @@ This file is updated as we build. Entries only describe things we actually hit o
   `access-control-expose-headers`), but the SDK reports only "HTTP request failed". *Fix suggestion:* read
   `RateLimit`'s `remaining` / `reset` into the typed error, so apps can show "N reads left" before hitting zero.
 
+### F14. A browser cannot see how much of the query budget is left until it is gone
+
+- **Surface:** public HTTP RPC response headers (`RateLimit`, `Arkiv-Quota-Used-Percent`), as seen by a browser.
+- **Observed by:** chain, 2026-10-16 (repeated with `curl -i` and from the app's own fetch transport).
+- **Expected:** with budget left, some header tells the client how much of the ~10,000-unit anonymous query budget
+  remains, so an app can warn "N reads left" before it hits zero. `access-control-expose-headers` even lists
+  `Arkiv-Quota-Used-Percent`, which suggests such a header exists.
+- **Actual:** a successful `arkiv_query` returns `arkiv-cost: 100` and `ratelimit: limit=600, remaining=597, reset=49`
+  (the per-minute request limit), and no `Arkiv-Quota-Used-Percent` at all. The budget appears only in the 429 that
+  ends it: `ratelimit: limit=10000, remaining=0, reset=3259`. Our footer inspector can therefore show "reads left 597/600"
+  one second before every query starts failing for up to an hour. Testing the new screens of this app twice emptied the
+  budget for the whole network (one IP), including for anyone else browsing from it.
+- **Repro:** `curl -i` any `arkiv_query` with budget left, then again after about 100 queries from the same IP; compare
+  the `ratelimit` lines, and look for `arkiv-quota-used-percent` in both.
+- **Fix suggestion:** send `Arkiv-Quota-Used-Percent` (already exposed to browsers) on every metered response, or a
+  second structured field, e.g. `RateLimit: "minute";r=597;t=49, "budget";r=4200;t=1800` (the IETF RateLimit header
+  draft allows several named policies). Document the window length; in our runs `reset` ranged up to 3,259 s.
+
 ## Paths tested that worked
 
 - **Read-only public client on Tiramisu.** `createPublicClient({ chain: tiramisu, transport: http() })`

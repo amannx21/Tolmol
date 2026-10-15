@@ -41,7 +41,7 @@ export function ReadInspector() {
             <li key={l.at + ":" + i}>
               <code class="mono small">{q}</code>{" "}
               <span class={`small tag-${l.status}`}>
-                {l.status === "live" ? t("inspectorLive") : l.status === "saved" ? t("inspectorSaved") : t("inspectorFailed")}
+                {l.status === "live" ? t("inspectorLive") : l.status === "saved" ? t("inspectorSaved") : l.status === "reused" ? t("inspectorReused") : t("inspectorFailed")}
                 {l.cost ? ` · ${l.cost}` : ""}
               </span>{" "}
               <button

@@ -3,6 +3,11 @@ import { ActionIcon } from "./ActionIcon"
 // that district) and the dashboard's public "Needs official attention" list. All read straight from Arkiv.
 import { useEffect, useState } from "preact/hooks"
 import {
+  activeDelegation,
+  delegateInspector,
+  INSPECTOR_ACTIONS,
+  shopDelegations,
+  type Delegation,
   OFFICIAL_ACTIONS_FOR_SCHEME,
   recordOfficialAction,
   shopOfficialActions,
@@ -37,19 +42,42 @@ export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: s
   const [pick, setPick] = useState<OfficialAction | null>(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const [dels, setDels] = useState<{ items: Delegation[]; head: bigint }>({ items: [], head: 0n })
+  const [inspector, setInspector] = useState("")
+  const [days, setDays] = useState("7")
 
   const load = async () => {
     if (!officials || !districts) return
-    const r = await shopOfficialActions(reader, shop.shopId)
-    setList(validOfficialActions(r.items, officials, districts).get(shop.shopId) ?? [])
+    const [r, d] = await Promise.all([shopOfficialActions(reader, shop.shopId), shopDelegations(reader, shop.shopId)])
+    setDels({ items: d.items, head: d.atBlock })
+    setList(validOfficialActions(r.items, officials, districts, d.items).get(shop.shopId) ?? [])
   }
   useEffect(() => {
     void load().catch(() => setList([]))
   }, [shop.shopId, officials, districts])
   if (!list || !officials || !districts) return null
 
-  const mine = officials.get(device().account.address.toLowerCase())
+  const me = device().account.address.toLowerCase()
+  const mine = officials.get(me)
   const iAmOfficial = !!mine && districts.get(mine.shopId) === shop.district
+  // A live delegation to this phone from an official of this district: it may record inspection findings here.
+  const myDelegation = activeDelegation(dels.items, me, shop.shopId, dels.head)
+  const iAmInspector = !iAmOfficial && !!myDelegation && districts.get(officials.get(myDelegation.creator.toLowerCase())?.shopId ?? "") === shop.district
+  const delegate = async () => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      if (!(await ensureGas())) return setMsg({ ok: false, text: t("gasFailed") })
+      await delegateInspector(reader, device().writer, shop, inspector, Number(days), { synthetic: true })
+      await load()
+      setInspector("")
+      setMsg({ ok: true, text: t("delegated") })
+    } catch {
+      setMsg({ ok: false, text: t("errGeneric") })
+    } finally {
+      setBusy(false)
+    }
+  }
   const record = async () => {
     if (!pick) return
     setBusy(true)
@@ -79,7 +107,7 @@ export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: s
         <ul class="list">
           {list.map((a) => (
             <li>
-              <strong>{t(offKey(a.action))}</strong> <span class="small muted">· #{a.createdAt.toString()} · {short(a.creator)}</span>
+              <strong>{t(offKey(a.action))}</strong> <span class="small muted">· #{a.createdAt.toString()} · {short(a.creator)}{a.via ? ` · ${t("byInspector", { official: short(a.via) })}` : ""}</span>
             </li>
           ))}
         </ul>
@@ -99,7 +127,46 @@ export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: s
           <button onClick={record} disabled={!pick || busy}>
             <ActionIcon name="save" />{t("recordAction")}
           </button>
+          <h4>{t("delegateTitle")}</h4>
+          <p class="small muted">{t("delegateHelp")}</p>
+          <div class="row wrap">
+            <input class="mono" placeholder="0x… (inspector's phone ID)" value={inspector} onInput={(e) => setInspector(e.currentTarget.value.trim())} size={44} aria-label={t("delegateTitle")} />
+            <label class="inline">
+              {t("delegateDays")} <input inputMode="numeric" size={3} value={days} onInput={(e) => setDays(e.currentTarget.value.trim())} />
+            </label>
+            <button class="secondary" onClick={delegate} disabled={busy || !/^0x[0-9a-fA-F]{40}$/.test(inspector) || !(Number(days) >= 1 && Number(days) <= 30)}>
+              <ActionIcon name="shield" />
+              {t("delegateBtn")}
+            </button>
+          </div>
         </div>
+      )}
+      {iAmInspector && myDelegation && (
+        <div class="dealer-answer">
+          <h4>{t("actAsInspector", { official: short(myDelegation.creator), days: String(Math.max(0, Number((myDelegation.untilBlock - dels.head) / 43_200n))) })}</h4>
+          <div class="issue-grid">
+            {INSPECTOR_ACTIONS.map((a) => (
+              <button class={`chip ${pick === a ? "selected" : ""}`} aria-pressed={pick === a} onClick={() => setPick(a)}>
+                {t(offKey(a))}
+              </button>
+            ))}
+          </div>
+          <button onClick={record} disabled={!pick || busy}>
+            <ActionIcon name="save" />{t("recordAction")}
+          </button>
+        </div>
+      )}
+      {dels.items.length > 0 && (
+        <details class="small">
+          <summary>{t("delegationsList", { n: dels.items.length })}</summary>
+          <ul class="list">
+            {dels.items.map((d) => (
+              <li>
+                {t("delegationLine", { inspector: short(d.inspector), official: short(d.creator) })} {d.untilBlock >= dels.head ? t("delegationLive") : t("delegationEnded")}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
       {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
     </section>

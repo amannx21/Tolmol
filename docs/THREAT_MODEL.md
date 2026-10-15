@@ -69,6 +69,7 @@ This page lists who might attack that promise, what stops them, and what is stil
 | T43 | A malicious link switches the app to an attacker's registry (fake shops, fake verifiers) | The choice is shown on every page in a warning banner with a one-tap reset; `#/trust` compares the registry with the address published in the GitHub repository | **Mitigated** |
 | T44 | "Send at a random time": the phone is closed and the report never goes out | It waits on the phone and goes out the first time Tolmol is open after its time; the screen says so. It is a choice, on by default only for risky reports and small shops | **Accepted** |
 | T45 | Another scheme's report is counted at the wrong outlet, or read as grams by an old reader | An outlet counts only its own scheme's reports; non-ration reports carry `scheme` and items that old readers do not know, so they drop them instead of misreading rupees as grams | **Mitigated** |
+| T46 | A delegated inspector oversteps (closes a case, cancels a licence, acts elsewhere or later) | Inspector actions count only as inspection findings, for the one outlet, inside the window, under a delegation from an official of that district. Anything else from that phone is ignored | **Mitigated** |
 
 ## What Tolmol does not solve
 

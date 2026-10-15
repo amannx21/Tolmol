@@ -121,3 +121,24 @@ describe("metered transport", () => {
     }
   })
 })
+
+describe("metered transport reuse", () => {
+  it("reuses an identical query at the same block, but asks again at a newer block", async () => {
+    let calls = 0
+    const realFetch = globalThis.fetch
+    globalThis.fetch = (async () => (calls++, new Response(JSON.stringify({ jsonrpc: "2.0", id: 1, result: { data: [calls] } }), { status: 200 }))) as typeof fetch
+    try {
+      const tr = meteredTransport({ url: "https://rpc.example", store: memoryStore() })
+      const t = tr({})
+      const a = await t.request({ method: "arkiv_query", params: ["q", { atBlock: "0x10" }] })
+      const b = await t.request({ method: "arkiv_query", params: ["q", { atBlock: "0x10" }] })
+      expect(b).toEqual(a)
+      expect(calls).toBe(1)
+      expect(tr.meter.log[0]?.status).toBe("reused")
+      await t.request({ method: "arkiv_query", params: ["q", { atBlock: "0x11" }] }) // after a write, the head moved
+      expect(calls).toBe(2)
+    } finally {
+      globalThis.fetch = realFetch
+    }
+  })
+})
