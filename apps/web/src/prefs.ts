@@ -3,10 +3,11 @@
 import { useEffect, useState } from "preact/hooks"
 
 export type Mode = "easy" | "full"
-export type Prefs = { mode: Mode; voice: boolean; myShop: string | null; chosen: boolean; separateIds: boolean }
+export type Theme = "light" | "dark"
+export type Prefs = { mode: Mode; voice: boolean; myShop: string | null; chosen: boolean; separateIds: boolean; theme: Theme }
 
 const KEY = "tolmol.prefs.v1"
-const DEFAULTS: Prefs = { mode: "easy", voice: true, myShop: null, chosen: false, separateIds: false }
+const DEFAULTS: Prefs = { mode: "easy", voice: true, myShop: null, chosen: false, separateIds: false, theme: "light" }
 const listeners = new Set<(p: Prefs) => void>()
 
 function load(): Prefs {
@@ -18,8 +19,15 @@ function load(): Prefs {
 }
 let current = load()
 
+/** Light unless the person chose dark, whatever the phone's own setting. */
+function applyTheme(t: Theme) {
+  document.documentElement.dataset.theme = t === "dark" ? "dark" : "light"
+}
+applyTheme(current.theme)
+
 export function setPrefs(patch: Partial<Prefs>) {
   current = { ...current, ...patch }
+  if (patch.theme) applyTheme(current.theme)
   try {
     localStorage.setItem(KEY, JSON.stringify(current))
   } catch {

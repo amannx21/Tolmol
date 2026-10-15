@@ -24,6 +24,7 @@ import "./preview.css"
 import "./photos.css"
 import "./amount.css"
 import "./report-receipt.css"
+import "./theme.css"
 
 function QueueBanner() {
   const n = useQueueCount()
