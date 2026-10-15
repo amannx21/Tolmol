@@ -2,6 +2,7 @@
 // tolmol: read Tolmol evidence straight from Arkiv (Tiramisu). Read-only, no keys, no Tolmol server involved.
 //
 //   tolmol shops [--state BR] [--district gaya]
+//   tolmol outlets [--state BR]            (ration shops, schools and gram panchayats)
 //   tolmol query --shop SYN-BR-0042 [--month 2026-10] [--at-block N] [--format table|csv|json]
 //   tolmol dashboard --state BR [--from 2026-08] [--to 2026-10]
 //   tolmol report <entityKey>
@@ -13,14 +14,16 @@ import { httpReader } from "./clients.js"
 import { explorerEntityUrl } from "./constants.js"
 import { evidenceRows, toCsv, toJson } from "./evidence.js"
 import { addMonths, currentMonth, monthToNum } from "./model.js"
-import { dashboardReports, dashboardWitnesses, getReport, listShops, reportCorrections, reportWitnesses, shopCorrections, shopReports, shopWitnesses, stateCorrections } from "./queries.js"
+import { formatAmount } from "./schemes.js"
+import { dashboardReports, dashboardWitnesses, getReport, listOutlets, listShops, reportCorrections, reportWitnesses, shopCorrections, shopReports, shopWitnesses, stateCorrections } from "./queries.js"
 import { latestFollowups, shopFollowups, shopResponses, validResponses } from "./answers.js"
 import { listAttestations, listVerifiers, verifiedDealers } from "./verify.js"
-import { dedupeReports, formatBp, formatKg, patternSignals, rapidReportKeys, shopStats, validWitnesses, withdrawnKeys } from "./rules.js"
+import { dedupeReports, formatBp, patternSignals, rapidReportKeys, shopStats, validWitnesses, withdrawnKeys } from "./rules.js"
 
 const USAGE = `tolmol: read Tolmol ration-shortfall evidence from Arkiv (Tiramisu testnet). Read-only.
 
   tolmol shops [--state BR] [--district gaya]
+  tolmol outlets [--state BR]
   tolmol query --shop SYN-BR-0042 [--month 2026-10] [--at-block N] [--format table|csv|json]
   tolmol dashboard --state BR [--from 2026-08] [--to 2026-10]
   tolmol report <entityKey>
@@ -61,6 +64,12 @@ async function main() {
     return out(`# ${r.items.length} synthetic shops from the registry, read at block ${r.atBlock}`)
   }
 
+  if (cmd === "outlets") {
+    const r = await listOutlets(reader, { state: values.state }, { atBlock })
+    for (const s of r.items.sort((a, b) => (a.shopId < b.shopId ? -1 : 1))) out(`${pad(s.shopId, 13)} ${pad(s.scheme, 6)} ${pad(s.state, 3)} ${pad(s.district, 14)} ${s.labelEn}`)
+    return out(`# ${r.items.length} synthetic outlets (ration shops, schools, gram panchayats), read at block ${r.atBlock}`)
+  }
+
   if (cmd === "query") {
     if (!values.shop) throw new Error("--shop is required")
     const head = atBlock ?? (await reader.getBlockNumber({ cacheTime: 0 }))
@@ -75,13 +84,14 @@ async function main() {
     if (values.format === "json") return out(toJson(rows, { network: "Arkiv Tiramisu 7738577", shop_id: values.shop, month: values.month ?? "all", read_at_block: head.toString(), note: "SYNTHETIC demo data" }))
     const s = shopStats(reps.items, wits.items, withdrawn)[0]
     out(`${values.shop} ${values.month ?? "(all months)"} at block ${head}`)
-    if (s) out(`shortfall ${formatBp(s.shortfallBp)} of ${formatKg(s.totalEntitledG)} · ${s.reports} reports (${s.reporters} devices) · ${s.corroborated} confirmed`)
+    const unit = reps.items[0]?.item ?? "rice"
+    if (s) out(`shortfall ${formatBp(s.shortfallBp)} of ${formatAmount(unit, s.totalEntitledG)} · ${s.reports} reports (${s.reporters} devices) · ${s.corroborated} confirmed`)
     const p = patternSignals(reps.items, wits.items, withdrawn)
     for (const g of p.rapidReports) out(`pattern: ${g.count} reports from ${g.devices} devices within blocks ${g.fromBlock}-${g.toBlock} (1 minute)`)
     for (const r of reps.items) {
       const w = validWitnesses(r, wits.items).length
       const tag = withdrawn.has(r.key.toLowerCase()) ? "  [withdrawn by reporter]" : ""
-      out(`  ${r.month} ${pad(r.item, 6)} ${pad(formatKg(r.receivedG) + "/" + formatKg(r.entitledG), 18)} short ${pad(formatBp(r.shortfallBp), 6)} witnesses ${w}  creator ${r.creator}  ${explorerEntityUrl(r.key)}${tag}`)
+      out(`  ${r.month} ${pad(r.item, 6)} ${pad(formatAmount(r.item, r.receivedG) + "/" + formatAmount(r.item, r.entitledG), 18)} short ${pad(formatBp(r.shortfallBp), 6)} witnesses ${w}  creator ${r.creator}  ${explorerEntityUrl(r.key)}${tag}`)
     }
     return
   }

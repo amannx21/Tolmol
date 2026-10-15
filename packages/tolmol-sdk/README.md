@@ -45,10 +45,39 @@ Every reader applies the same rules (see `arkiv/schema.md`): derived numbers are
 one report per device, shop, month and grain (earliest block wins), confirmations only from a *different* device,
 withdrawals only from the device that wrote the report, shops only from the registry wallet.
 
+## New in 0.2.0
+
+```js
+import {
+  listOutlets, forScheme, formatAmount,             // one ledger, three schemes: ration (grams), school meals (days), MGNREGA wages (rupees)
+  shopStocks, validStocks, boardForMonth, leakageEstimate, fairShop, shopVerdict, // stock boards and the verdicts
+  makeProof, checkProof, encodeProof, decodeProof,  // "this report is mine", checked against $creator, nothing stored
+  shopDelegations, validOfficialActions,            // inspectors delegated by a district official (authority only narrows)
+  meteredTransport, localStore, curlFor,            // a reusable browser transport for ANY Arkiv app (see below)
+} from "tolmol-sdk"
+```
+
+**`meteredTransport` is useful beyond Tolmol.** It is a viem transport for Arkiv reads that logs each request with
+Arkiv's own `Arkiv-Cost` and the reads left, merges identical reads in flight and reuses an identical read at the
+same block for 5 seconds, and when the anonymous query budget runs out (HTTP 429) or the network drops, answers a
+query it has seen before from a saved copy, flagged as saved, so a page does not go blank:
+
+```js
+import { createPublicClient } from "@arkiv-network/sdk"
+import { tiramisu } from "@arkiv-network/sdk/chains"
+import { meteredTransport, localStore } from "tolmol-sdk"
+
+const transport = meteredTransport({ url: "https://rpc.tiramisu.db-chain.testnet.arkiv.network", store: localStore("my-app.reads"), onChange: (m) => console.log(m.spent, m.remaining, m.savedAt) })
+const client = createPublicClient({ chain: tiramisu, transport })
+```
+
+See [CHANGELOG.md](CHANGELOG.md) for everything that changed and why older readers keep working.
+
 ## Command line (read-only, no keys)
 
 ```bash
 npx tolmol-sdk shops --state BR
+npx tolmol-sdk outlets --state BR                              # since 0.2.0: shops, schools and gram panchayats
 npx tolmol-sdk query --shop SYN-BR-0042 --format csv          # evidence export
 npx tolmol-sdk query --shop SYN-BR-0042 --at-block 518000     # what was public at that block
 npx tolmol-sdk dashboard --state BR
