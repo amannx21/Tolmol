@@ -25,7 +25,7 @@ jobs:
       - run: npm run build -w tolmol-web
         env:
           VITE_RELAYER_URL: ${{ vars.RELAYER_URL }}
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: apps/web/dist
   deploy:
