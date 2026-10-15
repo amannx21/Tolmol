@@ -303,20 +303,3 @@ export function SchemeReport({ scheme, initialShop }: { scheme: Other; initialSh
   }
   return <Loading />
 }
-
-/** On an add-on's report page: switch between the add-ons, or go back to the main ration flow. */
-export function SchemeChooser({ scheme }: { scheme: Scheme }) {
-  const { t } = useLang()
-  return (
-    <nav class="scheme-chooser" aria-label={t("addOnsTitle")}>
-      <a class="chip" href="#/report?scheme=pds">
-        ← 🌾 {t("backToRation")}
-      </a>
-      {(["mdm", "nrega"] as const).map((s) => (
-        <a class={`chip ${s === scheme ? "selected" : ""}`} href={`#/report?scheme=${s}`} aria-current={s === scheme ? "page" : undefined}>
-          {t(`scheme_${s}` as Key)}
-        </a>
-      ))}
-    </nav>
-  )
-}

@@ -24,32 +24,12 @@ function LanguageButtons() {
   )
 }
 
-/** Switch between the two add-ons, or go back to the main ration home. */
-function AddOnTabs({ scheme }: { scheme: Exclude<Scheme, "pds"> }) {
-  const { t } = useLang()
-  return (
-    <nav class="scheme-chooser scheme-tabs" aria-label={t("addOnsTitle")}>
-      <a class="chip" href="#/">
-        ← {ICON.pds} {t("backToRation")}
-      </a>
-      {(["mdm", "nrega"] as const).map((s) => (
-        <a class={`chip ${s === scheme ? "selected" : ""}`} href={`#/schemes/${s}`} aria-current={s === scheme ? "page" : undefined}>
-          {ICON[s]} {t(`scheme_${s}` as Key)}
-        </a>
-      ))}
-    </nav>
-  )
-}
-
 /** #/schemes: the add-ons. Without a choice, the two of them side by side; with one, its home. */
 export function AddOnsPage({ scheme }: { scheme?: "mdm" | "nrega" }) {
   const { t } = useLang()
   if (scheme)
     return (
-      <>
-        <AddOnTabs scheme={scheme} />
-        <SchemeHome scheme={scheme} />
-      </>
+<SchemeHome scheme={scheme} />
     )
   return (
     <section class="card easy welcome-card scheme-gate" aria-labelledby="addons-title">

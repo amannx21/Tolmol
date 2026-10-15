@@ -1,7 +1,7 @@
 import type { ComponentChildren } from "preact"
 import { useEffect, useState } from "preact/hooks"
 import type { Scheme } from "tolmol-sdk"
-import { SchemeChooser, SchemeReport } from "./SchemeReport"
+import { SchemeReport } from "./SchemeReport"
 import { Loading, loadOutlets } from "./ui"
 
 /**
@@ -20,10 +20,5 @@ export function ReportEntry({ shopId, scheme, children }: { shopId?: string; sch
   // Ration is the main flow and is shown exactly as designed; the add-ons appear only when asked for.
   const active = fromShop ?? scheme ?? "pds"
   if (active === "pds") return <>{children}</>
-  return (
-    <>
-      <SchemeChooser scheme={active} />
-      <SchemeReport scheme={active} initialShop={shopId} />
-    </>
-  )
+  return <SchemeReport scheme={active} initialShop={shopId} />
 }

@@ -994,3 +994,42 @@ label.field {
 .scheme-steps li {
   margin: 8px 0;
 }
+
+/* ---------------- workspaces: ration (main) + two add-ons, always in view ---------------- */
+.workspace-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+}
+.workspace-bar .ws {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+.workspace-bar .ws-main {
+  font-weight: 700;
+  font-size: 1rem;
+  border-color: var(--brand);
+}
+.workspace-bar .ws.active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.workspace-bar .ws-also {
+  color: var(--muted, #62716a);
+  margin-left: 4px;
+}
+.ws-title {
+  align-self: center;
+}

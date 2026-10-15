@@ -11,19 +11,22 @@ import { Mark } from "./Identity"
 import { ActionIcon } from "./ActionIcon"
 import { ReadInspector, SavedCopyBanner } from "./inspector"
 import { trustedRegistry, usingCustomRegistry } from "./trust"
+import { useWorkspace, WorkspaceBar, workspaceHref } from "./workspace"
 
 export function Layout({ route, children }: { route: Route; children: ComponentChildren }) {
   const { t, toggle, lang } = useLang()
   const [prefs, setPrefs] = usePrefs()
+  // Ration is the main workspace; in an add-on's workspace, Home, Dashboard and Report stay inside that add-on.
+  const ws = useWorkspace(route)
   const nav: [Route["name"], string, string][] = [
-    ["home", "#/", t("navHome")],
-    ["dashboard", "#/dashboard", t("navDashboard")],
+    ["home", workspaceHref(ws, "home"), t("navHome")],
+    ["dashboard", workspaceHref(ws, "dashboard"), t("navDashboard")],
     ["me", "#/me", t("navMe")],
     ["testCards", "#/test-cards", t("navGetVerified")],
     ["about", "#/about", t("navAbout")],
   ]
   if (prefs.mode === "full") nav.splice(2, 0, ["verify", "#/verify", t("navVerify")])
-  nav.push(["report", "#/report", t("navReport")])
+  nav.push(["report", workspaceHref(ws, "report"), t("navReport")])
   return (
     <>
       <a class="skip-link" href="#main-content" onClick={(event) => {
@@ -70,11 +73,12 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
       )}
       <nav class="tabs" aria-label="Main">
         {nav.map(([name, href, label]) => (
-          <a class={name === "report" ? "nav-report" : undefined} href={href} aria-current={route.name === name ? "page" : undefined}>
+          <a class={name === "report" ? "nav-report" : undefined} href={href} aria-current={route.name === name || (name === "home" && route.name === "schemes") ? "page" : undefined}>
             <ActionIcon name={name === "home" ? "home" : name === "dashboard" ? "dashboard" : name === "verify" ? "check" : name === "about" ? "info" : name === "me" ? "id" : name === "testCards" ? "shield" : "report"} />{label}
           </a>
         ))}
       </nav>
+      <WorkspaceBar ws={ws} />
       <p class="banner" role="note">
         {t("synthetic")}
       </p>

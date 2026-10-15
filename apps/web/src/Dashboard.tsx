@@ -45,7 +45,6 @@ import { useDealers, useOfficials, useVerified } from "./verified"
 import { AttentionList, offKey, useShopDistricts } from "./officialUI"
 
 const STATES = ["BR", "UP", "JH"]
-const SCHEMES_SHOWN: Scheme[] = ["pds", "mdm", "nrega"]
 /** An item whose unit matches the scheme, for formatting totals ("kg", "days", "₹"). */
 const UNIT_ITEM: Record<Scheme, AnyItem> = { pds: "rice", mdm: "meal_days", nrega: "wage_inr" }
 
@@ -54,7 +53,8 @@ export function Dashboard({ initialState, scheme: initialScheme }: { initialStat
   const f = useFmt()
   const [state, setState] = useState(initialState && STATES.includes(initialState) ? initialState : "BR")
   // One ledger, several schemes: the dashboard shows one scheme at a time (units are not mixed).
-  const [scheme, setScheme] = useState<Scheme>(initialScheme ?? "pds")
+  // The workspace decides the scheme (ration unless an add-on's records were opened); it follows the link.
+  const scheme: Scheme = initialScheme ?? "pds"
   const [outletScheme, setOutletScheme] = useState<Map<string, Scheme>>(new Map())
   const toMonth = currentMonth()
   const [fromMonth, setFromMonth] = useState(addMonths(toMonth, -2))
@@ -210,13 +210,7 @@ export function Dashboard({ initialState, scheme: initialScheme }: { initialStat
           </span>
         </div>
         <div class="row wrap">
-          {scheme !== "pds" && (
-            <select value={scheme} onChange={(e) => { const s = e.currentTarget.value as Scheme; setScheme(s); go(`#/dashboard?state=${state}${s === "pds" ? "" : `&scheme=${s}`}`) }} aria-label={t("schemeDashboard")}>
-              {SCHEMES_SHOWN.map((s) => (
-                <option value={s}>{s === "pds" ? `← ${t("backToRation")}` : t(`scheme_${s}` as Key)}</option>
-              ))}
-            </select>
-          )}
+          {scheme !== "pds" && <strong class="ws-title">{t(`scheme_${scheme}` as Key)}</strong>}
           <select value={state} onChange={(e) => (setState(e.currentTarget.value), go(`#/dashboard?state=${e.currentTarget.value}${scheme === "pds" ? "" : `&scheme=${scheme}`}`))} aria-label={t("state")}>
             {STATES.map((s) => (
               <option value={s}>{STATE_NAMES[s]?.[lang]}</option>
