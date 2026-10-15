@@ -47,6 +47,18 @@ export type RelayerEnv = VerifierEnv & {
   /** Secret salt for hashing IPs in the rate-limit store. */
   IP_SALT?: string
   RPC_URL?: string
+  /**
+   * The request header that carries the visitor's IP as set BY THE PLATFORM, never by the visitor: "x-real-ip" on
+   * Vercel, "cf-connecting-ip" on Cloudflare, "x-forwarded-for" behind our own Node entry (which overwrites it).
+   * Reading a header the platform does not control lets anyone bypass the per-IP limits with a made-up value.
+   */
+  IP_HEADER?: string
+}
+
+/** The visitor's IP from the one header the hosting platform sets (see RelayerEnv.IP_HEADER). */
+export function clientIp(req: Request, env: Pick<RelayerEnv, "IP_HEADER">): string {
+  const v = req.headers.get((env.IP_HEADER ?? "x-forwarded-for").toLowerCase())
+  return v?.split(",")[0]?.trim() || "unknown"
 }
 
 async function sha256Hex(s: string) {
@@ -100,7 +112,7 @@ export function makeHandler(env: RelayerEnv, store: CounterStore) {
       } catch {
         return json(400, { error: "body must be JSON: {card, device, sig}" }, h)
       }
-      const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+      const ip = clientIp(req, env)
       const day = new Date().toISOString().slice(0, 10)
       if ((await store.incr(`verify:${day}:${await sha256Hex(`${env.IP_SALT ?? "tolmol"}:${ip}`)}`, 86_400)) > VERIFY_PER_IP_PER_DAY)
         return json(429, { error: "daily verification limit for this network reached" }, h)
@@ -119,7 +131,7 @@ export function makeHandler(env: RelayerEnv, store: CounterStore) {
     if (typeof address !== "string" || !isAddress(address, { strict: false })) return json(400, { error: "invalid address" }, h)
     const to = address as Hex
 
-    const ip = req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+    const ip = clientIp(req, env)
     const day = new Date().toISOString().slice(0, 10)
     const ipKey = `ip:${day}:${await sha256Hex(`${env.IP_SALT ?? "tolmol"}:${ip}`)}`
     if ((await store.incr(ipKey, 86_400)) > PER_IP_PER_DAY) return json(429, { error: "daily limit for this network reached; try the Arkiv faucet" }, h)

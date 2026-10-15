@@ -18,7 +18,7 @@ const memory = new MemoryStore()
 
 export default {
   fetch(req: Request, env: RelayerEnv & { DRIP_KV?: KV }) {
-    cached ??= makeHandler(env, env.DRIP_KV ? new KvStore(env.DRIP_KV) : memory)
+    cached ??= makeHandler({ IP_HEADER: "cf-connecting-ip", ...env }, env.DRIP_KV ? new KvStore(env.DRIP_KV) : memory)
     return cached(req)
   },
 }

@@ -324,7 +324,8 @@ database: [`docs/VERIFIED_REPORTERS.md`](docs/VERIFIED_REPORTERS.md) (design, no
 - Testnet only. Gas comes from the faucet or our relayer.
 - Anonymous Arkiv reads are capped at about 100 queries per IP per ~13 minutes (friction F13). The app reads
   per viewer, so this is per person, but heavy use from one network can hit it.
-- Verification uses **synthetic test cards** in this demo, and the 40 public test cards let anyone verify a phone. In
+- Verification uses **synthetic test cards** in this demo, and the public test cards, dealer licences and official
+  IDs let anyone verify a phone as a card holder, a demo shop's dealer or a district official (threat model T35). In
   production the card would come from the state (DigiLocker). In this simple version the verifier could link a
   verified phone to its card (threat model T26); the anonymous design removes that.
 - Unverified devices are still allowed (on purpose), so there is no proof that every device belongs to a real card holder (see the threat model). Design for an optional,
