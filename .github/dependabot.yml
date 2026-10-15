@@ -1,14 +1,15 @@
+# Security updates only: Dependabot opens a pull request when a dependency has a known vulnerability
+# (enabled in the repository's security settings). Routine version bumps are switched off
+# (open-pull-requests-limit: 0) so a working build is not changed just for a newer version number.
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
-    groups:
-      dev-tools:
-        dependency-type: development
+    open-pull-requests-limit: 0
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
