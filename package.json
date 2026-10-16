@@ -21,7 +21,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "seed": "node --env-file=.env --import tsx scripts/seed.ts",
-    "tolmol": "node packages/tolmol-sdk/dist/cli.js"
+    "tolmol": "node --import tsx packages/tolmol-sdk/src/cli.ts"
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",

@@ -35,6 +35,8 @@ not know instead of misreading it.
 - `schemes.ts`: `SCHEMES`, `ITEM_INFO` (scheme, unit, maximum per item), `SCHEME_ISSUES`, `SCHEME_ISSUE_GROUPS`,
   `formatAmount`, `forScheme`.
 - `queries.ts`: `listOutlets` (one `OR` query over both registry types).
+- `records.ts`: `outletRecord` and `stateRecord` (Q30, Q31): everything about an outlet or a state in one query, each
+  record routed by its `type` to its own parser (`recordsWhere`). Same records as the per-type queries, far fewer reads.
 - `stock.ts`: boards (`postStockBoard`, `shopStocks`, `stateStocks`, `validStocks`, `boardForMonth`,
   `leakageEstimate`, `boardMissing`) and two verdicts every reader computes the same way: `fairShop` and `shopVerdict`.
 - `proof.ts`: `makeProof` / `checkProof`: a report's creator proves authorship in person; nothing is written.
@@ -43,7 +45,9 @@ not know instead of misreading it.
   of that district.
 - `metered.ts`: `meteredTransport`, `localStore`, `memoryStore`, `curlFor` (see the README).
 - `official.ts`: attention reasons `records_mismatch` and `discrimination` for the new schemes.
-- CLI: `tolmol outlets`; `tolmol answers --shop`; amounts printed in each item's unit.
+- CLI: `tolmol outlets`; `tolmol answers --shop`; amounts printed in each item's unit. Writes without any Tolmol
+  server: `tolmol key` (a key on this computer, never printed), `tolmol submit` (a report) and `tolmol confirm` (a
+  confirmation), with gas from the public faucet.
 
 ## 0.1.0 (2026-10-15)
 
