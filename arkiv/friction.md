@@ -7,11 +7,34 @@ Tiramisu testnet (chain ID 7738577). Each entry says how it was observed:
 
 This file is updated as we build. Entries only describe things we actually hit or tested.
 
+## Summary
+
+Every issue below has the surface, the versions, what we expected, what actually happened, steps to reproduce, and
+the change that would fix it. Severity is for an app like ours (many small writes, many anonymous browser readers).
+
+| # | Surface | Severity | What would fix it |
+|---|---|---|---|
+| F1 | AGENTS.md vs SDK query builder | medium | Say "range-filter on your own `u64` attribute"; make SDK and RPC agree on filterable system fields |
+| F2 | Docs, live events | medium | Show a `webSocket()` example and say when `watchEntityEvents` subscribes vs polls |
+| F3 | Hub faucet | low | Key the cooldown on the destination address, or say it is per connected wallet |
+| F4 | Docs, fundamentals | low | Say plain GLM transfers between wallets are allowed |
+| F5 | Public RPC + SDK errors | **high** | Map HTTP 413 to a typed `RequestTooLargeError`; document the 262,144-byte ingress limit |
+| F6 | SDK attribute encoding | low | Count user attributes in the error message |
+| F7 | SDK + node name validation | medium | Reject uppercase names in the SDK; fix both messages |
+| F8 | Docs, pricing | low | Document that lifetime does not change the fee on Tiramisu today |
+| F9 | Query engine, `$expiresAt` | medium | Index `$expiresAt` ranges, or document the cost |
+| F10 | Node query errors | low | Put the detail ("!= is not supported, use NOT") in the top-level message |
+| F11 | Hub faucet, WalletConnect | low | Fix or hide the WalletConnect option |
+| F12 | Block explorer | low | Show balance and incoming transfers; publish a read API |
+| F13 | RPC quota + viem retries | **high** | Typed `QuotaExceededError` from 429 + `Retry-After`; no silent 13-minute retry |
+| F14 | RPC headers in browsers | **high** | Send the remaining query budget on every response (`Arkiv-Quota-Used-Percent`) |
+
 ## Issues
 
 ### F1. AGENTS.md says to range-filter on `$createdAt`, but the SDK query builder rejects it
 
 - **Surface:** challenge AGENTS.md vs TypeScript SDK query builder.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577); AGENTS.md at commit `7eb4e1c` of `global-tour-stop-pre-devcon`.
 - **Observed by:** source, docs, and a local SDK run on 2026-10-13. It throws before any request is sent: `InvalidPredicateError: "$createdAt" is returned in query results but carries no index, so it cannot be filtered on.`
 - **Expected:** AGENTS.md in `global-tour-stop-pre-devcon` (commit `7eb4e1c`) says
   "There is no server-side ordering ... sort on the client, or range-filter on `$createdAt`."
@@ -28,6 +51,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F2. Live-events docs only show HTTP polling; the WebSocket path is undocumented there
 
 - **Surface:** docs page `typescript-sdk/live-events`, `watchEntityEvents`.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577); docs as read on 2026-10-13.
 - **Observed by:** docs, source, and chain on 2026-10-13 09:07 to 09:08 UTC (`scripts/test-events.mjs`).
 - **Expected:** AGENTS.md says `watchEntityEvents` "opens a real socket only with a
   WebSocket transport and no `fromBlock`; over HTTP it silently polls". The rubric rewards
@@ -41,12 +65,15 @@ This file is updated as we build. Entries only describe things we actually hit o
   and no `fromBlock`, `onEntityCreated` fired **before** our HTTP `createEntity` call returned its
   receipt (3 of 3 events). The same watcher on `http()` polled with `eth_blockNumber` +
   `eth_getLogs` (2 + 2 calls during one event) and fired 1.3 s to 4.6 s after the receipt.
+- **Repro:** `node --env-file=.env scripts/test-events.mjs`: it starts one watcher on `webSocket()` and one on
+  `http()`, creates an entity, and logs when each fires and which RPC calls each made.
 - **Fix suggestion:** add a WebSocket example to the live-events page and state when it
   subscribes vs polls. Note that viem decides this from the transport type.
 
 ### F3. Faucet cooldown applies to the connected wallet, not the destination address
 
 - **Surface:** Arkiv Hub faucet (https://hub.arkiv.network/faucet).
+- **Versions:** the Hub web app as served on 2026-10-13 (no version shown), Chrome on Windows 11, a Base wallet.
 - **Observed by:** the builder, in the Hub UI, 2026-10-13, with a Base wallet connected.
 - **Expected:** a cooldown per destination address, so a second, unfunded address could
   be claimed for. Projects need several distinct wallets: we need a reporter and two
@@ -64,6 +91,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F4. Docs say every non-operation transaction reverts, but plain GLM transfers succeed
 
 - **Surface:** docs page `start-here/fundamentals` ("A chain with a database engine instead of the EVM").
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577); viem `sendTransaction` with the SDK's `tiramisu` chain.
 - **Observed by:** docs and chain, 2026-10-13 08:52 UTC.
 - **Expected:** the page says "A transaction is accepted only if its `to` address is a known
   Arkiv operation address. Every other transaction reverts." So we expected a plain
@@ -78,6 +106,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F5. The public RPC's 262,144-byte request limit surfaces as "Execution error without revert data"
 
 - **Surface:** public HTTP RPC ingress + TypeScript SDK error mapping (`createEntity`, `executeBatch`).
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577); `curl` 8 for the raw requests.
 - **Observed by:** chain, 2026-10-13 08:59 to 09:05 UTC. Severity: **high** for batch writers,
   because the error gives no hint of the cause.
 - **Expected:** either a 128 KiB payload (the documented and SDK-enforced limit, 131,072 bytes) can
@@ -102,15 +131,18 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F6. `TooManyAttributesError` counts cells the caller never wrote
 
 - **Surface:** SDK attribute encoding. **Observed by:** local SDK run, 2026-10-13 08:59 UTC. Severity: low.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577).
 - **Expected:** passing 31 user attributes fails with "at most 30 attributes, got 31".
 - **Actual:** `TooManyAttributesError: An entity may carry at most 32 attributes, got 33.` The two
   extra cells are `$payload` and `$contentType`. 30 user attributes estimated fine (233,380 gas).
+- **Repro:** `createEntity({ payload: new Uint8Array(), contentType: "application/octet-stream", attributes: Object.fromEntries(Array.from({ length: 31 }, (_, i) => [`a${i}`, str("x")])), expires: ExpirationTime.fromHours(1) })`.
 - **Fix suggestion:** report user attributes in the message ("30 user attributes; you passed 31").
 
 ### F7. Uppercase attribute names: the node's own error says uppercase is allowed
 
 - **Surface:** node validation + SDK name validation. **Observed by:** chain (dry run), 2026-10-13 08:59 UTC.
   Severity: medium (it passes SDK validation, then fails at the node).
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577).
 - **Expected:** `shopId` is either accepted, or rejected by the SDK before any request.
 - **Actual:** the SDK accepted it. The node rejected it during gas estimation with
   `an attribute name holds "I" (0x49) at byte 4, which is outside the name charset ("A"-"Z", "a"-"z",
@@ -118,6 +150,7 @@ This file is updated as we build. Entries only describe things we actually hit o
   rejecting an uppercase letter. The SDK's `InvalidAttributeNameError` text also says A-Z is
   allowed and that "names are case-sensitive". The mutating-data docs page is correct: "Uppercase
   letters are rejected". The skills repo lists the same issue.
+- **Repro:** `createEntity({ ..., attributes: { shopId: str("SYN-BR-0042") } })`: no SDK error; gas estimation fails at the node.
 - **Fix suggestion:** make the SDK reject uppercase locally and fix both messages.
 
 ### F8. Docs say you pay for the lifetime you choose; on Tiramisu, lifetime does not change the fee
@@ -125,6 +158,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 - **Surface:** docs (fundamentals: "You pay for the lifetime you choose"; "Start with a short lifetime
   to save on fees"; best practices: "Do not over-allocate: it costs more").
 - **Observed by:** chain, 2026-10-13 08:58 to 08:59 UTC. Severity: low, but it changes design advice.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577); docs as read on 2026-10-13.
 - **Expected:** a 180-day entity costs more than a 30-day one.
 - **Actual:** the same create with `fromBlocks(1)`, `fromDays(30)`, `fromDays(90)` and
   `fromDays(180)` used **105,384 gas each**. The reporter's balance dropped by exactly
@@ -138,6 +172,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F9. A `$expiresAt` range makes queries 5 to 10 times slower and once timed out
 
 - **Surface:** node query engine via `select().where(lt("$expiresAt", u64(...)))`.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577).
 - **Observed by:** chain, 2026-10-13 09:06 to 09:07 UTC. Severity: medium for "expiring soon" views.
 - **Expected:** similar latency to the same query without the `$expiresAt` predicate.
 - **Actual:** `project + test + $expiresAt < head+43200`: first run **timed out** (viem
@@ -149,21 +184,30 @@ This file is updated as we build. Entries only describe things we actually hit o
   against the same query without the `$expiresAt` predicate.
 - **Workaround:** Tolmol selects `expiresAt` and computes "time left" on the client instead of
   filtering on it.
+- **Fix suggestion:** index `$expiresAt` for range predicates (it is the natural "expiring soon" query), or document
+  that such ranges scan and can time out.
 
 ### F10. `!=` and `ne()`: helpful detail, confusing top-level message
 
 - **Surface:** node query errors. **Observed by:** chain, 2026-10-13 09:06 UTC. Severity: low.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577).
+- **Expected:** an error whose top-level message says what is wrong with the query (`!=` is not supported).
 - **Actual:** `ne("seq", i32(5))` gives `QueryError (type, -32002): Requested resource not
   available.` The useful part ("!= is not part of the query language, write NOT (attr = value)")
   is only in the error's data. A raw `&&` query gives `(parse, -32001): Requested resource not
   found.` with detail "unexpected character". The generic text comes from the JSON-RPC
   error-code names, not the query problem.
+- **Repro:** `await client.select({ key: true }).where([eq("project", str("tolmol")), ne("seq", i32(5))]).fetch()`, then
+  print `error.message` and `error.cause.data`.
 - **Fix suggestion:** put the detail in the top-level message. The SDK could also drop or
   deprecate `ne()`, `exists()` and `hasType()` until the node supports them.
 
 ### F11. Hub faucet: WalletConnect option crashes
 
 - **Surface:** Hub faucet. **Observed by:** the builder, 2026-10-13 (reported, not reproduced by the agent).
+- **Versions:** the Hub web app as served on 2026-10-13, Chrome on Windows 11.
+- **Expected:** choosing WalletConnect opens a wallet chooser or QR code, like the Base option.
+- **Repro:** open https://hub.arkiv.network/faucet, choose "Connect wallet", then WalletConnect.
 - **Actual:** choosing WalletConnect on the faucet shows "This page couldn't load". The Base option
   works. A "Use a different address" link lets you send to an address other than the connected one.
 - **Fix suggestion:** fix or hide the WalletConnect option.
@@ -173,6 +217,10 @@ This file is updated as we build. Entries only describe things we actually hit o
 - **Surface:** Block Explorer (`tiramisu.explorer.arkiv.network/address/<addr>`).
 - **Observed by:** the builder, 2026-10-13 (reported). The agent could not check the page's data
   without a browser: `/api/v2/addresses/<addr>` returns 404 and `/api?module=account...` returns 400.
+- **Versions:** the explorer web app as served on 2026-10-13, Chrome on Windows 11.
+- **Expected:** an address page with the balance and both incoming and outgoing transactions, as on other explorers.
+- **Repro:** open `https://tiramisu.explorer.arkiv.network/address/0xAe8DCc161d9F27fACFE6D48A8B4DF148D64ab9E3` (Witness A,
+  funded only by an incoming 1 GLM transfer, tx `0x96df16d4...fffab`).
 - **Actual (as reported):** the page lists only outgoing transactions and shows no balance. Our
   witness wallets were funded by incoming transfers, so their pages do not show where their GLM came from.
 - **Fix suggestion:** show balance and incoming transfers, and publish a documented read API.
@@ -180,6 +228,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F13. Anonymous query budget runs out silently: reads look like hangs
 
 - **Surface:** public HTTP RPC quota for `arkiv_query` + viem/SDK retry behaviour.
+- **Versions:** `@arkiv-network/sdk` 0.8.1, viem 2.57.5, Node 24.11.0, Tiramisu (chain 7738577); viem's HTTP transport with its default `retryCount`.
 - **Observed by:** chain, 2026-10-13 09:24 to 09:34 UTC, while two seed runs (about 150 writes, each
   preceded by dedupe reads) ran from one IP. Severity: **high** for anyone seeding or indexing without an access key.
 - **Expected:** a clear error when the budget is used up.
@@ -221,6 +270,7 @@ This file is updated as we build. Entries only describe things we actually hit o
 ### F14. A browser cannot see how much of the query budget is left until it is gone
 
 - **Surface:** public HTTP RPC response headers (`RateLimit`, `Arkiv-Quota-Used-Percent`), as seen by a browser.
+- **Versions:** the public Tiramisu RPC on 2026-10-16; `curl` 8 and Chrome 141 `fetch`.
 - **Observed by:** chain, 2026-10-16 (repeated with `curl -i` and from the app's own fetch transport).
 - **Expected:** with budget left, some header tells the client how much of the ~10,000-unit anonymous query budget
   remains, so an app can warn "N reads left" before it hits zero. `access-control-expose-headers` even lists
