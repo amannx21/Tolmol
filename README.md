@@ -62,7 +62,8 @@ own phones. The second confirmation keeps the report alive longer, and the repor
 
 ### 🏪 The dealer, head teacher or employment assistant answers
 
-Verified once with a (test) licence or staff ID, they get **My shop, school or panchayat**: reports waiting for an answer.
+Verified once with a (test) licence or staff ID, their phone shows a **My shop** item in the menu and a banner on every
+page with the reports waiting for their answer; on their own outlet's reports the answer buttons come first.
 They answer from a fixed list (stock arrived, scale checked, meals resumed, wages paid, or "we dispute this") and post
 a **monthly board**: grain received, meals served, wages paid. Tolmol sets the board against the reports: *"13 card
 holders say they got 37.6% less; about 752 kg is unaccounted for"*. Only the reporter's own phone can then say
@@ -73,8 +74,18 @@ badge, which lapses by itself if things get worse.
 
 The dashboard ranks outlets and keeps a public **"needs official attention"** list built from fixed rules. A verified
 official records what the department did (inspection ordered, show-cause notice, licence suspended, dues restored) and
-can send an **inspector** whose authority covers one outlet for up to 30 days. At a hearing, a reporter can prove
-"this report is mine" by signing a one-time code, and nothing about them becomes public.
+can send an **inspector** whose authority covers one outlet for up to 30 days. A shop leaves the list only when its
+numbers improve, never because someone recorded an action.
+
+**Who checks the checkers.** Every official's and inspector's finding is shown next to what people reported at that
+outlet in the 60 days after it (`#/track`). A "no issue found" followed by 3+ reports from 2+ people at 20%+ short is
+flagged **contradicted by later reports**, and one tap drafts a letter to the authority above the inspector (State
+Food Commission for ration, the District Magistrate for mid-day meals, the MGNREGA Ombudsperson), with the signed
+finding and the later reports attached.
+
+**Proof without showing up.** If a reporter needs to show "this report is mine", their phone signs the official's
+one-time code. They don't have to go: someone they trust (an NGO, a legal-aid volunteer) can carry the code and the
+proof, and the official checks it against Arkiv. Nothing about the person is revealed or written.
 
 ### 🔎 Anyone checks
 
@@ -150,7 +161,7 @@ JavaScript or Python.
 
 ```bash
 git clone https://github.com/amannx21/Tolmol && cd Tolmol && npm ci
-npm test                                       # 103 unit tests, no network
+npm test                                       # 107 unit tests, no network
 npm run dev -w tolmol-web                      # http://localhost:5173, reads Tiramisu directly
 npm run tolmol -- answers --shop SYN-BR-0042   # read-only CLI: answers that count, fakes that don't
 node --import tsx scripts/privacy-audit.ts     # every Tolmol record on chain vs the data contract

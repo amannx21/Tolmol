@@ -100,6 +100,20 @@ The complete feature list and design notes. The short version is the [README](..
    inspection findings, only for that outlet, only inside the window; anything else it writes is ignored, and every
    finding shows "inspector, delegated by 0x…". The official can revoke it by deleting the delegation.
 
+20. **Who checks the checkers.** `#/track` sets every official's and inspector's finding against what people reported
+   at that outlet in the 60 days after it (`trackRecords` in the SDK, recomputed by every reader). A finding that
+   cleared an outlet ("inspected: no issue", "grain or dues restored") followed by attention-list evidence is flagged
+   "contradicted by later reports". An inspector's findings also count against the official who sent them. On the shop
+   page, "Complain about this finding" drafts a letter to the authority above: the State Food Commission (NFSA s.16,
+   copy to the Vigilance Committee, s.29), the District Magistrate (PM POSHAN), or the MGNREGA Ombudsperson (social
+   audit, s.17), with the signed finding and the later reports as explorer links.
+21. **Proof of a report without going in person.** The hearing proof is a signature over the official's one-time code,
+   valid for one hour, so a reporter who does not want to be seen can send it through someone they trust. The
+   official checks it against `$creator`; nothing is written to Arkiv and nothing about the person is revealed.
+22. **Dealers see their job first.** A phone verified as an outlet's dealer, head teacher or employment assistant gets a
+   "My shop" menu item and a banner with the reports waiting for its answer; on its own outlet's reports the answer
+   buttons come first and the "I got less too" button is hidden.
+
 **One site for everyone.** Card holders, shop dealers, officials and visitors use the same link and the same menu
 (Home, Shops, My activity, Verify, Get verified, About, Report). The home page shows what each person can do: a
 verified dealer sees "N reports waiting for your answer", a verified official sees the attention list, a card holder
@@ -245,7 +259,7 @@ makes them visible: each outlet page lists **patterns to look at** (3 or more ph
 confirmations, one-off devices) from public block numbers and `$creator`, and the dashboard can leave burst reports
 out; on the live data it flags exactly the shops our seed script filled in bursts. A phone can be **verified with a
 card** (synthetic test cards in the demo): the badge counts only from verifiers the registry names, one card per
-phone. 103 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
+phone. 107 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
 still open.
 
 **Open Source.** *Who is locked out today:* civic groups, journalists and other states' projects, who need a

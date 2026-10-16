@@ -44,7 +44,9 @@ lost or deleted, and nobody sees the pattern across a shop or a district.
    authority covers only that shop for a set number of days.
 5. The person prints a complaint to the right office (District Grievance Redressal Officer under NFSA s.15, District
    Education Officer, MGNREGA Programme Officer and Ombudsperson) or an RTI, calls their state's food helpline, and at a
-   hearing can prove "this report is mine" without anything about them becoming public. Journalists and social-audit
+   hearing can prove "this report is mine" without anything about them becoming public, even without going, through
+   someone they trust. If an inspector clears a shop and complaints continue, the finding is flagged and a letter to
+   the authority above (State Food Commission, District Magistrate, MGNREGA Ombudsperson) is one tap away. Journalists and social-audit
    groups rank the worst outlets, see any outlet as it was at a past block, and download evidence with an explorer
    link per row.
 6. A shop that fixes things earns a "Fair shop" badge from the evidence, which lapses on its own if things get worse.
@@ -95,7 +97,8 @@ ours, which the app already supports (the Trust page lets anyone choose the regi
   rounded to the day; the reporter chooses the expiry (30, 90 or 180 days) and whether others may extend it. Before
   sending, a box shows what becomes public. A separate anonymous ID per report (automatic for threats, a kept card,
   bribes, discrimination), a random send delay of 1 to 6 hours, a small-outlet warning, MGNREGA wages rounded to ₹500
-  (muster rolls are public), and an in-person proof of authorship that writes nothing. A public audit checks every
+  (muster rolls are public), and a proof of authorship that writes nothing and can be sent through someone the reporter trusts, so they never have
+  to appear. A public audit checks every
   Tolmol entity on Tiramisu (PASS), and a GitHub Action reruns it daily. Honest limits (threat model T36, T48): the
   entitlement can hint at family size, and block times are public.
 - **Security.** *Who is misled today:* officials, journalists and other card holders who act on records that can be
@@ -106,7 +109,9 @@ ours, which the app already supports (the Trust page lets anyone choose the regi
   answer and a fake "fixed", at a shop and at a school) are shown as ignored, with their writers. The registry address is
   checked against this repository from the Trust page; a custom registry shows a warning on every page. Every number is
   recomputed by every reader, a tamper test catches an edited evidence file, burst patterns flag sybil filing, and
-  phones can be verified (one card, one phone). 103 tests, CodeQL, and two real relayer bugs found and fixed (IP
+  phones can be verified (one card, one phone). Officials and inspectors are checked too: every finding is set against
+  the reports that follow it, and a "no issue found" contradicted by later reports is flagged in public (`#/track`).
+  107 tests, CodeQL, and two real relayer bugs found and fixed (IP
   spoofing, a 429 hang).
 
 ## Organiser questions (private to judges)
@@ -191,7 +196,7 @@ ours, which the app already supports (the Trust page lets anyone choose the regi
    10. `#/trust`: the registry checked against this repository, verifiers and when their approval lapses.
    11. Footer, "Arkiv queries on this page": each query, its `Arkiv-Cost`, the reads left.
    12. The whole story in six steps: `#/tour`.
-   13. From a clone: `npm ci && npm test` (103 tests), `npm run tolmol -- answers --shop SYN-BR-0042`,
+   13. From a clone: `npm ci && npm test` (107 tests), `npm run tolmol -- answers --shop SYN-BR-0042`,
        `node --import tsx scripts/privacy-audit.ts` (every Tolmol entity against the contract: PASS).
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
