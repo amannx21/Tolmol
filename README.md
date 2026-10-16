@@ -175,6 +175,7 @@ To write, tap **Get free test gas** in the app. For the end-to-end test and the 
 
 ## Licence and credits
 
-[MIT](LICENSE). Sources for every figure and rule: [`docs/SOURCES.md`](docs/SOURCES.md). Photo credits:
-[`docs/PHOTO-CREDITS.md`](docs/PHOTO-CREDITS.md). Built 13 to 18 October 2026 for the Arkiv Global Tour Stop, with no
+[MIT](LICENSE), for the code and docs. The photos and illustrations in the app are demo placeholders that belong to
+their owners and are not covered by MIT; a real deployment would use original or licensed images
+([`docs/PHOTO-CREDITS.md`](docs/PHOTO-CREDITS.md)). Sources for every figure and rule: [`docs/SOURCES.md`](docs/SOURCES.md). Built 13 to 18 October 2026 for the Arkiv Global Tour Stop, with no
 earlier code ([`docs/BASELINE.md`](docs/BASELINE.md)).
