@@ -60,6 +60,10 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 The report link goes out on WhatsApp. Others at the same outlet tap **मुझे भी कम मिला ✓** ("I got less too") on their
 own phones. The second confirmation keeps the report alive longer, and the reporter can say no to that.
 
+Neighbours can also say the opposite: **मुझे पूरा राशन मिला** ("I got my full ration this month"), once per phone. When 3
+or more did and nobody confirmed a complaint, it is labelled **contradicted by others**: never hidden, because a dealer
+can short a single family, but no longer a lone word against the dealer either.
+
 ### 🏪 The dealer, head teacher or employment assistant answers
 
 Verified once with a (test) licence or staff ID, their phone shows a **My shop** item in the menu and a banner on every
@@ -107,7 +111,10 @@ explorer link per row, and check an edited evidence file against the chain. They
 <img src="docs/media/trust-v2.jpg" alt="Before-you-send privacy box, ignored fake answers, and a shop's recomputed record" width="100%">
 
 - **Nothing personal on chain.** No name, phone, Aadhaar, card or job card number, or child's name, not even hashed.
-  The time is rounded to the day and MGNREGA wages to ₹500, because muster rolls are public. Payloads are empty.
+  The time is rounded to the day and MGNREGA wages to ₹500, because muster rolls are public. Payloads are empty,
+  except one: a **private note to the district official**, encrypted on the phone so only that official can read it
+  (ECIES on secp256k1, AES-256-GCM). [`#/public`](https://tolmol-web-kappa.vercel.app/#/public) shows a real report and
+  a real note exactly as a stranger sees them.
 - **Fakes don't count.** Answers, boards, "fixed", withdrawals and official actions count only when they come from
   the right wallet, as recorded by Arkiv itself (`$creator`). Planted fakes are shown as ignored, with their writers.
 - **Nobody can delete.** Each record is created read-only and handed to `0x…dEaD` in the same transaction. That
@@ -161,7 +168,7 @@ JavaScript or Python.
 
 ```bash
 git clone https://github.com/amannx21/Tolmol && cd Tolmol && npm ci
-npm test                                       # 107 unit tests, no network
+npm test                                       # 115 unit tests, no network
 npm run dev -w tolmol-web                      # http://localhost:5173, reads Tiramisu directly
 npm run tolmol -- answers --shop SYN-BR-0042   # read-only CLI: answers that count, fakes that don't
 node --import tsx scripts/privacy-audit.ts     # every Tolmol record on chain vs the data contract
@@ -171,9 +178,11 @@ To write, tap **Get free test gas** in the app. For the end-to-end test and the 
 
 ## Build on the data
 
-- **Data contract:** [`arkiv/schema.md`](arkiv/schema.md), and all 13 record types as JSON Schema in
+- **Data contract:** [`arkiv/schema.md`](arkiv/schema.md), and all 16 record types as JSON Schema in
   [`docs/data-contract.schema.json`](docs/data-contract.schema.json).
 - **SDK:** `npm install tolmol-sdk` reads the data and applies the same trust rules; `npx tolmol-sdk` is a read-only CLI.
+- **Build on it in 25 lines:** [`examples/build-on-tolmol.mjs`](examples/build-on-tolmol.mjs) prints every outlet's verdict
+  and every inspector's track record for a state, straight from Arkiv, with no Tolmol server and no key.
 - **Wallets and their roles:** [`arkiv/wallets.md`](arkiv/wallets.md). **Everything else:** [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## Limits

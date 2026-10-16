@@ -30,6 +30,9 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | `tolmol.stock` | The shop's verified dealer (counted only then) | burn address | readonly | 365 days | empty |
 | `tolmol.board` | The verified operator of a school or panchayat (counted only then) | burn address | readonly | 365 days | empty |
 | `tolmol.delegation` | A verified official of the outlet's district (counted only then) | that official (it can delete it to revoke) | readonly | the window (1 to 30 days) + 365 days | empty |
+| `tolmol.officekey` | A verified official (counted only if the key hashes to its `$creator` and the official is of that district) | that official | readonly | 365 days | empty |
+| `tolmol.note` | The device that wrote the report (counted only then) | burn address | readonly | 180 days | **ciphertext only**: an encryption envelope readable by one official |
+| `tolmol.fullshare` | Any device ("I got my full share here this month"), once per device, outlet and month | burn address | readonly | 90 days | empty |
 
 ### Why these flags and owners
 
@@ -327,6 +330,58 @@ delegation's `$creator` is a verified official whose district is the outlet's di
 The entity is owned by the official, who can delete it to revoke the delegation early (an owner can still delete a
 readonly entity). It lives a year past the window, so findings made in time stay attributable after it ends.
 
+## `tolmol.officekey` and `tolmol.note` (private notes to the district official)
+
+What a person cannot say in public ("the dealer's son threatened me") goes to the one official who acts on it, and to
+nobody else, while still living on Arkiv where nobody can delete it.
+
+**`tolmol.officekey`**: a verified official turns private notes on once. Its phone publishes its own secp256k1 public
+key. Readers count it only if the key hashes to the entity's `$creator` (so nobody can publish someone else's key, or
+a key they do not hold) and that `$creator` is a verified official whose ID's outlet is in `district`.
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.officekey`, `1` | |
+| `pubkey` | str | `0x02ab…` (33 bytes, compressed) | must hash to `$creator` |
+| `state`, `district` | str | `BR`, `gaya` | the official's district |
+| `reported_at`, `synthetic` | u64, bool | | |
+
+**`tolmol.note`**: the reporter's phone encrypts the note to the newest valid office key of the report's district:
+an ephemeral secp256k1 key, ECDH, HKDF-SHA256 and AES-256-GCM, with `tolmol.note|<report key>|<official address>` as
+associated data, so a note cannot be moved to another report or relabelled to another official. The note is created
+by **the same key that wrote the report** (readers count it only then), readonly, and handed to the burn address in
+the same batch. The payload is exactly the envelope `{"v":1,"alg":"ecies-secp256k1-hkdf-sha256-aes-256-gcm","epk":…,
+"iv":…,"ct":…}` and nothing else; the privacy audit fails on any other payload. At most 500 characters of text.
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.note`, `1` | |
+| `report_key` | key | `0x6e8b…` | the report the note is about |
+| `shop_id`, `state`, `district` | str | `SYN-BR-0002`, `BR`, `gaya` | copied from the report |
+| `to` | str | `0x20e2…` | the official who can read it, lowercase |
+| `reported_at`, `synthetic` | u64, bool | | |
+
+What a stranger learns from a note: that the reporter of report K wrote something to the official of that district.
+Not what. The reporter's other reports stay unlinked if they used a separate ID for each.
+
+## `tolmol.fullshare` ("I got my full share this month")
+
+A false "I got less" is answered by the people at the same counter. Each device can say once per outlet and month that
+it got everything: full ration, a meal every school day, full wages. A report then shows how many others got their full
+share, and is labelled **contradicted by others** when 3 or more did and no one confirmed it. The report is never
+hidden or deleted: a dealer can short one family only, so a real victim keeps their record. The reporter and the
+report's confirmers are never counted, and one device counts once.
+
+| Attribute | Type | Example | Notes |
+|---|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.fullshare`, `1` | |
+| `shop_id`, `state`, `district` | str | `SYN-BR-0004`, `BR`, `gaya` | |
+| `month`, `month_num` | str, i32 | `2026-10`, `202610` | |
+| `reported_at`, `synthetic` | u64, bool | | |
+
+With "separate anonymous ID" on, a phone's confirmations and full-share records come from one ID per outlet (derived on
+the phone from its key), so they cannot be linked across outlets.
+
 ## Other schemes on the same ledger
 
 The evidence model fits any scheme where a person is owed a fixed amount at a known place. Since 2026-10-16 the same
@@ -424,6 +479,10 @@ Tiramisu blocks are 2 s, so 1 day = 43,200 blocks. Durations use whole days only
 | `tolmol.action` | 365 days | a year of a shop's enforcement history |
 | `tolmol.stock` | 365 days | a year of a shop's boards, to compare with a year of reports |
 | `tolmol.outlet` | 180 days, any wallet can extend | like a shop |
+| `tolmol.delegation` | the window (1 to 30 days) + 365 days | findings made in time stay attributable after the window |
+| `tolmol.officekey` | 365 days | an official turns notes on again yearly; a new key replaces an old one |
+| `tolmol.note` | 180 days | long enough for the official to act, and no longer: private matters should not live forever |
+| `tolmol.fullshare` | 90 days | a month's counter-evidence matters while that month's reports are live |
 
 **Corroboration renews the lease.** When a witness corroborates a report that will then have
 **2 or more distinct witnesses**, the witness's device sends one atomic batch:
@@ -481,6 +540,10 @@ Pages are at most 200. Multi-page walks are pinned with `.atBlock(head)` and use
 | Q23 | Shop page: inspector delegations | `project AND type = "tolmol.delegation" AND shop_id = <id>` |
 | Q24 | Dashboard: inspector delegations | `project AND type = "tolmol.delegation" AND state = <s>` |
 | Q25 | Small-shop warning (before sending) | Q2 for this month: how many different `$creator` reported this outlet |
+| Q26 | Private notes: is a district's official reachable? | `project AND type = "tolmol.officekey" AND district = <d>` |
+| Q27 | Official: private notes about an outlet | `project AND type = "tolmol.note" AND shop_id = <id> AND to = <official>`, selecting `payload` (ciphertext) |
+| Q28 | Reporter: notes sent about a report | `project AND type = "tolmol.note" AND report_key = <key>` |
+| Q29 | Report page: "got my full share" this month | `project AND type = "tolmol.fullshare" AND shop_id = <id> AND month = <m>`; `.createdBy(me)` to stop a repeat |
 
 `#/raw` in the app lists the exact query string and JSON-RPC body of each of these for any outlet, generated from
 the app's own code, ready to copy as curl, JavaScript or Python.
@@ -528,12 +591,16 @@ watcher as a fallback.
 | Rate-limit counters and IP addresses for the gas top-up | Operational data about real people. Kept in the relayer's short-lived store, never on chain |
 | Aggregates (dashboard rankings, percentages per district) | Derived data. Anyone can recompute it from the raw entities, so storing it would only add a second, trustable copy |
 | Real shop registries and beneficiary lists | Out of scope by design. Tolmol uses a synthetic registry |
+| The words of a private note | Only ciphertext goes on Arkiv. The text exists in plain form on the reporter's phone while typing, and on the official's phone when opened |
+| An official's private key | Stays on the official's phone; only the public key is published, and anyone can check it belongs to that official |
 
-**Why there is no encryption.** Some Arkiv apps encrypt part of each entry with a password. Tolmol has nothing to
-encrypt: every field on Arkiv must be public for the evidence to work (anyone has to be able to recount a shop's
-shortfall without asking us), and everything private stays on the phone and is never sent at all. Encrypting a
-field that must stay readable would hide the evidence; encrypting personal data would still put it on a permanent
-public chain where a weak password, or a future break, exposes it. Not sending it is stronger than encrypting it.
+**Where we encrypt, and where we don't.** The evidence is public on purpose: anyone has to be able to recount a
+shop's shortfall without asking us, so reports, confirmations, answers and boards are plain numbers and fixed choices,
+never encrypted. Personal data is never sent at all, because a permanent public chain is the wrong place for it even
+encrypted: not sending it is stronger than encrypting it. Exactly one thing is encrypted: a **private note** to the
+district official (above), because it is meant for one person, not for the public. It is encrypted on the phone to that
+official's published key (ECIES on secp256k1 with AES-256-GCM), so the explorer shows ciphertext only, and it is sealed
+so nobody can delete it.
 
 **Before anything is sent**, both report screens show a "what becomes public" box: the public fields in plain words,
 what stays on the phone, the note that the entitlement can hint at family size, and whether this report goes out
@@ -555,5 +622,6 @@ See `arkiv/wallets.md`. In short:
 on Tiramisu and checks each one against this contract: only the attributes listed above, each value in its
 allowed format (synthetic `SYN-` shop IDs, `YYYY-MM` months, two-letter states, lowercase district slugs, grams in
 range, `issues` within 7 bits), and an empty payload for reports, witnesses and corrections (shops: exactly
-`label_en`, `label_hi`, `synthetic`). Last result: see `arkiv/friction.md` ("Tested paths"). Entities of type
+`label_en`, `label_hi`, `synthetic`; private notes: exactly the encryption envelope, so only ciphertext can ever be
+stored). A GitHub Action reruns it every day, and `#/public` in the app shows the latest result. Last result: see `arkiv/friction.md` ("Tested paths"). Entities of type
 `tolmol.test` come from the friction experiments, are synthetic, and are listed separately.

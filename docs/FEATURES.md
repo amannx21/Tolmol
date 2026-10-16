@@ -114,6 +114,19 @@ The complete feature list and design notes. The short version is the [README](..
    "My shop" menu item and a banner with the reports waiting for its answer; on its own outlet's reports the answer
    buttons come first and the "I got less too" button is hidden.
 
+23. **Private note to the district official (encrypted).** On their own report, a person can write what they cannot
+   say in public. The phone encrypts it to the district official's published key (ECIES on secp256k1, HKDF-SHA256,
+   AES-256-GCM, bound to the report and the official) and seals it on Arkiv (`tolmol.note`), created by the report's own
+   key. The official turns notes on once (`tolmol.officekey`; the key must hash to the official's `$creator`) and reads
+   them on the outlet's page. Everyone else, on the explorer, sees ciphertext; the daily audit fails on anything else.
+24. **"I got my full share."** Neighbours who got everything say so once per month (`tolmol.fullshare`). A report shows
+   how many others got their full share and, with 3 or more and no confirmation, is labelled "contradicted by others";
+   it is never hidden.
+25. **Separate IDs for confirmations too.** With "separate anonymous ID" on, confirmations and "I got my full share"
+   come from one ID per outlet, derived on the phone, so they cannot be linked across outlets.
+26. **What a stranger sees (`#/public`).** A real report and a real private note exactly as anyone reads them from
+   Arkiv, next to everything that never left the phone, and the latest daily audit result.
+
 **One site for everyone.** Card holders, shop dealers, officials and visitors use the same link and the same menu
 (Home, Shops, My activity, Verify, Get verified, About, Report). The home page shows what each person can do: a
 verified dealer sees "N reports waiting for your answer", a verified official sees the attention list, a card holder
@@ -173,7 +186,7 @@ rate-limit data and IPs, and aggregates such as the Fair shop badge (anyone can 
 sets it (5 kg a person, 35 kg for an Antyodaya card), so it can hint at your family size. We keep the exact amount
 because rounding it would distort the shortfall, which is the evidence. Every report screen shows a "what becomes
 public" box before you send, and reports about threats or a kept card go out under a separate ID by default.
-There is no encryption because nothing private is ever sent: not sending it beats encrypting it.
+Personal data is never sent, because not sending it beats encrypting it. The one thing encrypted is a private note to the district official: only that official's phone can read it, and the explorer shows ciphertext.
 
 ## How we use Arkiv
 
@@ -259,12 +272,12 @@ makes them visible: each outlet page lists **patterns to look at** (3 or more ph
 confirmations, one-off devices) from public block numbers and `$creator`, and the dashboard can leave burst reports
 out; on the live data it flags exactly the shops our seed script filled in bursts. A phone can be **verified with a
 card** (synthetic test cards in the demo): the badge counts only from verifiers the registry names, one card per
-phone. 107 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
+phone. 115 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
 still open.
 
 **Open Source.** *Who is locked out today:* civic groups, journalists and other states' projects, who need a
 permission and an integration for each portal's data. *From day one:* MIT; a documented data contract
-([`arkiv/schema.md`](../arkiv/schema.md), and all 13 entity types as JSON Schema in
+([`arkiv/schema.md`](../arkiv/schema.md), and all 16 entity types as JSON Schema in
 [`docs/data-contract.schema.json`](data-contract.schema.json)); a reusable [`tolmol-sdk`](../packages/tolmol-sdk)
 **published on npm** (`npm install tolmol-sdk`) with a changelog; a read-only CLI; a
 [minimal reader](../examples/minimal-reader.mjs) and a [Python reader](../examples/tolmol_reader.py) written only from the
