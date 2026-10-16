@@ -100,6 +100,7 @@ export function RoleHub({ scheme = "pds" }: { scheme?: "pds" | "mdm" | "nrega" }
         : null
   const everyone: Card[] = [
     { icon: "report", title: t("hubReportTitle"), body: t("hubReportBody"), action: t("ctaReport"), href: "#/report" },
+    ...(dealer ? [] : [{ icon: "shop" as const, title: t(outletKey("hubOwnerTitle", scheme)), body: t(outletKey("hubOwnerBody", scheme)), action: t(outletKey("hubOwnerAction", scheme)), href: "#/my-outlet" }]),
     { icon: "id", title: t("navMe"), body: t("hubMeBody"), action: t("hubMeAction"), href: "#/me" },
     { icon: "dashboard", title: t("hubShopsTitle"), body: t("hubShopsBody"), action: t("seeAllShops"), href: "#/dashboard" },
     { icon: "check", title: t("verifyTitle"), body: t("hubCheckBody"), action: t("hubCheckAction"), href: "#/verify" },
