@@ -2,7 +2,8 @@ import type { ComponentChildren } from "preact"
 import { useState } from "preact/hooks"
 import { explorerAddressUrl, explorerEntityUrl, listOutlets, quotaError, type Shop } from "tolmol-sdk"
 import { device, MIN_WRITE_WEI, reader, requestGas, short, useBalance } from "./arkiv"
-import { useLang } from "./i18n"
+import { outletKey, useLang } from "./i18n"
+import { OperatorBanner, useOperator } from "./operatorBanner"
 import { usePrefs } from "./prefs"
 import { stopSpeaking } from "./speak"
 import { PhoneVerification } from "./verified"
@@ -18,6 +19,8 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
   const [prefs, setPrefs] = usePrefs()
   // Ration is the main workspace; in an add-on's workspace, Home, Dashboard and Report stay inside that add-on.
   const ws = useWorkspace(route)
+  // A phone verified as an outlet's operator gets its own menu item (and the banner below the menu).
+  const op = useOperator()
   const nav: [Route["name"], string, string][] = [
     ["home", workspaceHref(ws, "home"), t("navHome")],
     ["dashboard", workspaceHref(ws, "dashboard"), t("navDashboard")],
@@ -26,6 +29,7 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
     ["about", "#/about", t("navAbout")],
   ]
   if (prefs.mode === "full") nav.splice(2, 0, ["verify", "#/verify", t("navVerify")])
+  if (op) nav.splice(2, 0, ["myOutlet", "#/my-outlet", t(outletKey("navMyOutlet", op.scheme))])
   nav.push(["report", workspaceHref(ws, "report"), t("navReport")])
   return (
     <>
@@ -74,10 +78,11 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
       <nav class="tabs" aria-label="Main">
         {nav.map(([name, href, label]) => (
           <a class={name === "report" ? "nav-report" : undefined} href={href} aria-current={route.name === name || (name === "home" && route.name === "schemes") ? "page" : undefined}>
-            <ActionIcon name={name === "home" ? "home" : name === "dashboard" ? "dashboard" : name === "verify" ? "check" : name === "about" ? "info" : name === "me" ? "id" : name === "testCards" ? "shield" : "report"} />{label}
+            <ActionIcon name={name === "home" ? "home" : name === "dashboard" ? "dashboard" : name === "verify" ? "check" : name === "about" ? "info" : name === "me" ? "id" : name === "testCards" ? "shield" : name === "myOutlet" ? "shop" : "report"} />{label}
           </a>
         ))}
       </nav>
+      <OperatorBanner route={route} />
       <WorkspaceBar ws={ws} rationOnly={route.name === "home"} />
       <p class="banner" role="note">
         {t("synthetic")}

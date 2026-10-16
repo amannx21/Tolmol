@@ -24,7 +24,7 @@ import { useFmt, useLang } from "./i18n"
 import { IssueList, NextSteps, PrivacyPanel } from "./extras"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 import { RaisedReportNotice } from "./RaisedReportNotice"
-import { useVerified, VerifiedBadge } from "./verified"
+import { useDealers, useVerified, VerifiedBadge } from "./verified"
 import { ShopAnswer } from "./answersUI"
 import { HearingKit } from "./proofUI"
 
@@ -41,6 +41,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const isNew = location.hash.includes("new=1")
   const verified = useVerified()
+  const dealers = useDealers()
   const me = device().account.address
 
   const load = async () => {
@@ -74,6 +75,8 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const mine = myAddresses().has(r.creator.toLowerCase())
   const separate = mine && r.creator.toLowerCase() !== me.toLowerCase()
   const iWitnessed = data.witnesses.some((w) => w.creator.toLowerCase() === me.toLowerCase())
+  // This phone answers for the report's outlet: its answer comes first, and it is not asked to confirm the report.
+  const iAnswerHere = dealers?.get(me.toLowerCase())?.shopId === r.shopId
   const link = `${location.origin}${location.pathname}#/r/${r.key}`
 
   const withdraw = async () => {
@@ -196,7 +199,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             </li>
           ))}
         </ul>
-        {!mine && !iWitnessed && (
+        {!mine && !iWitnessed && !iAnswerHere && (
           <>
             <DeviceCard compact />
             <button onClick={confirm} disabled={busy}>
@@ -207,7 +210,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
-      {prefs.mode === "full" && <ShopAnswer report={r} mine={mine} />}
+      {prefs.mode === "full" && !iAnswerHere && <ShopAnswer report={r} mine={mine} />}
       {data.raw && <PrivacyPanel raw={data.raw} />}
     </>
   )
@@ -227,6 +230,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           )}
         </section>
       )}
+        {iAnswerHere && <ShopAnswer report={r} mine={mine} />}
         {fullView}
         {mine && <NextSteps shopId={r.shopId} mask={r.issues} scheme={r.scheme} />}
         {mine && <HearingKit report={r} />}
@@ -260,6 +264,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
           )}
         </section>
       )}
+      {iAnswerHere && <ShopAnswer report={r} mine={mine} big />}
       <section class="card easy">
         <h2>
           {r.shopId} · {f.month(r.month)} · {t(r.item)}
@@ -273,7 +278,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {data.withdrawnBy && <p class="tag big-tag">{t("withdrawn")}</p>}
         <IssueList mask={r.issues} scheme={r.scheme} />
         <p class="lead">{t("confirmedBy", { n: valid.length })}</p>
-        {!mine && !iWitnessed && (
+        {!mine && !iWitnessed && !iAnswerHere && (
           <button class="big-action" onClick={confirmEasy} disabled={busy}>
             <ActionIcon name="people" />{busy ? t("corroborating") : t("confirmEasy")}
           </button>
@@ -282,7 +287,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {withdrawBox}
         {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
-      <ShopAnswer report={r} mine={mine} big />
+      {!iAnswerHere && <ShopAnswer report={r} mine={mine} big />}
       {mine && <NextSteps shopId={r.shopId} mask={r.issues} scheme={r.scheme} />}
         {mine && <HearingKit report={r} />}
       <details class="card auditors">

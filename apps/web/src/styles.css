@@ -1128,3 +1128,10 @@ label.field {
 .role-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .role-tabs button { background: var(--card); color: var(--ink); border: 1px solid var(--line); white-space: normal; }
 .role-tabs button[aria-pressed="true"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+
+/* A verified shop dealer, head teacher or employment assistant: their job, under the menu */
+.operator-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; padding: 12px 16px; background: var(--soft); border-bottom: 1px solid var(--line); color: var(--ink); }
+.operator-banner-icon { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background: var(--card); color: var(--brand); flex: none; }
+.operator-banner-text { display: grid; gap: 2px; flex: 1 1 220px; min-width: 0; }
+.operator-banner-text span { font-size: .92rem; color: var(--muted); }
+.operator-banner .button { flex: none; }
