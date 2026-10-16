@@ -204,7 +204,8 @@ the change that would fix it. Severity is for an app like ours (many small write
 
 ### F11. Hub faucet: WalletConnect option crashes
 
-- **Surface:** Hub faucet. **Observed by:** the builder, 2026-10-13 (reported, not reproduced by the agent).
+- **Surface:** Hub faucet (a tool around Arkiv, not the database itself). **Observed by:** the builder, 2026-10-13. Not
+  reproduced by script: it needs a real wallet connection. Severity: low (the Base option works).
 - **Versions:** the Hub web app as served on 2026-10-13, Chrome on Windows 11.
 - **Expected:** choosing WalletConnect opens a wallet chooser or QR code, like the Base option.
 - **Repro:** open https://hub.arkiv.network/faucet, choose "Connect wallet", then WalletConnect.
@@ -221,7 +222,9 @@ the change that would fix it. Severity is for an app like ours (many small write
 - **Expected:** an address page with the balance and both incoming and outgoing transactions, as on other explorers.
 - **Repro:** open `https://tiramisu.explorer.arkiv.network/address/0xAe8DCc161d9F27fACFE6D48A8B4DF148D64ab9E3` (Witness A,
   funded only by an incoming 1 GLM transfer, tx `0x96df16d4...fffab`).
-- **Actual (as reported):** the page lists only outgoing transactions and shows no balance. Our
+- **Actual (as reported, then reproduced on 2026-10-17 in headless Chrome 141):** the page says "5 outgoing
+  transactions; showing 5 on page 1 of 1" and lists only those, with their fees. There is no balance field, and the
+  incoming 1 GLM transfer that funded the wallet (tx `0x96df16d4...fffab`) does not appear anywhere on the page. Our
   witness wallets were funded by incoming transfers, so their pages do not show where their GLM came from.
 - **Fix suggestion:** show balance and incoming transfers, and publish a documented read API.
 

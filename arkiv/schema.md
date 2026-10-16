@@ -362,7 +362,10 @@ the same batch. The payload is exactly the envelope `{"v":1,"alg":"ecies-secp256
 | `reported_at`, `synthetic` | u64, bool | | |
 
 What a stranger learns from a note: that the reporter of report K wrote something to the official of that district.
-Not what. The reporter's other reports stay unlinked if they used a separate ID for each.
+Not what. **Expiry does not erase ciphertext:** after 180 days the note leaves every query, but its encrypted bytes stay
+in the chain's transaction history. So notes are for what must reach the official, never for identity: the note box
+says so, and the SDK refuses a note holding a run of 10 or more digits (a phone, Aadhaar or card number). The scheme is
+standard ECIES (SEC 1) built only from audited @noble primitives; the combination is not independently audited. The reporter's other reports stay unlinked if they used a separate ID for each.
 
 ## `tolmol.fullshare` ("I got my full share this month")
 
@@ -544,6 +547,8 @@ Pages are at most 200. Multi-page walks are pinned with `.atBlock(head)` and use
 | Q27 | Official: private notes about an outlet | `project AND type = "tolmol.note" AND shop_id = <id> AND to = <official>`, selecting `payload` (ciphertext) |
 | Q28 | Reporter: notes sent about a report | `project AND type = "tolmol.note" AND report_key = <key>` |
 | Q29 | Report page: "got my full share" this month | `project AND type = "tolmol.fullshare" AND shop_id = <id> AND month = <m>`; `.createdBy(me)` to stop a repeat |
+| Q30 | Shop page, everything at once (what the app reads) | `project AND shop_id = <id>`, selecting `payload`: reports, confirmations, withdrawals, answers, follow-ups, boards, official actions, delegations, notes and full shares in one query, each routed by `type` to its own strict parser (`outletRecord`). Q2, Q3, Q21, Q23, Q27 and Q29 return the same records type by type |
+| Q31 | Dashboard and track record, everything in a state | `project AND state = <s>` (`stateRecord`); a few pages instead of a dozen queries. Q6, Q7, Q22 and Q24 are the same records, filtered |
 
 `#/raw` in the app lists the exact query string and JSON-RPC body of each of these for any outlet, generated from
 the app's own code, ready to copy as curl, JavaScript or Python.
@@ -551,6 +556,12 @@ the app's own code, ready to copy as curl, JavaScript or Python.
 Fields selected: `key`, `creator`, `owner`, `createdAt`, `expiresAt`, `creationFlags`, `attributes` (never the
 payload for reports, which is empty anyway). Shop and dashboard pages have a "How this is computed" panel that
 prints the exact query strings they ran.
+
+**Why Q30 and Q31.** Anonymous reads are metered (friction F13, F14): a visitor gets about 100 queries an hour. A
+shop page used to run about ten, one per type; with Q30 it runs one, shared by every card on the page for 30
+seconds, and any write from the phone clears that copy. The trust rules are unchanged, because every record still goes
+through its own parser and the same `$creator` checks. "Show as it was at block N" still runs the per-type queries
+pinned at that block.
 
 `$expiresAt` is not used as a filter: it made queries 5 to 10 times slower (friction F9). Time
 left is computed on the device from the selected `expiresAt` and the current head.

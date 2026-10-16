@@ -6,6 +6,9 @@
 
 **What people are owed, what they actually got, on a record nobody can edit or delete.**
 
+**A complaint anyone can make: tap, listen, done.** The phone reads every question aloud in Hindi; answers are big
+buttons. No typing, no forms, no sign-up, no app to install.
+
 [Open the app](https://tolmol-web-kappa.vercel.app) · [Backup host](https://amannx21.github.io/Tolmol/) ·
 [Data contract](arkiv/schema.md) · [npm: `tolmol-sdk`](https://www.npmjs.com/package/tolmol-sdk) ·
 [One-file reader](https://tolmol-web-kappa.vercel.app/mirror.html)
@@ -24,8 +27,16 @@ dealer, head teacher or employment assistant answers on the record, and district
 lives on [Arkiv](https://arkiv.network), sealed so that nobody, including us, can edit or delete it, and anyone can
 read it without our website.
 
+It is built for the person at the ration counter, not for a computer user: someone in a village with a basic
+smartphone, patchy signal and little time, who may not read easily. If she can tap and listen, she can complain.
+
 Tolmol is a **testnet prototype** on Arkiv's Tiramisu network. Every shop, school and panchayat ID starts with `SYN-`
 and every seeded record carries `synthetic = true`; districts are real place names, everything else is invented.
+
+**In 60 seconds:** [report a shortfall in Hindi, read aloud](https://tolmol-web-kappa.vercel.app/#/report) →
+[a shop's sealed record](https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-0042) →
+[who checks the checkers](https://tolmol-web-kappa.vercel.app/#/track?state=BR) →
+[what a stranger sees](https://tolmol-web-kappa.vercel.app/#/public).
 
 ## Why this exists
 
@@ -37,7 +48,7 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 
 ## The product, person by person
 
-### 🔊 A card holder, parent or worker reports, in Hindi, out loud
+### 🔊 A card holder, parent or worker reports, in Hindi, out loud: nothing to type, nothing to learn
 
 <img src="docs/media/voice-v2.jpg" alt="Two Hindi report screens with speech bubbles: the phone reads each question aloud" width="100%">
 
@@ -144,6 +155,9 @@ and lifetimes the reporter chooses. Each Arkiv feature and the line that uses it
 
 ## Try it
 
+Arkiv gives each anonymous visitor about 100 queries an hour; the footer of every page shows how many are left, and
+pages fall back to a labelled saved copy if they run out.
+
 | Open | What you'll see |
 |---|---|
 | [`#/tour`](https://tolmol-web-kappa.vercel.app/#/tour) | The whole story in six steps |
@@ -152,6 +166,8 @@ and lifetimes the reporter chooses. Each Arkiv feature and the line that uses it
 | [`#/shop/SYN-BR-5001`](https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-5001) · [`7001`](https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-7001) | A school's meal board; a panchayat's unaccounted wages |
 | [`#/dashboard?state=BR`](https://tolmol-web-kappa.vercel.app/#/dashboard?state=BR) | Outlets ranked, the attention list, live updates |
 | [`#/test-cards`](https://tolmol-web-kappa.vercel.app/#/test-cards) | Act as a card holder, dealer, head teacher or official |
+| [`#/track?state=BR`](https://tolmol-web-kappa.vercel.app/#/track?state=BR) | Who checks the checkers: an inspector's "no issue found" contradicted by later reports |
+| [`#/public`](https://tolmol-web-kappa.vercel.app/#/public) | A real report and a real private note exactly as a stranger sees them, and the daily audit |
 
 ## Read the data without Tolmol
 
@@ -168,19 +184,33 @@ JavaScript or Python.
 
 ```bash
 git clone https://github.com/amannx21/Tolmol && cd Tolmol && npm ci
-npm test                                       # 115 unit tests, no network
+npm test                                       # 121 unit tests, no network
 npm run dev -w tolmol-web                      # http://localhost:5173, reads Tiramisu directly
-npm run tolmol -- answers --shop SYN-BR-0042   # read-only CLI: answers that count, fakes that don't
+npm run tolmol -- answers --shop SYN-BR-0042   # CLI: answers that count, fakes that don't
 node --import tsx scripts/privacy-audit.ts     # every Tolmol record on chain vs the data contract
 ```
 
 To write, tap **Get free test gas** in the app. For the end-to-end test and the seed, see [`.env.example`](.env.example).
 
+### Report even if our site is blocked
+
+The website and the relayer are conveniences, not gatekeepers. From any computer, with free test gas from the
+public [faucet](https://hub.arkiv.network/faucet):
+
+```bash
+npm run tolmol -- key       # once: makes a key on this computer, prints only its address (paste it at the faucet)
+npm run tolmol -- submit --shop SYN-BR-0042 --item rice --entitled 25000 --received 20000
+npm run tolmol -- confirm 0x<report key>   # "I got less too", from a different key than the reporter's
+```
+
+The report is sealed the same way as from the app and shows on the same pages. Demo outlets only: never enter a real
+card, name or phone number.
+
 ## Build on the data
 
 - **Data contract:** [`arkiv/schema.md`](arkiv/schema.md), and all 16 record types as JSON Schema in
   [`docs/data-contract.schema.json`](docs/data-contract.schema.json).
-- **SDK:** `npm install tolmol-sdk` reads the data and applies the same trust rules; `npx tolmol-sdk` is a read-only CLI.
+- **SDK:** `npm install tolmol-sdk` reads the data and applies the same trust rules; `npx tolmol-sdk` is its CLI.
 - **Build on it in 25 lines:** [`examples/build-on-tolmol.mjs`](examples/build-on-tolmol.mjs) prints every outlet's verdict
   and every inspector's track record for a state, straight from Arkiv, with no Tolmol server and no key.
 - **Wallets and their roles:** [`arkiv/wallets.md`](arkiv/wallets.md). **Everything else:** [`docs/FEATURES.md`](docs/FEATURES.md).
@@ -192,7 +222,6 @@ To write, tap **Get free test gas** in the app. For the end-to-end test and the 
   than impossible.
 - Test cards are public, so anyone can act as a demo dealer or official. In real use a state department would issue them.
 - The amount a person was due can hint at family size; the app says so before sending.
-- Hindi strings need a native speaker's review.
 
 ## Licence and credits
 

@@ -272,14 +272,14 @@ makes them visible: each outlet page lists **patterns to look at** (3 or more ph
 confirmations, one-off devices) from public block numbers and `$creator`, and the dashboard can leave burst reports
 out; on the live data it flags exactly the shops our seed script filled in bursts. A phone can be **verified with a
 card** (synthetic test cards in the demo): the badge counts only from verifiers the registry names, one card per
-phone. 115 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
+phone. 121 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
 still open.
 
 **Open Source.** *Who is locked out today:* civic groups, journalists and other states' projects, who need a
 permission and an integration for each portal's data. *From day one:* MIT; a documented data contract
 ([`arkiv/schema.md`](../arkiv/schema.md), and all 16 entity types as JSON Schema in
 [`docs/data-contract.schema.json`](data-contract.schema.json)); a reusable [`tolmol-sdk`](../packages/tolmol-sdk)
-**published on npm** (`npm install tolmol-sdk`) with a changelog; a read-only CLI; a
+**published on npm** (`npm install tolmol-sdk`) with a changelog; a CLI that reads, and files or confirms a report without our site; a
 [minimal reader](../examples/minimal-reader.mjs) and a [Python reader](../examples/tolmol_reader.py) written only from the
 contract; a daily public data check; contribution notes. Every outlet and dashboard page prints the exact queries it
 ran ("How this is computed"). The pattern is proven reusable: school meals and MGNREGA wages were added on the same
