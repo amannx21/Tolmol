@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/hero.jpg" alt="Tolmol: three phones showing the Hindi home page, an English report question, and a shop's stock board" width="100%">
+<img src="docs/media/hero-v2.jpg" alt="Tolmol: three phones showing the Hindi home page, an English report question, and a shop's stock board" width="100%">
 
 # Tolmol · तोलमोल
 
@@ -39,7 +39,7 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 
 ### 🔊 A card holder, parent or worker reports, in Hindi, out loud
 
-<img src="docs/media/voice.jpg" alt="Two Hindi report screens with speech bubbles: the phone reads each question aloud" width="100%">
+<img src="docs/media/voice-v2.jpg" alt="Two Hindi report screens with speech bubbles: the phone reads each question aloud" width="100%">
 
 1. Tap **मुझे कम राशन मिला** ("I got less ration"), or **मिड-डे मील की समस्या** ("mid-day meal problem") or
    **मनरेगा मज़दूरी की समस्या** ("MGNREGA wage problem"). The phone **reads each question aloud in Hindi**
@@ -83,7 +83,7 @@ explorer link per row, and check an edited evidence file against the chain. They
 
 ## One ledger, three schemes
 
-<img src="docs/media/schemes.jpg" alt="Ration stock board, mid-day meal board and MGNREGA report in Hindi" width="100%">
+<img src="docs/media/schemes-v2.jpg" alt="Ration stock board, mid-day meal board and MGNREGA report in Hindi" width="100%">
 
 | | Ration problem | Mid-day meal problem (PM POSHAN) | MGNREGA wage problem |
 |---|---|---|---|
@@ -93,7 +93,7 @@ explorer link per row, and check an edited evidence file against the chain. They
 
 ## Trust and privacy you can see
 
-<img src="docs/media/trust.jpg" alt="Before-you-send privacy box, ignored fake answers, and a shop's recomputed record" width="100%">
+<img src="docs/media/trust-v2.jpg" alt="Before-you-send privacy box, ignored fake answers, and a shop's recomputed record" width="100%">
 
 - **Nothing personal on chain.** No name, phone, Aadhaar, card or job card number, or child's name, not even hashed.
   The time is rounded to the day and MGNREGA wages to ₹500, because muster rolls are public. Payloads are empty.
