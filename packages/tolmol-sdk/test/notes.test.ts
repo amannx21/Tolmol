@@ -1,9 +1,11 @@
+import { createDecipheriv, createECDH, hkdfSync } from "node:crypto"
 import { describe, expect, it } from "vitest"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import type { RawEntity } from "../src/attributes.js"
 import {
   addressOfPublicKey,
   decryptNote,
+  noteHasPersonalNumber,
   encodeEnvelope,
   encryptNote,
   noteAttributes,
@@ -45,6 +47,36 @@ describe("private notes to the official", () => {
     expect(parseEnvelope(new TextEncoder().encode(JSON.stringify({ ...env, name: "x" })))).toBeNull()
     expect(parseEnvelope(new TextEncoder().encode("plain text"))).toBeNull()
     expect(() => encryptNote("x".repeat(NOTE_MAX_CHARS + 1), publicKeyOf(officialPk), report.key, to)).toThrow()
+  })
+  it("known answer: a fixed key, ephemeral key and nonce give exactly this envelope", () => {
+    const pk = `0x${"11".repeat(32)}` as `0x${string}`
+    const env = encryptNote("SYNTHETIC known-answer test", publicKeyOf(pk), `0x${"42".repeat(32)}`, `0x${"ab".repeat(20)}`, { ephemeral: new Uint8Array(32).fill(7), iv: new Uint8Array(12).fill(9) })
+    expect(env).toEqual({
+      v: 1, alg: "ecies-secp256k1-hkdf-sha256-aes-256-gcm",
+      epk: "0x02989c0b76cb563971fdc9bef31ec06c3560f3249d6ee9e5d83c57625596e05f6f",
+      iv: "0x090909090909090909090909",
+      ct: "0x2607b0f28731a732fbf250eb31ec702761d14a71c2d775bc5a74a40d3801440032e87fd6b89717011056e7",
+    })
+  })
+  it("standard construction: Node's own OpenSSL (ECDH, HKDF-SHA256, AES-256-GCM) opens a note made by the SDK", () => {
+    const env = encryptNote("दोबारा शिकायत की तो राशन बंद", publicKeyOf(officialPk), report.key, to)
+    const ecdh = createECDH("secp256k1")
+    ecdh.setPrivateKey(Buffer.from(officialPk.slice(2), "hex"))
+    const epk = Buffer.from(env.epk.slice(2), "hex")
+    const shared = ecdh.computeSecret(epk) // the x-coordinate, 32 bytes
+    const key = Buffer.from(hkdfSync("sha256", shared, epk, Buffer.from("tolmol-note-v1"), 32))
+    const ct = Buffer.from(env.ct.slice(2), "hex")
+    const d = createDecipheriv("aes-256-gcm", key, Buffer.from(env.iv.slice(2), "hex"))
+    d.setAAD(Buffer.from(`tolmol.note|${report.key.toLowerCase()}|${to.toLowerCase()}`))
+    d.setAuthTag(ct.subarray(ct.length - 16))
+    expect(Buffer.concat([d.update(ct.subarray(0, ct.length - 16)), d.final()]).toString("utf8")).toBe("दोबारा शिकायत की तो राशन बंद")
+  })
+  it("refuses notes holding a phone, Aadhaar or card number (the ciphertext outlives the note)", () => {
+    expect(noteHasPersonalNumber("call me on 98765 43210")).toBe(true)
+    expect(noteHasPersonalNumber("Aadhaar 1234 5678 9012")).toBe(true)
+    expect(noteHasPersonalNumber("card no. 102-030-4050-60")).toBe(true)
+    expect(noteHasPersonalNumber("asked to pay Rs 50 on 12 Oct for 35 kg")).toBe(false)
+    expect(() => encryptNote("my number is 9876543210", publicKeyOf(officialPk), report.key, to)).toThrow()
   })
   it("an office key counts only if it belongs to its creator, a verified official of that district", () => {
     const pub = publicKeyOf(officialPk)

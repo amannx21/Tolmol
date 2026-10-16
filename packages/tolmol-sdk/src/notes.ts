@@ -57,15 +57,28 @@ export function addressOfPublicKey(pubkey: string): Hex {
   return lc(publicKeyToAddress(hex(full))) as Hex
 }
 
-/** Encrypts a note to an official's public key, bound to one report and one official. */
-export function encryptNote(text: string, recipientPubkey: Hex, reportKey: Hex, to: Hex): NoteEnvelope {
+/**
+ * True if the text holds something that looks like a phone, Aadhaar or card number: a run of 10 or more digits
+ * (spaces, dots and dashes between them ignored). The ciphertext stays in Arkiv's history even after the note expires,
+ * so identifying numbers are refused, not just discouraged.
+ */
+export const noteHasPersonalNumber = (text: string): boolean => /\d{10,}/.test(text.replace(/(?<=\d)[\s.\-–]+(?=\d)/g, ""))
+
+/**
+ * Encrypts a note to an official's public key, bound to one report and one official. Standard ECIES (SEC 1 v2, s.5.1)
+ * with an ephemeral secp256k1 key, the x-coordinate of the ECDH point through HKDF-SHA256 (salt: the ephemeral public
+ * key, info: "tolmol-note-v1"), and AES-256-GCM with a 96-bit nonce; the associated data binds the report and the
+ * official. `fixed` exists only for the known-answer test.
+ */
+export function encryptNote(text: string, recipientPubkey: Hex, reportKey: Hex, to: Hex, fixed?: { ephemeral: Uint8Array; iv: Uint8Array }): NoteEnvelope {
   const clean = text.trim()
   if (!clean) throw new Error("the note is empty")
   if ([...clean].length > NOTE_MAX_CHARS) throw new Error(`a note is at most ${NOTE_MAX_CHARS} characters`)
-  const ephemeral = secp256k1.utils.randomPrivateKey()
+  if (noteHasPersonalNumber(clean)) throw new Error("a note must not contain a phone, Aadhaar or card number")
+  const ephemeral = fixed?.ephemeral ?? secp256k1.utils.randomPrivateKey()
   const epk = secp256k1.getPublicKey(ephemeral, true)
   const k = noteKey(secp256k1.getSharedSecret(ephemeral, unhex(recipientPubkey), true), epk)
-  const iv = randomBytes(12)
+  const iv = fixed?.iv ?? randomBytes(12)
   const ct = gcm(k, iv, aad(reportKey, to)).encrypt(utf8ToBytes(clean))
   return { v: 1, alg: NOTE_ALG, epk: hex(epk), iv: hex(iv), ct: hex(ct) }
 }
