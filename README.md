@@ -42,13 +42,15 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 <img src="docs/media/voice.jpg" alt="Two Hindi report screens with speech bubbles: the phone reads each question aloud" width="100%">
 
 1. Tap **मुझे कम राशन मिला** (or School meals, or MGNREGA wages). The phone **reads each question aloud in Hindi**
-   in its own voice, with no server, and it works offline. 🔊 सुनें replays a question.
+   with its own built-in voice, so nothing is sent to a server. With no internet it still speaks if the phone has the
+   Hindi voice downloaded (Android: Settings → Text-to-speech). 🔊 सुनें replays a question.
 2. Answer with big buttons, pictures and **+ / −** steps: which shop, which month, how many people on the card, how
    much you got. No typing, no name, no card number, no account.
 3. Tap what else went wrong: asked to pay, fingerprint failed, card kept, children seated apart, wages late. These are
    fixed choices, never free text.
 4. Before sending, see **exactly what becomes public** and what stays on the phone. Choose how long it stays (30, 90
    or 180 days). Use a separate anonymous ID for this report, or send it at a random time in the next 1 to 6 hours.
+   **No signal?** The report is kept on the phone and goes out by itself when the connection is back.
 5. Next steps appear: the state's food helpline, and a printable complaint to the right officer or an RTI letter,
    with name and address left blank to fill in by hand.
 
