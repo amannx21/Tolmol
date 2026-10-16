@@ -19,6 +19,7 @@ import { ProofPage } from "./proofUI"
 import { TrustPage } from "./trust"
 import { RawPage } from "./rawPage"
 import { AddOnsPage } from "./schemeHome"
+import { MyOutletPage } from "./operatorUI"
 import "./styles.css"
 import "./design.css"
 import "./flow.css"
@@ -107,6 +108,9 @@ function App() {
       break
     case "schemes":
       page = <AddOnsPage scheme={route.s} />
+      break
+    case "myOutlet":
+      page = <MyOutletPage />
       break
     case "card":
       page = <CardPage c={route.c} />

@@ -22,7 +22,7 @@ import {
   type Witness,
 } from "tolmol-sdk"
 import { reader, short } from "./arkiv"
-import { STATE_NAMES, useFmt, useLang } from "./i18n"
+import { outletKey, STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts, PatternsCard } from "./extras"
 import { ShopScoreCard } from "./answersUI"
@@ -304,7 +304,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
         {rtiText && <textarea class="rti" readOnly rows={16} value={rtiText} aria-label={t("rtiTitle")} />}
       </section>
 
-      <ShopScoreCard shopId={shopId} counted={kept} />
+      <ShopScoreCard shopId={shopId} counted={kept} scheme={data.shop?.scheme} />
       {data.shop && <OfficialActionsCard shop={data.shop} />}
       <PatternsCard reports={data.reports} witnesses={data.witnesses} withdrawn={data.withdrawn} />
       <details class="card">
@@ -315,7 +315,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
       </details>
 
       <section class="card">
-        <h3>{t("qrTitle")}</h3>
+        <h3>{t(outletKey("qrTitle", data.shop?.scheme))}</h3>
         <p class="small">{t("qrHelp")}</p>
         <ShopQr url={`${location.origin}${location.pathname}#/report?shop=${shopId}`} />
         <button class="secondary" onClick={() => window.print()}>

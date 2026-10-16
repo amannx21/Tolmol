@@ -28,6 +28,7 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | `tolmol.followup` | The report's own device (counted only then) | burn address | readonly | until the report's `createdAt` + 365 days | empty |
 | `tolmol.action` | A device verified as an official of the shop's district (counted only then) | burn address | readonly | 365 days | empty |
 | `tolmol.stock` | The shop's verified dealer (counted only then) | burn address | readonly | 365 days | empty |
+| `tolmol.board` | The verified operator of a school or panchayat (counted only then) | burn address | readonly | 365 days | empty |
 | `tolmol.delegation` | A verified official of the outlet's district (counted only then) | that official (it can delete it to revoke) | readonly | the window (1 to 30 days) + 365 days | empty |
 
 ### Why these flags and owners
@@ -286,6 +287,25 @@ a sample, labelled as such). *No board*: after the 5th, a month with no counted 
 `Tolmol: I created report <key>\ncode <6 digits>\ntime <unix s>` with the key that created the report; the official
 recovers the signer and compares it with the report's `$creator`. The code is one-time and the proof expires after
 15 minutes. Nothing is written to Arkiv.
+
+## `tolmol.board` (a school's or panchayat's monthly board)
+
+The other schemes' equivalent of the ration stock board, posted by the outlet's verified operator (head teacher or
+employment assistant) and sealed (readonly + `0x…dEaD`), 365 days. Re-posting adds a version; every version is shown.
+
+| Attribute | Type | Notes |
+|---|---|---|
+| `project`, `type`, `schema_version` | | `tolmol`, `tolmol.board`, `1` |
+| `scheme` | str | `mdm` (school) or `nrega` (panchayat) |
+| `shop_id`, `state`, `district`, `month`, `month_num` | | as on reports |
+| `children`, `open_days`, `meal_days`, `grain_g` | i32 | school: children enrolled (1 to 5,000), school days open (1 to 31), days a meal was served (at most `open_days`), grain received in grams |
+| `workers`, `person_days`, `rate_inr`, `wages_paid_inr` | i32 | panchayat: workers on the muster roll, person-days of work, the daily wage, total wages paid in rupees |
+| `reported_at`, `synthetic` | u64, bool | |
+
+**Rules.** Counted only from the outlet's verified operator (`$creator` holds a `dealer` attestation for that
+`shop_id`). *Gap* (`boardGap`): for a school, the board's share of school days with a meal against the share parents
+reported; for a panchayat, the wages the board says were paid times the share workers say they did not get. A missing
+board after the 5th is shown, and the Fair badge needs the month's board for every scheme.
 
 ## `tolmol.delegation` (an official sends an inspector)
 

@@ -14,6 +14,12 @@ import {
   shopFollowups,
   shopResponses,
   shopStocks,
+  shopBoards,
+  validBoards,
+  boardGap,
+  postBoard,
+  type BoardValues,
+  type OutletBoard,
   validResponses,
   validStocks,
   type FairCheck,
@@ -28,25 +34,27 @@ import { device, ensureGas, reader, short } from "./arkiv"
 import { useFmt, useLang, type Key } from "./i18n"
 import { useDealers } from "./verified"
 
-type Evidence = { boards: StockBoard[]; answers: Map<string, Response[]>; followups: Map<string, Followup> }
+type Evidence = { boards: StockBoard[]; outletBoards: OutletBoard[]; answers: Map<string, Response[]>; followups: Map<string, Followup> }
 
 /** The shop's valid boards, answers and follow-ups (three queries, shared by both cards). */
-function useEvidence(shopId: string, counted: Report[]) {
+function useEvidence(shopId: string, counted: Report[], scheme: Shop["scheme"]) {
   const dealers = useDealers()
-  const [raw, setRaw] = useState<{ b: StockBoard[]; r: Response[]; f: Followup[] } | null>(null)
+  const [raw, setRaw] = useState<{ b: StockBoard[]; ob: OutletBoard[]; r: Response[]; f: Followup[] } | null>(null)
   const [tick, setTick] = useState(0)
   useEffect(() => {
     let live = true
-    Promise.all([shopStocks(reader, shopId), shopResponses(reader, shopId), shopFollowups(reader, shopId)])
-      .then(([b, r, f]) => live && setRaw({ b: b.items, r: r.items, f: f.items }))
-      .catch(() => live && setRaw({ b: [], r: [], f: [] }))
+    // Ration shops post stock boards; schools and panchayats post their own monthly boards.
+    const boards = scheme === "pds" ? shopStocks(reader, shopId).then((x) => ({ b: x.items, ob: [] as OutletBoard[] })) : shopBoards(reader, shopId).then((x) => ({ b: [] as StockBoard[], ob: x.items }))
+    Promise.all([boards, shopResponses(reader, shopId), shopFollowups(reader, shopId)])
+      .then(([bb, r, f]) => live && setRaw({ ...bb, r: r.items, f: f.items }))
+      .catch(() => live && setRaw({ b: [], ob: [], r: [], f: [] }))
     return () => {
       live = false
     }
-  }, [shopId, tick])
+  }, [shopId, tick, scheme])
   const ev = useMemo<Evidence | null>(() => {
     if (!raw || !dealers) return null
-    return { boards: validStocks(raw.b, dealers).get(shopId) ?? [], answers: validResponses(counted, raw.r, dealers), followups: latestFollowups(counted, raw.f) }
+    return { boards: validStocks(raw.b, dealers).get(shopId) ?? [], outletBoards: validBoards(raw.ob, dealers, shopId), answers: validResponses(counted, raw.r, dealers), followups: latestFollowups(counted, raw.f) }
   }, [raw, dealers, counted, shopId])
   return { ev, dealers, reload: () => setTick((n) => n + 1) }
 }
@@ -54,13 +62,17 @@ function useEvidence(shopId: string, counted: Report[]) {
 const kgText = (g: number) => (g / 1000).toLocaleString("en-IN", { maximumFractionDigits: 1 })
 
 export function StockAndFairness({ shop, counted, month }: { shop: Shop; counted: Report[]; month?: string }) {
-  const { ev, dealers, reload } = useEvidence(shop.shopId, counted)
+  const { ev, dealers, reload } = useEvidence(shop.shopId, counted, shop.scheme)
   if (!ev || !dealers) return null
   const m = month ?? currentMonth()
   return (
     <>
       <FairShopCard shop={shop} counted={counted} ev={ev} />
-      {shop.scheme === "pds" && <StockBoardCard shop={shop} counted={counted} ev={ev} month={m} iAmDealer={dealers.get(device().account.address.toLowerCase())?.shopId === shop.shopId} onPosted={reload} />}
+      {shop.scheme === "pds" ? (
+        <StockBoardCard shop={shop} counted={counted} ev={ev} month={m} iAmDealer={dealers.get(device().account.address.toLowerCase())?.shopId === shop.shopId} onPosted={reload} />
+      ) : (
+        <OutletBoardCard shop={shop} counted={counted} boards={ev.outletBoards} month={m} iAmOperator={dealers.get(device().account.address.toLowerCase())?.shopId === shop.shopId} onPosted={reload} />
+      )}
     </>
   )
 }
@@ -68,7 +80,7 @@ export function StockAndFairness({ shop, counted, month }: { shop: Shop; counted
 function FairShopCard({ shop, counted, ev }: { shop: Shop; counted: Report[]; ev: Evidence }) {
   const { t } = useLang()
   const f = useFmt()
-  const v = fairShop({ reports: counted, answers: ev.answers, followups: ev.followups, boards: ev.boards, month: currentMonth(), scheme: shop.scheme })
+  const v = fairShop({ reports: counted, answers: ev.answers, followups: ev.followups, boards: shop.scheme === "pds" ? ev.boards : ev.outletBoards, month: currentMonth(), scheme: shop.scheme })
   const url = `${location.origin}${location.pathname}#/shop/${shop.shopId}`
   const svg = useMemo(() => {
     const qr = qrcode(0, "M")
@@ -81,7 +93,7 @@ function FairShopCard({ shop, counted, ev }: { shop: Shop; counted: Report[]; ev
       <h3>{v.fair ? `🏅 ${t("fairYes")}` : t("fairNo")}</h3>
       <p class="small">{t("fairHelp", { a: f.month(v.months[0]!), b: f.month(v.months[1]!) })}</p>
       <ul class="checks">
-        {(["enough_reports", "low_shortfall", "all_answered", "none_not_fixed", ...(shop.scheme === "pds" ? (["board_posted"] as const) : [])] as FairCheck[]).map((c) => (
+        {(["enough_reports", "low_shortfall", "all_answered", "none_not_fixed", "board_posted"] as FairCheck[]).map((c) => (
           <li class={v.failed.includes(c) ? "bad" : "ok"}>
             {v.failed.includes(c) ? "✗" : "✓"} {t(`fair_${c}` as Key)}
           </li>
@@ -202,6 +214,107 @@ function PostBoard({ shop, month, onPosted }: { shop: Shop; month: string; onPos
         {field("cards", t("stockCards"))}
         {field("from", t("stockFrom"))}
         {field("to", t("stockTo"))}
+      </div>
+      <p class="small muted">{t("stockPostHelp")}</p>
+      <button onClick={post} disabled={!ok || busy}>
+        <ActionIcon name="save" />
+        {busy ? t("sending") : t("stockPostBtn")}
+      </button>
+      {msg && <p class={msg.ok ? "ok" : "err"}>{msg.text}</p>}
+    </div>
+  )
+}
+
+// ------------------------------------------------------------------ schools and panchayats: their own monthly board
+function OutletBoardCard({ shop, counted, boards, month, iAmOperator, onPosted }: { shop: Shop; counted: Report[]; boards: OutletBoard[]; month: string; iAmOperator: boolean; onPosted: () => void }) {
+  const { t } = useLang()
+  const f = useFmt()
+  const scheme = shop.scheme === "mdm" ? "mdm" : "nrega"
+  const b = boardForMonth(boards, month)
+  const missing = boardMissing(boards, month)
+  const gap = b ? boardGap(b.latest, counted.filter((r) => r.month === month)) : null
+  const pct = (bp: number) => (bp / 100).toFixed(0)
+  return (
+    <section class="card stock-board">
+      <h3>
+        {t(`boardTitle_${scheme}` as Key)} · {f.month(month)}
+      </h3>
+      {b ? (
+        <>
+          {b.latest.scheme === "mdm" ? (
+            <div class="statrow">
+              <div><div class="big">{b.latest.children}</div><div class="label">{t("bChildren")}</div></div>
+              <div><div class="big">{b.latest.mealDays}/{b.latest.openDays}</div><div class="label">{t("bMealDays")}</div></div>
+              <div><div class="big">{kgText(b.latest.grainG)}</div><div class="label">{t("bGrain")} (kg)</div></div>
+            </div>
+          ) : (
+            <div class="statrow">
+              <div><div class="big">{b.latest.workers}</div><div class="label">{t("bWorkers")}</div></div>
+              <div><div class="big">{b.latest.personDays}</div><div class="label">{t("bPersonDays")}</div></div>
+              <div><div class="big">₹{b.latest.wagesPaidInr.toLocaleString("en-IN")}</div><div class="label">{t("bWagesPaid")}</div></div>
+            </div>
+          )}
+          {gap && gap.reports > 0 && (
+            <p class={gap.gapBp > 0 ? "notice" : "ok"}>
+              {b.latest.scheme === "mdm"
+                ? gap.gapBp > 0
+                  ? t("bGapMdm", { claimed: pct(gap.claimedBp), reported: pct(gap.reportedBp), n: gap.reports })
+                  : t("bNoGap", { n: gap.reports })
+                : gap.unaccountedInr > 0
+                  ? t("bGapNrega", { pct: pct(gap.gapBp), n: gap.reports, inr: gap.unaccountedInr.toLocaleString("en-IN"), total: b.latest.wagesPaidInr.toLocaleString("en-IN") })
+                  : t("bNoGap", { n: gap.reports })}
+            </p>
+          )}
+          {b.versions.length > 1 && <p class="small">{t("stockChanged", { n: b.versions.length - 1 })}</p>}
+          <p class="small muted">{t(`bSealed_${scheme}` as Key, { op: short(b.latest.creator) })}</p>
+        </>
+      ) : missing ? (
+        <p class="err" role="alert">
+          {t(`bMissing_${scheme}` as Key, { month: f.month(month) })}
+        </p>
+      ) : (
+        <p class="muted small">{t("stockNotYet")}</p>
+      )}
+      {iAmOperator && <PostOutletBoard shop={shop} scheme={scheme} month={month} onPosted={onPosted} />}
+    </section>
+  )
+}
+
+function PostOutletBoard({ shop, scheme, month, onPosted }: { shop: Shop; scheme: "mdm" | "nrega"; month: string; onPosted: () => void }) {
+  const { t } = useLang()
+  const [v, setV] = useState<Record<string, string>>(scheme === "mdm" ? { a: "", b: "22", c: "", d: "" } : { a: "", b: "", c: "250", d: "" })
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const n = (s: string | undefined) => (/^\d{1,9}$/.test((s ?? "").trim()) ? Number((s ?? "").trim()) : NaN)
+  const values: BoardValues =
+    scheme === "mdm"
+      ? { scheme, children: n(v.a), openDays: n(v.b), mealDays: n(v.c), grainG: n(v.d) * 1000 }
+      : { scheme, workers: n(v.a), personDays: n(v.b), rateInr: n(v.c), wagesPaidInr: n(v.d) }
+  const ok = Object.values(values).every((x) => typeof x === "string" || Number.isFinite(x)) && (scheme !== "mdm" || n(v.c) <= n(v.b))
+  const labels = scheme === "mdm" ? [t("bChildren"), t("bOpenDays"), t("bMealDaysServed"), `${t("bGrain")} (kg)`] : [t("bWorkers"), t("bPersonDays"), `${t("bRate")} (₹)`, `${t("bWagesPaid")} (₹)`]
+  const post = async () => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      if (!(await ensureGas())) throw new Error("gas")
+      await postBoard(reader, device().writer, shop, month, values, { synthetic: true })
+      setMsg({ ok: true, text: t("stockPosted") })
+      onPosted()
+    } catch {
+      setMsg({ ok: false, text: t("errGeneric") })
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div class="dealer-answer">
+      <h4>{t(`bPostTitle_${scheme}` as Key)}</h4>
+      <div class="row wrap">
+        {(["a", "b", "c", "d"] as const).map((k, i) => (
+          <label class="inline">
+            {labels[i]} <input class="mono" inputMode="numeric" size={8} value={v[k]} onInput={(e) => setV({ ...v, [k]: e.currentTarget.value })} />
+          </label>
+        ))}
       </div>
       <p class="small muted">{t("stockPostHelp")}</p>
       <button onClick={post} disabled={!ok || busy}>

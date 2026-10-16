@@ -127,7 +127,7 @@ export function validStocks(boards: readonly StockBoard[], dealers: ReadonlyMap<
 }
 
 /** One month's board: the first declaration, the latest one, and every change in between (a board cannot be edited, only re-posted). */
-export function boardForMonth(boards: readonly StockBoard[], month: string): { first: StockBoard; latest: StockBoard; versions: StockBoard[] } | null {
+export function boardForMonth<B extends { month: string; createdAt: bigint; key: string }>(boards: readonly B[], month: string): { first: B; latest: B; versions: B[] } | null {
   const versions = boards.filter((b) => b.month === month).sort((x, y) => (earlier(x, y) ? -1 : 1))
   if (!versions.length) return null
   return { first: versions[0]!, latest: versions[versions.length - 1]!, versions }
@@ -149,7 +149,7 @@ export function leakageEstimate(board: StockValues, monthReports: readonly Pick<
 
 /** After the 5th of a month, a shop with reports that month but no valid board shows "No stock board". */
 export const BOARD_DUE_DAY = 5
-export function boardMissing(boards: readonly StockBoard[], month: string, now: Date = new Date()): boolean {
+export function boardMissing(boards: readonly { month: string }[], month: string, now: Date = new Date()): boolean {
   const thisMonth = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`
   if (month === thisMonth && now.getUTCDate() <= BOARD_DUE_DAY) return false
   return !boards.some((b) => b.month === month)
@@ -163,13 +163,14 @@ export type FairShop = { fair: boolean; failed: FairCheck[]; months: string[] }
 /**
  * "Fair shop" for this month and last month, from public evidence only. Earned, not claimed: the shop needs 3+ counted
  * reports from 2+ devices, under 5% shortfall, an answer to every shortfall report, no reporter saying "not fixed",
- * and (ration shops) a stock board this month. It lapses by itself as soon as the evidence stops supporting it.
+ * and the outlet's monthly board (stock board, school meal board or panchayat work board). It lapses by itself as soon as the evidence stops supporting it.
  */
 export function fairShop(input: {
   reports: readonly Report[]
   answers: ReadonlyMap<string, Response[]>
   followups: ReadonlyMap<string, Followup>
-  boards?: readonly StockBoard[]
+  /** This outlet's valid monthly boards: ration stock boards (stock.ts) or school / panchayat boards (boards.ts). */
+  boards?: readonly { month: string }[]
   month: string
   scheme?: Report["scheme"]
   now?: Date
@@ -183,7 +184,7 @@ export function fairShop(input: {
   if (e === 0 || (s * 10_000) / e >= 500) failed.push("low_shortfall")
   if (r.some((x) => x.shortfallG > 0 && !input.answers.has(lc(x.key)))) failed.push("all_answered")
   if (r.some((x) => input.followups.get(lc(x.key))?.status === "not_fixed")) failed.push("none_not_fixed")
-  if ((input.scheme ?? "pds") === "pds" && boardMissing(input.boards ?? [], input.month, input.now)) failed.push("board_posted")
+  if (boardMissing(input.boards ?? [], input.month, input.now)) failed.push("board_posted")
   return { fair: failed.length === 0, failed, months }
 }
 

@@ -20,7 +20,7 @@ import {
   type ResponseAction,
 } from "tolmol-sdk"
 import { device, ensureGas, reader, short, writerForAddress } from "./arkiv"
-import { useLang, type Key } from "./i18n"
+import { outletKey, useLang, type Key } from "./i18n"
 import { useDealers } from "./verified"
 
 const actKey = (a: ResponseAction) => `act_${a}` as Key
@@ -77,9 +77,9 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
 
   return (
     <section class={`card answers ${big ? "easy" : ""}`}>
-      <h3>{t("shopAnswerTitle")}</h3>
+      <h3>{t(outletKey("shopAnswerTitle", report.scheme))}</h3>
       {data.answers.length === 0 ? (
-        <p class="muted">{t("noShopAnswer")}</p>
+        <p class="muted">{t(outletKey("noShopAnswer", report.scheme))}</p>
       ) : (
         <ul class="list">
           {data.answers.map((a) => (
@@ -95,9 +95,9 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
         </p>
       )}
 
-      {mine && data.answers.length > 0 && (
+      {mine && (
         <div class="followup">
-          <p class={big ? "lead" : ""}>{t("didShopFix")}</p>
+          <p class={big ? "lead" : ""}>{t(outletKey("didShopFix", report.scheme))}</p>
           <div class="row wrap">
             <button class={big ? "big-action" : ""} disabled={busy} onClick={() => follow("fixed")}>
               {t("fixedYes")}
@@ -111,7 +111,7 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
 
       {iAmDealer && !mine && (
         <div class="dealer-answer">
-          <h4>{t("answerAsDealer")}</h4>
+          <h4>{t(outletKey("answerAsDealer", report.scheme))}</h4>
           <p class="small">{t("answerHelp")}</p>
           <div class="issue-grid">
             {suggestedActions(report.issues, report.scheme).map((a) => (
@@ -131,7 +131,7 @@ export function ShopAnswer({ report, mine, big = false }: { report: Report; mine
 }
 
 /** On a shop page: answered / fixed (confirmed by reporters) / not fixed / disputed, the dealer, and a dealer's to-do list. */
-export function ShopScoreCard({ shopId, counted }: { shopId: string; counted: Report[] }) {
+export function ShopScoreCard({ shopId, counted, scheme }: { shopId: string; counted: Report[]; scheme?: "pds" | "mdm" | "nrega" }) {
   const { t } = useLang()
   const dealers = useDealers()
   const [data, setData] = useState<{ answers: Map<string, Response[]>; followups: Map<string, Followup>; ignored: string[] } | null>(null)
@@ -166,10 +166,10 @@ export function ShopScoreCard({ shopId, counted }: { shopId: string; counted: Re
   const waiting = counted.filter((r) => r.shortfallG > 0 && !data.answers.has(r.key.toLowerCase()))
   return (
     <section class="card score">
-      <h3>{t("scoreTitle")}</h3>
+      <h3>{t(outletKey("scoreTitle", scheme))}</h3>
       <p>{t("scoreLine", { a: s.answered, n: s.reports, f: s.fixed, nf: s.notFixed, d: s.disputed })}</p>
-      <p class="small muted">{shopDealers.length ? t("dealerLine", { d: shopDealers.map((d) => short(d.device)).join(", ") }) : t("noDealer")}</p>
-      <p class="small muted">{t("scoreHelp")}</p>
+      <p class="small muted">{shopDealers.length ? t(outletKey("dealerLine", scheme), { d: shopDealers.map((d) => short(d.device)).join(", ") }) : t(outletKey("noDealer", scheme))}</p>
+      <p class="small muted">{t(outletKey("scoreHelp", scheme))}</p>
       {data.ignored.length > 0 && (
         <details class="small">
           <summary>{t("ignoredWriters", { n: data.ignored.length })}</summary>
@@ -187,7 +187,7 @@ export function ShopScoreCard({ shopId, counted }: { shopId: string; counted: Re
       )}
       {iAmDealer && (
         <div class="notice">
-          <p>{t("youAreDealer", { n: waiting.length })}</p>
+          <p>{t(outletKey("youAreDealer", scheme), { n: waiting.length })}</p>
           <ul class="list">
             {waiting.slice(0, 20).map((r) => (
               <li>

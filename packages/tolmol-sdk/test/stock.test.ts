@@ -3,6 +3,7 @@ import { privateKeyToAccount } from "viem/accounts"
 import { parseStock, stockAttributes, validStocks, boardForMonth, leakageEstimate, boardMissing, fairShop, shopVerdict, type StockBoard } from "../src/stock.js"
 import { checkProof, decodeProof, encodeProof, makeProof } from "../src/proof.js"
 import { meteredTransport, memoryStore } from "../src/metered.js"
+import { boardAttributes, boardGap, parseBoard, validBoards } from "../src/boards.js"
 import { reportAttributes, type RawEntity } from "../src/attributes.js"
 import type { Report } from "../src/model.js"
 import type { Attestation } from "../src/verify.js"
@@ -140,5 +141,27 @@ describe("metered transport reuse", () => {
     } finally {
       globalThis.fetch = realFetch
     }
+  })
+})
+
+describe("school and panchayat boards", () => {
+  const SCHOOL = { shopId: "SYN-BR-5001", state: "BR", district: "gaya" }
+  it("round-trips, refuses impossible numbers, and counts only the outlet's operator", () => {
+    const attrs = boardAttributes(SCHOOL, "2026-10", { scheme: "mdm", children: 200, openDays: 22, mealDays: 22, grainG: 400_000 }, { synthetic: true, atMs: 1n })
+    const e: RawEntity = { key: k(70), creator: dev(1), createdAt: 5n, attributes: attrs as RawEntity["attributes"] }
+    const b = parseBoard(e)!
+    expect(b.scheme).toBe("mdm")
+    expect(() => boardAttributes(SCHOOL, "2026-10", { scheme: "mdm", children: 200, openDays: 20, mealDays: 25, grainG: 0 }, { synthetic: true, atMs: 1n })).toThrow() // more meal days than school days
+    const ops = new Map([[dev(1).toLowerCase(), dealer("SYN-BR-5001")]])
+    expect(validBoards([b, { ...b, key: k(71), creator: dev(9) }], ops, "SYN-BR-5001")).toHaveLength(1)
+  })
+  it("sets the board against what parents and workers reported", () => {
+    const meal = (got: number) => ({ entitledG: 20, receivedG: got, scheme: "mdm" as const })
+    const g = boardGap({ scheme: "mdm", children: 200, openDays: 22, mealDays: 22, grainG: 0 }, [meal(10), meal(10)])
+    expect(g.claimedBp).toBe(10_000)
+    expect(g.reportedBp).toBe(5_000)
+    const wage = { entitledG: 3000, receivedG: 1500, scheme: "nrega" as const }
+    const w = boardGap({ scheme: "nrega", workers: 30, personDays: 400, rateInr: 250, wagesPaidInr: 100_000 }, [wage])
+    expect(w.unaccountedInr).toBe(50_000)
   })
 })

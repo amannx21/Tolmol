@@ -131,16 +131,16 @@ export function CardPage({ c }: { c: string }) {
       <dl class="facts">
         <dt>{t("state")}</dt>
         <dd>{STATE_NAMES[card.state]?.[lang] ?? card.state}</dd>
-        <dt>{t("shop")}</dt>
+        <dt>{t(card.type === "SCH" ? "outletSchool" : card.type === "GPO" ? "outletPanchayat" : "shop")}</dt>
         <dd class="mono">{card.shopId}</dd>
         <dt>{t("cardTypeLabel")}</dt>
         <dd>{op ? t(`operatorIdTitle_${op}`) : isOfficial ? t("officialIdTitle") : isDealer ? t("dealerLicenceTitle") : t(card.type === "AAY" ? "cardType_AAY" : "cardType_PHH")}</dd>
       </dl>
-      <p class="small">{t("verifyPrivacy", { shop: card.shopId })}</p>
+      <p class="small">{t(op || isDealer || isOfficial ? "verifyPrivacyRole" : "verifyPrivacy", { shop: card.shopId })}</p>
       {state === "done" || state === "already" ? (
         <p class="ok" role="status">
           {isOfficial && state === "done" ? t("officialDone", { shop: card.shopId }) : op && state === "done" ? t("operatorDone", { shop: card.shopId }) : isDealer && state === "done" ? t("dealerDone", { shop: card.shopId }) : t(state === "done" ? "verifyDone" : "verifyAlready")}{" "}
-          <a href={isDealer || isOfficial ? `#/shop/${card.shopId}` : `#/report?shop=${card.shopId}`}>{isDealer || isOfficial ? card.shopId : t("ctaReport")} →</a>
+          <a href={isDealer ? "#/my-outlet" : isOfficial ? `#/shop/${card.shopId}` : `#/report?shop=${card.shopId}`}>{isDealer ? t("myOutletOpen") : isOfficial ? card.shopId : t("ctaReport")} →</a>
         </p>
       ) : (
         <button class="big-action" onClick={go} disabled={state === "busy"}>

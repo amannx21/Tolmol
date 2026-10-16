@@ -85,7 +85,8 @@ export function makeHandler(env: RelayerEnv, store: CounterStore) {
   const pk = env.RELAYER_PRIVATE_KEY
   if (!/^0x[0-9a-fA-F]{64}$/.test(pk ?? "")) throw new Error("RELAYER_PRIVATE_KEY missing or malformed")
   const account = privateKeyToAccount(pk as Hex)
-  const transport = http(env.RPC_URL ?? tiramisu.rpcUrls.default.http[0], { retryCount: 1, timeout: 20_000 })
+  // No retries: on HTTP 429 viem would wait out Retry-After (up to an hour) and the page would hang (friction F13).
+  const transport = http(env.RPC_URL ?? tiramisu.rpcUrls.default.http[0], { retryCount: 0, timeout: 20_000 })
   const pub = createPublicClient({ chain: tiramisu, transport })
   const wallet = createWalletClient({ chain: tiramisu, transport, account })
   // One drip at a time per instance, so our own transactions never collide on the nonce.

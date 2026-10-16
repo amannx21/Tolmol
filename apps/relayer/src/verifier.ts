@@ -62,7 +62,8 @@ export function makeVerifier(env: VerifierEnv) {
   if (!pk || !/^0x[0-9a-fA-F]{64}$/.test(pk) || !secret || secret.length < 32) return null
   const issuer = (env.CARD_ISSUER && isAddress(env.CARD_ISSUER) ? env.CARD_ISSUER : TEST_ISSUER) as Hex
   const account = privateKeyToAccount(pk as Hex)
-  const transport = http(env.RPC_URL ?? tiramisu.rpcUrls.default.http[0], { retryCount: 1, timeout: 20_000 })
+  // No retries: on HTTP 429 viem would wait out Retry-After (up to an hour) and the page would hang (friction F13).
+  const transport = http(env.RPC_URL ?? tiramisu.rpcUrls.default.http[0], { retryCount: 0, timeout: 20_000 })
   const reader = createPublicClient({ chain: tiramisu, transport })
   const writer = createWalletClient({ chain: tiramisu, transport, account })
   const me = account.address

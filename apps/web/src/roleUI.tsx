@@ -29,9 +29,10 @@ import {
   type Witness,
 } from "tolmol-sdk"
 import { CheckShop } from "./checkUI"
+import { loadOutlets } from "./ui"
 import { ActionIcon, type ActionIconName } from "./ActionIcon"
 import { device, myAddresses, reader } from "./arkiv"
-import { useFmt, useLang, type Key } from "./i18n"
+import { outletKey, useFmt, useLang, type Key } from "./i18n"
 import { ErrorBox, Loading } from "./ui"
 import { PhoneVerification, useDealers, useOfficials, useVerified } from "./verified"
 
@@ -70,6 +71,11 @@ export function RoleHub({ scheme = "pds" }: { scheme?: "pds" | "mdm" | "nrega" }
   const dealer = dealers?.get(me)
   const official = officials?.get(me)
   const [waiting, setWaiting] = useState<number | null>(null)
+  // Which kind of outlet this phone answers for (shop, school or panchayat), for the card's wording.
+  const [dealerScheme, setDealerScheme] = useState<"pds" | "mdm" | "nrega">("pds")
+  useEffect(() => {
+    if (dealer) void loadOutlets().then((all) => setDealerScheme(all.find((s) => s.shopId === dealer.shopId)?.scheme ?? "pds"), () => undefined)
+  }, [dealer?.shopId])
   useEffect(() => {
     if (!dealer || !dealers) return
     let live = true
@@ -86,7 +92,7 @@ export function RoleHub({ scheme = "pds" }: { scheme?: "pds" | "mdm" | "nrega" }
   }, [dealer?.shopId, dealers])
 
   const roleCard: Card | null = dealer
-    ? { icon: "shop", title: t("roleDealerTitle", { shop: dealer.shopId }), body: waiting === null ? t("roleDealerBody") : t("roleDealerWaiting", { n: waiting }), action: t("roleDealerAction"), href: `#/shop/${dealer.shopId}`, strong: true }
+    ? { icon: "shop", title: t(outletKey("roleDealerTitle", dealerScheme), { shop: dealer.shopId }), body: waiting === null ? t(outletKey("roleDealerBody", dealerScheme)) : t("roleDealerWaiting", { n: waiting }), action: t(outletKey("roleDealerAction", dealerScheme)), href: "#/my-outlet", strong: true }
     : official
       ? { icon: "shield", title: t("roleOfficialTitle", { shop: official.shopId }), body: t("roleOfficialBody"), action: t("roleOfficialAction"), href: `#/dashboard?state=${official.state}`, strong: true }
       : holder

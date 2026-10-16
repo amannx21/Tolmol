@@ -18,6 +18,7 @@ export type Route =
   | { name: "proof"; p?: string }
   | { name: "trust" }
   | { name: "raw" }
+  | { name: "myOutlet" }
   | { name: "schemes"; s?: "mdm" | "nrega" }
 
 const schemeParam = (q: URLSearchParams): Scheme | undefined => {
@@ -40,6 +41,8 @@ export function parse(hash: string): Route {
       return { name: "trust" }
     case "raw":
       return { name: "raw" }
+    case "my-outlet":
+      return { name: "myOutlet" }
     case "schemes":
       return { name: "schemes", s: parts[1] === "mdm" || parts[1] === "nrega" ? parts[1] : undefined }
     case "proof":

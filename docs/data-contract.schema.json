@@ -1012,6 +1012,201 @@
           "$ref": "#/$defs/bool"
         }
       }
+    },
+    {
+      "title": "tolmol.board",
+      "description": "A school's (scheme mdm) or gram panchayat's (scheme nrega) monthly board, by the outlet's verified operator. Sealed (readonly, owner 0x...dEaD), 365 days, empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "scheme",
+        "shop_id",
+        "state",
+        "district",
+        "month",
+        "month_num"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.board"
+                }
+              }
+            }
+          ]
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "scheme": {
+          "$ref": "#/$defs/scheme"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "month": {
+          "$ref": "#/$defs/str"
+        },
+        "month_num": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 200001,
+                  "maximum": 299912
+                }
+              }
+            }
+          ]
+        },
+        "children": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 5000
+                }
+              }
+            }
+          ]
+        },
+        "open_days": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 31
+                }
+              }
+            }
+          ]
+        },
+        "meal_days": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 31
+                }
+              }
+            }
+          ]
+        },
+        "grain_g": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 100000000
+                }
+              }
+            }
+          ]
+        },
+        "workers": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 10000
+                }
+              }
+            }
+          ]
+        },
+        "person_days": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 100000
+                }
+              }
+            }
+          ]
+        },
+        "rate_inr": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 5000
+                }
+              }
+            }
+          ]
+        },
+        "wages_paid_inr": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 1000000000
+                }
+              }
+            }
+          ]
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
+      }
     }
   ]
 }

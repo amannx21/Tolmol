@@ -50,6 +50,10 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
     rice_g: isInt(0, 100_000_000), wheat_g: isInt(0, 100_000_000), millet_g: isInt(0, 100_000_000), cards: isInt(1, 5000), from_day: isInt(1, 31), to_day: isInt(1, 31) },
   // A district official sends an inspector to one outlet for a few days; numbers and addresses only.
   "tolmol.delegation": { ...COMMON, type: oneOf("tolmol.delegation"), inspector: re(/^0x[0-9a-f]{40}$/), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), until_block: any },
+  // A school's or panchayat's monthly board: counts and amounts only.
+  "tolmol.board": { ...COMMON, type: oneOf("tolmol.board"), scheme: oneOf("mdm", "nrega"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912),
+    children: isInt(1, 5000), open_days: isInt(1, 31), meal_days: isInt(0, 31), grain_g: isInt(0, 100_000_000),
+    workers: isInt(1, 10_000), person_days: isInt(0, 100_000), rate_inr: isInt(1, 5000), wages_paid_inr: isInt(0, 1_000_000_000) },
   "tolmol.followup": { ...COMMON, type: oneOf("tolmol.followup"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), status: oneOf("fixed", "not_fixed") },
 }
 

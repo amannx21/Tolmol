@@ -11,6 +11,7 @@ import {
   shopReports,
   shopStats,
   shopStocks,
+  shopBoards,
   shopVerdict,
   withdrawnKeys,
   type Scheme,
@@ -49,14 +50,14 @@ export function CheckShop({ scheme }: { scheme?: Scheme } = {}) {
       const [reps, corr, boards] = await Promise.all([
         shopReports(reader, shop.shopId),
         shopCorrections(reader, shop.shopId),
-        shop.scheme === "pds" ? shopStocks(reader, shop.shopId) : Promise.resolve({ items: [] }),
+        shop.scheme === "pds" ? shopStocks(reader, shop.shopId) : shopBoards(reader, shop.shopId),
       ])
       const mine = forScheme(reps.items, shop.scheme)
       // The last two months: what a card holder needs to know before going to the shop this month.
       const recent = mine.filter((r) => r.month >= addMonths(currentMonth(), -1))
       const counted = dedupeReports(recent, withdrawnKeys(mine, corr.items))
       const stats = shopStats(counted, [])[0]
-      const noBoard = shop.scheme === "pds" && counted.length > 0 && boardMissing(boards.items, currentMonth())
+      const noBoard = counted.length > 0 && boardMissing(boards.items, currentMonth())
       setRes({ shop, stats, verdict: shopVerdict(stats, { noBoard }), noBoard })
     } catch (e) {
       setErr(e)
