@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/hero.jpg" alt="Tolmol: three phones showing the Hindi home page, a report question read aloud, and a shop's stock board" width="100%">
+<img src="docs/media/hero.jpg" alt="Tolmol: three phones showing the Hindi home page, an English report question, and a shop's stock board" width="100%">
 
 # Tolmol · तोलमोल
 
@@ -41,9 +41,10 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 
 <img src="docs/media/voice.jpg" alt="Two Hindi report screens with speech bubbles: the phone reads each question aloud" width="100%">
 
-1. Tap **मुझे कम राशन मिला** (or **मिड-डे मील की समस्या**, or **मनरेगा मज़दूरी की समस्या**). The phone **reads each question aloud in Hindi**
+1. Tap **मुझे कम राशन मिला** ("I got less ration"), or **मिड-डे मील की समस्या** ("mid-day meal problem") or
+   **मनरेगा मज़दूरी की समस्या** ("MGNREGA wage problem"). The phone **reads each question aloud in Hindi**
    with its own built-in voice, so nothing is sent to a server. With no internet it still speaks if the phone has the
-   Hindi voice downloaded (Android: Settings → Text-to-speech). 🔊 सुनें replays a question.
+   Hindi voice downloaded (Android: Settings → Text-to-speech). 🔊 सुनें ("Listen") replays a question.
 2. Answer with big buttons, pictures and **+ / −** steps: which shop, which month, how many people on the card, how
    much you got. No typing, no name, no card number, no account.
 3. Tap what else went wrong: asked to pay, fingerprint failed, card kept, children seated apart, wages late. These are
@@ -56,8 +57,8 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 
 ### 👥 Neighbours confirm
 
-The report link goes out on WhatsApp. Others at the same outlet tap **मुझे भी कम मिला ✓** on their own phones. The
-second confirmation keeps the report alive longer, and the reporter can say no to that.
+The report link goes out on WhatsApp. Others at the same outlet tap **मुझे भी कम मिला ✓** ("I got less too") on their
+own phones. The second confirmation keeps the report alive longer, and the reporter can say no to that.
 
 ### 🏪 The dealer, head teacher or employment assistant answers
 
