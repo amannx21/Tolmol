@@ -5,7 +5,7 @@ import { ISSUES } from "../src/constants.js"
 import { validateReportInput, ValidationError } from "../src/model.js"
 import { needsAttention } from "../src/official.js"
 import { forScheme, shopStats } from "../src/rules.js"
-import { formatAmount, SCHEME_ISSUES, schemeIssueList, schemeOfItem } from "../src/schemes.js"
+import { coarsenWages, formatAmount, SCHEME_ISSUES, schemeIssueList, schemeOfItem } from "../src/schemes.js"
 
 const KEY = `0x${"ab".repeat(32)}` as const
 const CREATOR = "0x1111111111111111111111111111111111111111" as const
@@ -85,5 +85,15 @@ describe("one ledger, several schemes", () => {
     const w = parseReport(asEntity(reportAttributes(wage, where, { synthetic: true, reportedAtMs: 1n })))!
     const att = needsAttention(shopStats([w], []), new Map(), new Map(), new Map())
     expect(att[0]?.reasons).toContain("records_mismatch")
+  })
+})
+
+describe("MGNREGA wage rounding (muster rolls are public)", () => {
+  it("rounds owed and paid to whole steps, keeping the share paid", () => {
+    expect(coarsenWages(3000, 1750)).toEqual({ owed: 3000, paid: 2000 })
+    expect(coarsenWages(2750, 1100)).toEqual({ owed: 3000, paid: 1000 })
+    expect(coarsenWages(250, 0)).toEqual({ owed: 500, paid: 0 })
+    expect(coarsenWages(3000, 3000)).toEqual({ owed: 3000, paid: 3000 })
+    expect(() => coarsenWages(1000, 2000)).toThrow()
   })
 })

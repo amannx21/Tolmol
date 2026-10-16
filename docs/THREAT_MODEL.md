@@ -70,6 +70,8 @@ This page lists who might attack that promise, what stops them, and what is stil
 | T44 | "Send at a random time": the phone is closed and the report never goes out | It waits on the phone and goes out the first time Tolmol is open after its time; the screen says so. It is a choice, on by default only for risky reports and small shops | **Accepted** |
 | T45 | Another scheme's report is counted at the wrong outlet, or read as grams by an old reader | An outlet counts only its own scheme's reports; non-ration reports carry `scheme` and items that old readers do not know, so they drop them instead of misreading rupees as grams | **Mitigated** |
 | T46 | A delegated inspector oversteps (closes a case, cancels a licence, acts elsewhere or later) | Inspector actions count only as inspection findings, for the one outlet, inside the window, under a delegation from an official of that district. Anything else from that phone is ignored | **Mitigated** |
+| T47 | A MGNREGA reporter is identified by matching the reported wage to the public muster roll (names, days worked) | Wages are rounded to the nearest ₹500 by default before they are written (`coarsenWages`), so the exact days worked cannot be read from the record; the shortfall stays within half a step of the truth. The person can choose exact amounts, and the screen explains why rounding is on. Separate ID is automatic for job-card, bribe and fake-name reports | **Mitigated** |
+| T48 | A parent is identified at a small school | No child's name or class is asked; the small-outlet warning, separate ID (automatic for "asked to pay" and "seated apart") and send-at-a-random-time apply exactly as for ration | **Partly mitigated** (a very small school stays small) |
 
 ## What Tolmol does not solve
 

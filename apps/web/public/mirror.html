@@ -46,10 +46,13 @@
 <script>
 "use strict"
 const T = {
-  en: { title:"Tolmol reader", intro:"One file, no server: reads ration-shortfall records straight from Arkiv. Demo data is synthetic.", rpc:"Arkiv server (any Tiramisu RPC)", shop:"Shop ID", block:"Read as it was at block (optional)", go:"Read", reading:"Reading from Arkiv…", shortfall:"Shortfall", reports:"Reports (counted)", devices:"Devices", confirmed:"Confirmed by other devices", month:"Month", grain:"Grain", got:"Got / entitled", conf:"Conf.", status:"Status", counted:"counted", dup:"duplicate", withdrawn:"withdrawn by reporter", none:"No reports for this shop.", readAt:"Read at block", err:"Could not read", foot:"Source: github.com/amannx21/Tolmol · Data format: arkiv/schema.md · Network: Arkiv Tiramisu (chain 7738577)", other:"हिन्दी" },
-  hi: { title:"तोलमोल रीडर", intro:"एक फ़ाइल, कोई सर्वर नहीं: राशन में कमी के रिकॉर्ड सीधे Arkiv से पढ़ता है। डेमो डेटा नकली है।", rpc:"Arkiv सर्वर (कोई भी Tiramisu RPC)", shop:"दुकान नंबर", block:"इस ब्लॉक पर जैसा था वैसा पढ़ें (ज़रूरी नहीं)", go:"पढ़ें", reading:"Arkiv से पढ़ा जा रहा है…", shortfall:"कमी", reports:"रिपोर्टें (गिनी गईं)", devices:"डिवाइस", confirmed:"दूसरे डिवाइसों से पुष्ट", month:"महीना", grain:"अनाज", got:"मिला / हक़", conf:"पुष्टि", status:"स्थिति", counted:"गिनी गई", dup:"दोहराई गई", withdrawn:"रिपोर्ट करने वाले ने वापस ली", none:"इस दुकान की कोई रिपोर्ट नहीं।", readAt:"इस ब्लॉक पर पढ़ा गया", err:"पढ़ा नहीं जा सका", foot:"सोर्स: github.com/amannx21/Tolmol · डेटा स्वरूप: arkiv/schema.md · नेटवर्क: Arkiv Tiramisu (chain 7738577)", other:"English" },
+  en: { title:"Tolmol reader", intro:"One file, no server: reads ration, school-meal and MGNREGA wage records straight from Arkiv. Demo data is synthetic.", rpc:"Arkiv server (any Tiramisu RPC)", shop:"Shop, school or panchayat ID", block:"Read as it was at block (optional)", go:"Read", reading:"Reading from Arkiv…", shortfall:"Shortfall", reports:"Reports (counted)", devices:"Devices", confirmed:"Confirmed by other devices", month:"Month", grain:"Item", got:"Got / due", conf:"Conf.", status:"Status", counted:"counted", dup:"duplicate", withdrawn:"withdrawn by reporter", none:"No reports here.", unknown:"Not in the registry (only outlets created by the registry wallet count).", readAt:"Read at block", err:"Could not read", foot:"Source: github.com/amannx21/Tolmol · Data format: arkiv/schema.md · Network: Arkiv Tiramisu (chain 7738577)", other:"हिन्दी" },
+  hi: { title:"तोलमोल रीडर", intro:"एक फ़ाइल, कोई सर्वर नहीं: राशन, स्कूल भोजन और मनरेगा मज़दूरी के रिकॉर्ड सीधे Arkiv से पढ़ता है। डेमो डेटा नकली है।", rpc:"Arkiv सर्वर (कोई भी Tiramisu RPC)", shop:"दुकान, स्कूल या पंचायत नंबर", block:"इस ब्लॉक पर जैसा था वैसा पढ़ें (ज़रूरी नहीं)", go:"पढ़ें", reading:"Arkiv से पढ़ा जा रहा है…", shortfall:"कमी", reports:"रिपोर्टें (गिनी गईं)", devices:"डिवाइस", confirmed:"दूसरे डिवाइसों से पुष्ट", month:"महीना", grain:"चीज़", got:"मिला / हक़", conf:"पुष्टि", status:"स्थिति", counted:"गिनी गई", dup:"दोहराई गई", withdrawn:"रिपोर्ट करने वाले ने वापस ली", none:"यहाँ कोई रिपोर्ट नहीं।", unknown:"रजिस्टर में नहीं है (सिर्फ़ रजिस्ट्री वॉलेट की बनाई जगहें गिनी जाती हैं)।", readAt:"इस ब्लॉक पर पढ़ा गया", err:"पढ़ा नहीं जा सका", foot:"सोर्स: github.com/amannx21/Tolmol · डेटा स्वरूप: arkiv/schema.md · नेटवर्क: Arkiv Tiramisu (chain 7738577)", other:"English" },
 }
-const ITEM = { en:{rice:"rice",wheat:"wheat",millet:"millet",total:"all grain"}, hi:{rice:"चावल",wheat:"गेहूँ",millet:"मोटा अनाज",total:"कुल अनाज"} }
+const ITEM = { en:{rice:"rice",wheat:"wheat",millet:"millet",total:"all grain",meal_days:"school meals",wage_inr:"wages"}, hi:{rice:"चावल",wheat:"गेहूँ",millet:"मोटा अनाज",total:"कुल अनाज",meal_days:"स्कूल का भोजन",wage_inr:"मज़दूरी"} }
+// Each item's scheme and unit (arkiv/schema.md, "Other schemes on the same ledger").
+const SCHEME_OF = { rice:"pds", wheat:"pds", millet:"pds", total:"pds", meal_days:"mdm", wage_inr:"nrega" }
+const REGISTRY = "0x6DBf6A36E27d814c58A05312913DCEEfc0dAe221"
 let lang = (navigator.language || "").startsWith("hi") ? "hi" : "en"
 const $ = (id) => document.getElementById(id)
 function applyLang() {
@@ -63,6 +66,7 @@ applyLang()
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]))
 const big = (h) => BigInt(h)
 const kg = (g) => { const w = Math.floor(g / 1000), f = String(g % 1000).padStart(3, "0").replace(/0+$/, ""); return (f ? w + "." + f : String(w)) + (lang === "hi" ? " किलो" : " kg") }
+const amt = (item, n) => item === "meal_days" ? n + (lang === "hi" ? " दिन" : " days") : item === "wage_inr" ? "₹" + n.toLocaleString("en-IN") : kg(n)
 const bp = (b) => { const t = Math.floor(b / 10); return Math.floor(t / 10) + "." + (t % 10) + "%" }
 const attrsOf = (e) => Object.fromEntries((e.attributes || []).map((a) => [a.name, a]))
 const val = (A, n, type) => (A[n] && A[n].type === type ? A[n].value : undefined)
@@ -91,18 +95,25 @@ $("go").onclick = async () => {
   try {
     const at = /^\d+$/.test(blk) ? BigInt(blk) : undefined
     const base = "project = str('tolmol') AND shop_id = str('" + shop + "') AND type = str("
-    const reps = await query(rpc, base + "'tolmol.report')", at)
+    // The outlet itself, only from the registry wallet: it says which scheme this outlet belongs to.
+    const reg = await query(rpc, "project = str('tolmol') AND shop_id = str('" + shop + "') AND (type = str('tolmol.shop') OR type = str('tolmol.outlet')) AND $creator = addr(" + REGISTRY + ")", at)
+    const outlet = reg.rows[0] ? attrsOf(reg.rows[0]) : null
+    if (!outlet) { $("out").innerHTML = '<p class="bad">' + T[lang].unknown + "</p>"; return }
+    const scheme = val(outlet, "scheme", "str") || "pds"
+    const reps = await query(rpc, base + "'tolmol.report')", reg.atBlock)
     const wits = await query(rpc, base + "'tolmol.witness')", reps.atBlock)
     const corr = await query(rpc, base + "'tolmol.correction')", reps.atBlock)
-    last = { shop, reps, wits, corr }
+    last = { shop, scheme, reps, wits, corr }
     render(last)
   } catch (e) { $("out").innerHTML = '<p class="bad">' + T[lang].err + ": " + esc(e.message) + "</p>" }
 }
 
-function render({ shop, reps, wits, corr }) {
+function render({ shop, scheme, reps, wits, corr }) {
   const t = T[lang], lc = (s) => String(s).toLowerCase()
   const reports = reps.rows.map((e) => { const A = attrsOf(e); return { key: lc(e.key), creator: lc(e.creator), createdAt: big(e.createdAt), month: val(A,"month","str"), item: val(A,"item","str"), entitled: val(A,"entitled_g","i32"), received: val(A,"received_g","i32") } })
     .filter((r) => r.month && r.item && Number.isInteger(r.entitled) && Number.isInteger(r.received) && r.entitled > 0 && r.received >= 0 && r.received <= r.entitled)
+    // Only this outlet's scheme counts (a wage report filed against a ration shop's ID is not counted).
+    .filter((r) => SCHEME_OF[r.item] === scheme)
   const creatorOf = new Map(reports.map((r) => [r.key, r.creator]))
   const withdrawn = new Set(corr.rows.map((e) => { const A = attrsOf(e); return [lc(val(A,"report_key","key") || ""), lc(e.creator), val(A,"action","str")] })
     .filter(([k, c, a]) => a === "withdraw" && creatorOf.get(k) === c).map(([k]) => k))
@@ -118,7 +129,7 @@ function render({ shop, reps, wits, corr }) {
   if (!reports.length) { $("out").innerHTML = '<div class="card"><p>' + t.none + "</p></div>"; return }
   const rows = reports.sort((a, b) => (a.month < b.month ? 1 : a.month > b.month ? -1 : 0)).map((r) => {
     const status = withdrawn.has(r.key) ? t.withdrawn : kept.has(r.key) ? t.counted : t.dup
-    return "<tr class='" + (kept.has(r.key) ? "" : "dim") + "'><td>" + esc(r.month) + "</td><td>" + esc((ITEM[lang][r.item]) || r.item) + "</td><td>" + kg(r.received) + " / " + kg(r.entitled) + " (" + bp(Math.floor((r.entitled - r.received) * 10000 / r.entitled)) + ")</td><td>" + conf(r) + "</td><td>" + esc(status) + "</td><td class='mono'><a href='https://tiramisu.explorer.arkiv.network/entity/" + esc(r.key) + "' target='_blank' rel='noopener'>" + esc(r.key.slice(0, 10)) + "…</a></td></tr>"
+    return "<tr class='" + (kept.has(r.key) ? "" : "dim") + "'><td>" + esc(r.month) + "</td><td>" + esc((ITEM[lang][r.item]) || r.item) + "</td><td>" + amt(r.item, r.received) + " / " + amt(r.item, r.entitled) + " (" + bp(Math.floor((r.entitled - r.received) * 10000 / r.entitled)) + ")</td><td>" + conf(r) + "</td><td>" + esc(status) + "</td><td class='mono'><a href='https://tiramisu.explorer.arkiv.network/entity/" + esc(r.key) + "' target='_blank' rel='noopener'>" + esc(r.key.slice(0, 10)) + "…</a></td></tr>"
   }).join("")
   $("out").innerHTML = "<div class='card'><h2 class='mono'>" + esc(shop) + "</h2><p><span class='big'>" + (E ? bp(Math.floor(S * 10000 / E)) : "0.0%") + "</span> " + t.shortfall + " · " + best.size + " " + t.reports + " · " + devices.size + " " + t.devices + " · " + confirmed + " " + t.confirmed + "</p>" +
     "<table><thead><tr><th>" + t.month + "</th><th>" + t.grain + "</th><th>" + t.got + "</th><th>" + t.conf + "</th><th>" + t.status + "</th><th></th></tr></thead><tbody>" + rows + "</tbody></table>" +

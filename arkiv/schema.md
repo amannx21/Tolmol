@@ -328,6 +328,9 @@ the ration data changed; the additions are built so that a reader that only know
   they do not know the item: they can never misread rupees as grams.
 - An outlet counts only reports of its own scheme (`forScheme`), and the dashboard shows one scheme at a time, so units
   are never mixed.
+- **MGNREGA wages are rounded before they are written** (`coarsenWages`, default ₹500 steps): muster rolls are public
+  (name, days worked, wage), so an exact owed amount reveals the days worked and can be matched to one name. The
+  reporter can choose exact amounts; the shortfall stays within half a step either way.
 - **`issues`** holds the scheme's own flags (at most 7, so `issues2` is ration-only):
 
 | Bit | School meals (`mdm`) | MGNREGA wages (`nrega`) |

@@ -131,6 +131,11 @@ dealer's, and complaints made on a portal or a WhatsApp group can be deleted, ig
    questions, answers from the head teacher or employment assistant, official actions, and letters to the right
    authority (District Education Officer; MGNREGA Programme Officer and Ombudsperson). Ration data did not change, and
    older readers simply do not see the new records ([`arkiv/schema.md`](arkiv/schema.md#other-schemes-on-the-same-ledger)).
+   Ration stays the first workspace; a bar under the menu keeps School meals and MGNREGA wages in view on every page,
+   each a separate workspace with its own home, report and records. Their reports are as easy as ration's: one
+   question per screen read aloud in Hindi, big + / − steps instead of typing, and the same privacy protections.
+   MGNREGA wages are rounded to ₹500 by default, because muster rolls are public and an exact amount could name the
+   worker.
 16. **Privacy you can feel.** Before sending, a box shows what becomes public and what stays on the phone. Reports
    can be held on the phone and sent at a **random time 1 to 6 hours later**, so the moment a report lands cannot be
    matched to who was at the counter; this switches on by itself for risky reports and for shops where few people have

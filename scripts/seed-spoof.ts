@@ -7,10 +7,12 @@ import { parseEther } from "viem"
 import { ExpirationTime } from "@arkiv-network/sdk"
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts"
 import {
-  dedupeReports, followupAttributes, httpReader, respondToReport, shopFollowups, shopReports, shopResponses, writerFor, listAttestations, verifiedDealers, listVerifiers,
+  dedupeReports, followupAttributes, httpReader, respondToReport, shopFollowups, shopReports, shopResponses, writerFor, listAttestations, verifiedDealers, listVerifiers, type ResponseAction,
 } from "../packages/tolmol-sdk/src/index.js"
 
-const SHOP = "SYN-BR-0042"
+// Any outlet: SHOP=SYN-BR-5001 ACTION=meals_resumed plants the same two fakes at a school.
+const SHOP = process.env.SHOP ?? "SYN-BR-0042"
+const ACTION = (process.env.ACTION ?? "full_quantity") as ResponseAction
 const need = (k: string) => {
   const m = fs.readFileSync(".env", "utf8").match(new RegExp(`^${k}=(0x[0-9a-fA-F]{64})`, "m"))
   if (!m) throw new Error(`${k} missing in .env`)
@@ -33,7 +35,7 @@ const w = writerFor(stranger)
 const target = reports.filter((r) => r.shortfallG > 0)
 if (target.length < 2) throw new Error("need two reports with a shortfall at " + SHOP)
 if (!fakeAnswers) {
-  const a = await respondToReport(reader, w, target[0]!, "full_quantity", { synthetic: true })
+  const a = await respondToReport(reader, w, target[0]!, ACTION, { synthetic: true })
   console.log("fake dealer answer", a.entityKey, "tx", a.txHash)
 }
 if (!fakeFollowups) {

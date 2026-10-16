@@ -221,7 +221,7 @@ export function MyActivityPage() {
                   return (
                     <li>
                       <a href={`#/r/${r.key}`}>
-                        <strong>{r.shopId}</strong> · {f.month(r.month)} · {t(r.item as Key)} · {f.kg(r.shortfallG)} ({formatBp(r.shortfallBp)})
+                        <strong>{r.shopId}</strong> · {f.month(r.month)} · {t(r.item as Key)} · {f.amt(r.item, r.shortfallG)} ({formatBp(r.shortfallBp)})
                       </a>
                       <div class="small">
                         {data.withdrawn.has(k) ? (

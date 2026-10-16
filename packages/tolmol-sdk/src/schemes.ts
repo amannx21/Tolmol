@@ -4,8 +4,8 @@
 //   pds    ration at a fair-price shop (National Food Security Act 2013), in grams
 //   mdm    hot cooked school meals (PM POSHAN), in school days with a meal
 //   nrega  wages for rural work (Mahatma Gandhi NREGA 2005), in rupees
-// Every outlet (shop, school, gram panchayat) is a `tolmol.shop` entity from the registry with a `scheme` attribute
-// (absent = pds, so every older record still reads as a ration shop). Reports keep their shape: `entitled_g`,
+// Ration shops are `tolmol.shop` entities from the registry (unchanged); schools and gram panchayats are
+// `tolmol.outlet` entities from the same registry with a `scheme` attribute, so ration-only readers never list them. Reports keep their shape: `entitled_g`,
 // `received_g` and `shortfall_g` hold whole units of the item (grams, days or rupees, see ITEM_INFO), and a report for
 // a non-ration scheme also carries `scheme`. A reader that only knows ration items drops these reports instead of
 // misreading rupees as grams, because their `item` is not one it knows.
@@ -86,4 +86,17 @@ export function formatAmount(item: AnyItem, n: number): string {
   const kg = Math.floor(n / 1000)
   const g = n % 1000
   return g === 0 ? `${kg} kg` : `${kg}.${String(g).padStart(3, "0").replace(/0+$/, "")} kg`
+}
+
+/**
+ * MGNREGA muster rolls are public by law (name, days worked, wage). An exact "owed ₹3,000, paid ₹1,750" can be matched
+ * to one name on the roll, so wage reports are rounded before they are written: the amount owed to the nearest `step`
+ * rupees (at least one step), and the amount paid to the nearest step at the same share of what was owed. The shortfall
+ * stays close to the truth (within half a step), and the exact days worked are no longer readable from the record.
+ */
+export function coarsenWages(owed: number, paid: number, step = 500): { owed: number; paid: number } {
+  if (!Number.isSafeInteger(owed) || !Number.isSafeInteger(paid) || owed <= 0 || paid < 0 || paid > owed) throw new Error("owed and paid must be whole rupees, 0 <= paid <= owed")
+  const o = Math.max(step, Math.round(owed / step) * step)
+  const p = Math.min(o, Math.round(((paid / owed) * o) / step) * step)
+  return { owed: o, paid: p }
 }

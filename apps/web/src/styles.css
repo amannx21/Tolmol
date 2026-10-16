@@ -1033,3 +1033,35 @@ label.field {
 .ws-title {
   align-self: center;
 }
+
+/* ---------------- big steppers (school meals, MGNREGA) ---------------- */
+.stepper {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.stepper .big-step {
+  min-width: 56px;
+  min-height: 56px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  border-radius: 14px;
+}
+.stepper-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.6rem;
+  font-weight: 700;
+  padding: 0 8px;
+}
+.stepper-value input {
+  width: 4.2em;
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px;
+}
