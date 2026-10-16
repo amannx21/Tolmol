@@ -18,6 +18,7 @@ import {
 import { device, reader, RELAYER_URL } from "./arkiv"
 import { trustedRegistry } from "./trust"
 import { STATE_NAMES, useLang } from "./i18n"
+import type { CardRole } from "./router"
 
 // ------------------------------------------------------------------ who is verified (cached per page load)
 let verifiersP: Promise<Verifier[]> | null = null
@@ -85,7 +86,7 @@ export async function verifyThisPhone(cardText: string, card: TestCard): Promise
 }
 
 /** One line for the device card: verified, or a link to get verified. */
-export function PhoneVerification() {
+export function PhoneVerification({ showLink = true }: { showLink?: boolean } = {}) {
   const { t } = useLang()
   const m = useVerified()
   const dealers = useDealers()
@@ -97,6 +98,7 @@ export function PhoneVerification() {
   if (!m || !dealers || !officials) return null
   if (o) return <p class="small ok">{t("phoneIsOfficial", { shop: o.shopId })} <a href={`#/dashboard?state=${o.state}`}>⚖ →</a></p>
   if (d) return <p class="small ok">{t("phoneIsDealer", { shop: d.shopId })} <a href={`#/shop/${d.shopId}`}>{d.shopId} →</a></p>
+  if (!a && !showLink) return null
   return a ? (
     <p class="small ok">{t("phoneVerified", { shop: a.shopId })}</p>
   ) : (
@@ -162,13 +164,18 @@ function Qr({ url }: { url: string }) {
   return <div class="qr small-qr" role="img" aria-label="QR" dangerouslySetInnerHTML={{ __html: qr.createSvgTag({ cellSize: 3, margin: 2, scalable: true }) }} />
 }
 
-export function TestCardsPage() {
+export function TestCardsPage({ role }: { role?: CardRole } = {}) {
   const { t } = useLang()
   const [cards, setCards] = useState<{ text: string; card: TestCard }[] | null>(null)
   const [dealers, setDealers] = useState<{ text: string; card: TestCard }[]>([])
   const [officials, setOfficials] = useState<{ text: string; card: TestCard }[]>([])
   const [operators, setOperators] = useState<{ text: string; card: TestCard }[]>([])
   const [err, setErr] = useState(false)
+  // Who this page is for: card holders by default; the shop dashboard's link opens on dealers.
+  const [tab, setTab] = useState<CardRole>(role ?? "holder")
+  useEffect(() => {
+    if (role) setTab(role)
+  }, [role])
   useEffect(() => {
     fetch("test-cards.json")
       .then((r) => r.json() as Promise<{ cards: string[]; dealers?: string[]; officials?: string[]; operators?: string[] }>)
@@ -185,85 +192,70 @@ export function TestCardsPage() {
       .catch(() => setErr(true))
   }, [])
   const base = `${location.origin}${location.pathname}`
+  const list = (items: { text: string; card: TestCard }[], prefix: string, label: (card: TestCard) => string) => (
+    <ul class="cards">
+      {items.map(({ text, card }, i) => (
+        <li>
+          <Qr url={`${base}#/card?c=${text}`} />
+          <div>
+            <strong>{prefix}{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {label(card)}
+            <br />
+            <a class="button secondary" href={`#/card?c=${text}`}>
+              <ActionIcon name="card" />
+              {t("useCard")}
+            </a>
+          </div>
+        </li>
+      ))}
+    </ul>
+  )
+  const tabs: { id: CardRole; count: number }[] = [
+    { id: "holder", count: cards?.length ?? 0 },
+    { id: "dealer", count: dealers.length },
+    { id: "staff", count: operators.length },
+    { id: "official", count: officials.length },
+  ]
   return (
     <section class="card">
-      <h2>{t("testCardsTitle")}</h2>
-      <p class="small">{t("testCardsHelp")}</p>
-      <PhoneVerification />
+      <h2>{t("navGetVerified")}</h2>
+      <p class="role-question">{t("verifyWho")}</p>
+      <div class="role-tabs" role="group" aria-label={t("verifyWho")}>
+        {tabs
+          .filter((x) => x.id === "holder" || x.count > 0)
+          .map((x) => (
+            <button type="button" aria-pressed={tab === x.id} onClick={() => setTab(x.id)}>
+              {t(`roleTab_${x.id}`)}
+            </button>
+          ))}
+      </div>
+      <PhoneVerification showLink={tab === "holder"} />
       {err && <p class="error">{t("errGeneric")}</p>}
-      <ul class="cards">
-        {cards?.map(({ text, card }, i) => (
-          <li>
-            <Qr url={`${base}#/card?c=${text}`} />
-            <div>
-              <strong>#{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {card.type}
-              <br />
-              <a class="button secondary" href={`#/card?c=${text}`}>
-                <ActionIcon name="card" />{t("useCard")}
-              </a>
-            </div>
-          </li>
-        ))}
-      </ul>
-      {dealers.length > 0 && (
+      {tab === "holder" && (
+        <>
+          <h3>{t("testCardsTitle")}</h3>
+          <p class="small">{t("testCardsHelp")}</p>
+          {list(cards ?? [], "#", (card) => card.type)}
+        </>
+      )}
+      {tab === "dealer" && (
         <>
           <h3>{t("testDealersTitle")}</h3>
           <p class="small">{t("testDealersHelp")}</p>
-          <ul class="cards">
-            {dealers.map(({ text, card }, i) => (
-              <li>
-                <Qr url={`${base}#/card?c=${text}`} />
-                <div>
-                  <strong>D{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("dealerLicenceTitle")}
-                  <br />
-                  <a class="button secondary" href={`#/card?c=${text}`}>
-                  <ActionIcon name="card" />{t("useCard")}
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {list(dealers, "D", () => t("dealerLicenceTitle"))}
         </>
       )}
-      {operators.length > 0 && (
+      {tab === "staff" && (
         <>
           <h3>{t("testOperatorsTitle")}</h3>
           <p class="small">{t("testOperatorsHelp")}</p>
-          <ul class="cards">
-            {operators.map(({ text, card }, i) => (
-              <li>
-                <Qr url={`${base}#/card?c=${text}`} />
-                <div>
-                  <strong>S{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t(card.type === "SCH" ? "operatorIdTitle_SCH" : "operatorIdTitle_GPO")}
-                  <br />
-                  <a class="button secondary" href={`#/card?c=${text}`}>
-                    <ActionIcon name="card" />
-                    {t("useCard")}
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {list(operators, "S", (card) => t(card.type === "SCH" ? "operatorIdTitle_SCH" : "operatorIdTitle_GPO"))}
         </>
       )}
-      {officials.length > 0 && (
+      {tab === "official" && (
         <>
           <h3>{t("testOfficialsTitle")}</h3>
           <p class="small">{t("testOfficialsHelp")}</p>
-          <ul class="cards">
-            {officials.map(({ text, card }, i) => (
-              <li>
-                <Qr url={`${base}#/card?c=${text}`} />
-                <div>
-                  <strong>G{i + 1}</strong> <span class="mono small">{card.shopId}</span> · {t("officialIdTitle")}
-                  <br />
-                  <a class="button secondary" href={`#/card?c=${text}`}>
-                  <ActionIcon name="card" />{t("useCard")}
-                  </a>
-                </div>
-              </li>
-            ))}
-          </ul>
+          {list(officials, "G", () => t("officialIdTitle"))}
         </>
       )}
     </section>

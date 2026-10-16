@@ -44,7 +44,7 @@ export function MyOutletPage() {
       <section class="card">
         <h2>{t("myOutletTitle")}</h2>
         <p>{t("myOutletNone")}</p>
-        <a class="button" href="#/test-cards">
+        <a class="button" href="#/test-cards?role=dealer">
           <ActionIcon name="shield" />
           {t("navGetVerified")}
         </a>

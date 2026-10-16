@@ -11,7 +11,7 @@ export type Route =
   | { name: "r"; key: string }
   | { name: "about" }
   | { name: "card"; c: string }
-  | { name: "testCards" }
+  | { name: "testCards"; role?: CardRole }
   | { name: "designPreview" }
   | { name: "me" }
   | { name: "tour" }
@@ -20,6 +20,10 @@ export type Route =
   | { name: "raw" }
   | { name: "myOutlet" }
   | { name: "schemes"; s?: "mdm" | "nrega" }
+
+/** Who the Get verified page is showing test cards for. */
+export type CardRole = "holder" | "dealer" | "staff" | "official"
+const CARD_ROLES: readonly CardRole[] = ["holder", "dealer", "staff", "official"]
 
 const schemeParam = (q: URLSearchParams): Scheme | undefined => {
   const s = q.get("scheme")
@@ -66,8 +70,10 @@ export function parse(hash: string): Route {
       return { name: "verify" }
     case "card":
       return { name: "card", c: q.get("c") ?? "" }
-    case "test-cards":
-      return { name: "testCards" }
+    case "test-cards": {
+      const role = q.get("role")
+      return { name: "testCards", role: CARD_ROLES.find((r) => r === role) }
+    }
   }
   return { name: "home" }
 }

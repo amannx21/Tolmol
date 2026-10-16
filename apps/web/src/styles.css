@@ -1122,3 +1122,9 @@ label.field {
   text-align: center;
   padding: 6px;
 }
+
+/* Get verified: who are you? (one list at a time) */
+.role-question { margin: 4px 0 8px; font-weight: 600; }
+.role-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.role-tabs button { background: var(--card); color: var(--ink); border: 1px solid var(--line); white-space: normal; }
+.role-tabs button[aria-pressed="true"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }

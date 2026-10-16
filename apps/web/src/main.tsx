@@ -116,7 +116,7 @@ function App() {
       page = <CardPage c={route.c} />
       break
     case "testCards":
-      page = <TestCardsPage />
+      page = <TestCardsPage role={route.role} />
       break
     case "verify":
       page = <VerifyPage />
