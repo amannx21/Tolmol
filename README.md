@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/media/hero-v2.jpg" alt="Tolmol: three phones showing the Hindi home page, an English report question, and a shop's stock board" width="100%">
+<img src="docs/media/hero-v3.jpg" alt="Tolmol: three phones showing the English home page, a Hindi report question read aloud, and a shop's stock board" width="100%">
 
 # Tolmol · तोलमोल
 
