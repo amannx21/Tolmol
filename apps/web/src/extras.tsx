@@ -16,8 +16,6 @@ import {
   patternSignals,
   PROJECT,
   evidenceRows,
-  shopWitnesses,
-  shopReports,
   SCHEME_ISSUES,
   schemeIssueList,
   schemeIssueNames,
@@ -29,6 +27,7 @@ import {
   type Report,
   type Witness,
 } from "tolmol-sdk"
+import { shopReports, shopWitnesses } from "./reads"
 import { key as keyAttr } from "@arkiv-network/sdk/attr"
 import { newIdentity, reader, rpcSetting, setRpc } from "./arkiv"
 import { usePrefs } from "./prefs"

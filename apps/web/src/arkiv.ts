@@ -1,12 +1,12 @@
 import { useEffect, useState } from "preact/hooks"
 import { concat, formatEther, keccak256, toHex } from "viem"
-import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts"
+import { generatePrivateKey, privateKeyToAccount, type LocalAccount, type PrivateKeyAccount } from "viem/accounts"
 import {
   DuplicateError,
   myExistingReport,
   reportCorrections,
   submitReport,
-  writerFor,
+  writerFor as sdkWriterFor,
   wsReader,
   type Reader,
   type ReportInput,
@@ -14,6 +14,7 @@ import {
   type Writer,
 } from "tolmol-sdk"
 import { getPrefs } from "./prefs"
+import { clearReadCache } from "./reads"
 import { meteredReader } from "./rpc"
 
 /** Shared read-only clients. Reads go straight from the browser to the public Arkiv RPC: no Tolmol backend. */
@@ -47,6 +48,23 @@ export const liveReader = () => (ws ??= wsReader(rpcSetting.ws))
 
 // --- Device identity: an anonymous keypair generated on this device. It is not a login and is never sent anywhere.
 const STORAGE_KEY = "tolmol.device.v1"
+/** Every writer this phone uses: after any of its calls settles (a write, or a failed one), the shared read cache in
+ *  reads.ts is cleared, so the next read shows the new record instead of a copy from before it. */
+function writerFor(acct: LocalAccount, url?: string): Writer {
+  const w = sdkWriterFor(acct, url)
+  return new Proxy(w, {
+    get(target, prop, receiver) {
+      const v: unknown = Reflect.get(target, prop, receiver)
+      if (typeof v !== "function") return v
+      return (...args: unknown[]) => {
+        const out: unknown = (v as (...a: unknown[]) => unknown).apply(target, args)
+        if (out instanceof Promise) out.then(clearReadCache, clearReadCache)
+        return out
+      }
+    },
+  })
+}
+
 let account: PrivateKeyAccount | undefined
 let writer: Writer | undefined
 

@@ -5,17 +5,18 @@ import { useEffect, useState } from "preact/hooks"
 import {
   decryptNote,
   districtOfficeKeys,
+  noteHasPersonalNumber,
   explorerEntityUrl,
   NOTE_MAX_CHARS,
   publishOfficeKey,
   reportNotes,
   sendNote,
-  shopNotesTo,
   validNotes,
   validOfficeKeys,
   type OfficeKey,
   type Report,
 } from "tolmol-sdk"
+import { shopNotesTo } from "./reads"
 import { ActionIcon } from "./ActionIcon"
 import { device, devicePrivateKey, ensureGas, reader, short, writerForAddress } from "./arkiv"
 import { useFmt, useLang } from "./i18n"
@@ -47,6 +48,7 @@ export function ReporterNote({ report }: { report: Report }) {
   const send = async () => {
     const w = writerForAddress(report.creator)
     if (!office || office === "error" || !w) return
+    if (noteHasPersonalNumber(text)) return setMsg({ ok: false, text: t("noteNoNumbers") })
     setBusy(true)
     setMsg(null)
     try {

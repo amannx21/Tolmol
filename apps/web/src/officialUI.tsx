@@ -6,11 +6,9 @@ import {
   activeDelegation,
   delegateInspector,
   INSPECTOR_ACTIONS,
-  shopDelegations,
   type Delegation,
   OFFICIAL_ACTIONS_FOR_SCHEME,
   recordOfficialAction,
-  shopOfficialActions,
   validOfficialActions,
   afterStats,
   isContradicted,
@@ -22,6 +20,7 @@ import {
   type OfficialRecord,
   type Scheme,
 } from "tolmol-sdk"
+import { shopDelegations, shopOfficialActions } from "./reads"
 import { device, ensureGas, reader, short } from "./arkiv"
 import { useFmt, useLang, type Key } from "./i18n"
 import { loadOutlets } from "./ui"

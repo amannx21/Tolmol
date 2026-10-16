@@ -9,6 +9,7 @@ import {
   listAttestations,
   listOutlets,
   listVerifiers,
+  outletRecord,
   shopCorrections,
   shopFollowups,
   shopOfficialActions,
@@ -51,6 +52,7 @@ async function capture(run: (r: Reader) => Promise<unknown>): Promise<Captured |
 
 const QUERIES: { id: string; run: (r: Reader, shop: string) => Promise<unknown> }[] = [
   { id: "outlets", run: (r) => listOutlets(r, {}, { registry: trustedRegistry() }) },
+  { id: "everything", run: (r, s) => outletRecord(r, s) },
   { id: "reports", run: (r, s) => shopReports(r, s) },
   { id: "witnesses", run: (r, s) => shopWitnesses(r, s) },
   { id: "corrections", run: (r, s) => shopCorrections(r, s) },

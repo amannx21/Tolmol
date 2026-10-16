@@ -10,7 +10,6 @@ import {
   fullShareContext,
   parseReport,
   sayFullShare,
-  shopFullShares,
   type FullShare,
   reportCorrections,
   reportWitnesses,
@@ -21,6 +20,7 @@ import {
   type Report,
   type Witness,
 } from "tolmol-sdk"
+import { shopFullShares } from "./reads"
 import { confirmWriter, device, ensureGas, myAddresses, reader, short, writerForAddress } from "./arkiv"
 import { Say } from "./Easy"
 import { usePrefs } from "./prefs"

@@ -3,7 +3,7 @@ import { formatKg, ITEM_INFO, type AnyItem } from "tolmol-sdk"
 
 export type Lang = "en" | "hi"
 
-// Hindi strings were drafted by an AI assistant and need review by a native speaker (see docs/LLMS_USED.md).
+// Hindi strings were drafted with an AI assistant, then checked by the builder, a native Hindi speaker (see docs/LLMS_USED.md).
 const en = {
   appName: "Tolmol",
   tagline: "Ration shortfall evidence that no dealer, official or app host can quietly erase.",
@@ -243,7 +243,8 @@ const en = {
   pubAuditNone: "The audit result could not be loaded right now.",
   pubAuditHow: "The audit reads every Tolmol entity and fails on any unknown attribute, free text, personal data, or any payload other than an encrypted note. Anyone can run it without keys:",
   noteTitle: "Private note to the district official",
-  noteHelp: "Say here what you cannot say in public. Your phone locks it so that only the verified official of {district} can read it; everyone else, on Arkiv, sees scrambled text. It is sealed: nobody can delete it, you included. Write your name only if you want the official to know it.",
+  noteHelp: "Say here what you cannot say in public. Your phone locks it so that only the verified official of {district} can read it; everyone else, on Arkiv, sees scrambled text. It is sealed: nobody can delete it, you included. Do not write your name, phone or card number: the locked text stays in Arkiv's history even after it expires.",
+  noteNoNumbers: "Please remove the phone, Aadhaar or card number. The locked text stays in Arkiv's history even after it expires, so numbers that identify you are not sent.",
   notePlaceholder: "For example: the dealer said he will stop my ration if I complain again.",
   noteSend: "Lock and send",
   noteSending: "Locking and sending…",
@@ -447,6 +448,7 @@ const en = {
   rawTitle: "Read it without Tolmol",
   rawHelp: "Every question this app asks Arkiv about one shop, school or panchayat, generated from the app's own code. Run any of them from a terminal or your own program: the same records come back, with no Tolmol server in between, from any Arkiv endpoint.",
   raw_outlets: "All outlets (ration shops, schools, panchayats), from the trusted registry only",
+  raw_everything: "Everything about this outlet in one query (what the app itself reads); the rest are the same records, one type at a time",
   raw_reports: "Reports for this outlet",
   raw_witnesses: "Confirmations of those reports",
   raw_corrections: "Withdrawals by the reporters themselves",
@@ -492,6 +494,7 @@ const en = {
   homeVisual_nrega: "Wages for every day worked, within 15 days",
   homeNoName: "No name needed",
   homeEasyPhone: "Easy on your phone",
+  homeListenTap: "Listen and tap, no typing",
   homeHowTitle: "How it works",
   homeStep1_mdm: "Say how many days the school was open, and on how many your child got a hot meal. No name, no child's name.",
   homeStep2_mdm: "Other parents at the school confirm it from their own phones.",
@@ -1078,7 +1081,8 @@ const hi: Record<Key, string> = {
   pubAuditNone: "अभी जाँच का नतीजा लोड नहीं हो सका।",
   pubAuditHow: "जाँच Tolmol का हर रिकॉर्ड पढ़ती है और किसी अनजान जानकारी, खुले टेक्स्ट, निजी जानकारी, या ताले वाले संदेश के अलावा किसी भी पेलोड पर फ़ेल हो जाती है। कोई भी इसे बिना कुंजी के चला सकता है:",
   noteTitle: "ज़िला अधिकारी को निजी संदेश",
-  noteHelp: "जो बात आप सबके सामने नहीं कह सकते, यहाँ लिखें। आपका फ़ोन इसे ताला लगाकर भेजता है, ताकि सिर्फ़ {district} के सत्यापित अधिकारी इसे पढ़ सकें; Arkiv पर बाकी सबको उलझे हुए अक्षर दिखते हैं। यह सील हो जाता है: कोई इसे मिटा नहीं सकता, आप भी नहीं। अपना नाम तभी लिखें जब आप चाहते हैं कि अधिकारी जानें।",
+  noteHelp: "जो बात आप सबके सामने नहीं कह सकते, यहाँ लिखें। आपका फ़ोन इसे ताला लगाकर भेजता है, ताकि सिर्फ़ {district} के सत्यापित अधिकारी इसे पढ़ सकें; Arkiv पर बाकी सबको उलझे हुए अक्षर दिखते हैं। यह सील हो जाता है: कोई इसे मिटा नहीं सकता, आप भी नहीं। अपना नाम, फ़ोन या कार्ड नंबर न लिखें: ताले वाला टेक्स्ट समय पूरा होने के बाद भी Arkiv के इतिहास में रहता है।",
+  noteNoNumbers: "कृपया फ़ोन, आधार या कार्ड नंबर हटा दें। ताले वाला टेक्स्ट समय पूरा होने के बाद भी Arkiv के इतिहास में रहता है, इसलिए आपकी पहचान बताने वाले नंबर नहीं भेजे जाते।",
   notePlaceholder: "जैसे: कोटेदार ने कहा कि दोबारा शिकायत की तो राशन बंद कर देगा।",
   noteSend: "ताला लगाकर भेजें",
   noteSending: "ताला लगाकर भेज रहे हैं…",
@@ -1282,6 +1286,7 @@ const hi: Record<Key, string> = {
   rawTitle: "Tolmol के बिना पढ़ें",
   rawHelp: "किसी एक दुकान, स्कूल या पंचायत के बारे में यह ऐप Arkiv से जो भी पूछता है, ऐप के अपने कोड से बनाया गया। इनमें से कोई भी टर्मिनल या अपने प्रोग्राम से चलाएँ: वही रिकॉर्ड लौटेंगे, बीच में कोई Tolmol सर्वर नहीं, किसी भी Arkiv सर्वर से।",
   raw_outlets: "सभी जगहें (राशन दुकानें, स्कूल, पंचायतें), सिर्फ़ भरोसेमंद रजिस्ट्री से",
+  raw_everything: "इस जगह का सब कुछ, एक ही क्वेरी में (ऐप ख़ुद यही पढ़ता है); नीचे वही रिकॉर्ड, एक-एक प्रकार करके",
   raw_reports: "इस जगह की रिपोर्टें",
   raw_witnesses: "उन रिपोर्टों की पुष्टियाँ",
   raw_corrections: "रिपोर्ट करने वालों द्वारा वापस ली गई रिपोर्टें",
@@ -1327,6 +1332,7 @@ const hi: Record<Key, string> = {
   homeVisual_nrega: "हर काम के दिन की मज़दूरी, 15 दिन के भीतर",
   homeNoName: "नाम नहीं माँगते",
   homeEasyPhone: "फ़ोन पर आसान",
+  homeListenTap: "सुनिए और टैप कीजिए, लिखना नहीं",
   homeHowTitle: "यह कैसे काम करता है",
   homeStep1_mdm: "बताएँ कि स्कूल कितने दिन खुला, और कितने दिन आपके बच्चे को गरम भोजन मिला। कोई नाम नहीं, बच्चे का नाम भी नहीं।",
   homeStep2_mdm: "स्कूल के दूसरे माता-पिता अपने फ़ोन से इसकी पुष्टि करते हैं।",

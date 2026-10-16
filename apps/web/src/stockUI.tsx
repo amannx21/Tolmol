@@ -11,10 +11,6 @@ import {
   latestFollowups,
   leakageEstimate,
   postStockBoard,
-  shopFollowups,
-  shopResponses,
-  shopStocks,
-  shopBoards,
   validBoards,
   boardGap,
   postBoard,
@@ -29,6 +25,7 @@ import {
   type Shop,
   type StockBoard,
 } from "tolmol-sdk"
+import { shopBoards, shopFollowups, shopResponses, shopStocks } from "./reads"
 import { ActionIcon } from "./ActionIcon"
 import { device, ensureGas, reader, short } from "./arkiv"
 import { useFmt, useLang, type Key } from "./i18n"

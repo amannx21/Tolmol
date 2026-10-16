@@ -9,8 +9,6 @@ import {
   reportFollowups,
   reportResponses,
   respondToReport,
-  shopFollowups,
-  shopResponses,
   suggestedActions,
   validResponses,
   type Followup,
@@ -19,6 +17,7 @@ import {
   type Response,
   type ResponseAction,
 } from "tolmol-sdk"
+import { shopFollowups, shopResponses } from "./reads"
 import { device, ensureGas, reader, short, writerForAddress } from "./arkiv"
 import { outletKey, useLang, type Key } from "./i18n"
 import { useDealers } from "./verified"

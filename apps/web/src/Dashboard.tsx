@@ -2,29 +2,22 @@ import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 import {
   answerStats,
   needsAttention,
-  stateOfficialActions,
-  stateDelegations,
   type Delegation,
   strongestAction,
   validOfficialActions,
   type OfficialRecord,
   dedupeReports,
   latestFollowups,
-  stateFollowups,
-  stateResponses,
   validResponses,
   type AnswerStats,
   type Followup,
   type Response,
   addMonths,
   currentMonth,
-  dashboardReports,
-  dashboardWitnesses,
   describeDashboardQueries,
   formatBp,
   monthToNum,
   shopStats,
-  stateCorrections,
   validWitnesses,
   watchTolmol,
   withdrawnKeys,
@@ -36,6 +29,7 @@ import {
   type AnyItem,
   type Scheme,
 } from "tolmol-sdk"
+import { dashboardReports, dashboardWitnesses, stateCorrections, stateDelegations, stateFollowups, stateOfficialActions, stateResponses } from "./reads"
 import { liveReader, reader } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang, type Key } from "./i18n"
 import { go } from "./router"

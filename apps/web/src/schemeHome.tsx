@@ -116,6 +116,7 @@ export function SchemeHome({ scheme }: { scheme: Exclude<Scheme, "pds"> }) {
           <div class="landing-assurances">
             <span>✓ {t("homeNoName")}</span>
             <span>✓ {t("homeEasyPhone")}</span>
+            <span>✓ {t("homeListenTap")}</span>
           </div>
         </div>
         {scheme === "mdm" ? <SchoolMealHero /> : <WageHero />}

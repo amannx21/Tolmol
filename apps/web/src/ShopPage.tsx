@@ -9,10 +9,10 @@ import {
   forScheme,
   formatBp,
   describeShopQueries,
-  shopCorrections,
-  shopReports,
+  shopCorrections as shopCorrectionsAt,
+  shopReports as shopReportsAt,
   shopStats,
-  shopWitnesses,
+  shopWitnesses as shopWitnessesAt,
   toCsv,
   toJson,
   validWitnesses,
@@ -22,6 +22,7 @@ import {
   type Witness,
 } from "tolmol-sdk"
 import { reader, short } from "./arkiv"
+import { shopCorrections, shopReports, shopWitnesses } from "./reads"
 import { outletKey, STATE_NAMES, useFmt, useLang } from "./i18n"
 import { go } from "./router"
 import { IssueCounts, PatternsCard } from "./extras"
@@ -66,17 +67,20 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
     setErr(null)
     ;(async () => {
       const head = await reader.getBlockNumber({ cacheTime: 0 })
-      const at = atBlock && /^\d+$/.test(atBlock) && BigInt(atBlock) <= head ? BigInt(atBlock) : head
+      const past = atBlock && /^\d+$/.test(atBlock) && BigInt(atBlock) < head ? BigInt(atBlock) : null
+      // Now: the outlet's whole record in one query, shared with every card on this page (reads.ts). As it was at a
+      // past block: the exact per-type queries pinned at that block.
       const [shops, reps, wits, corr] = await Promise.all([
         loadOutlets(),
-        shopReports(reader, shopId, month, { atBlock: at }),
-        shopWitnesses(reader, shopId, month, { atBlock: at }),
-        shopCorrections(reader, shopId, month, { atBlock: at }),
+        past === null ? shopReports(reader, shopId, month) : shopReportsAt(reader, shopId, month, { atBlock: past }),
+        past === null ? shopWitnesses(reader, shopId, month) : shopWitnessesAt(reader, shopId, month, { atBlock: past }),
+        past === null ? shopCorrections(reader, shopId, month) : shopCorrectionsAt(reader, shopId, month, { atBlock: past }),
       ])
       const shop = shops.find((s) => s.shopId === shopId)
       // An outlet counts only reports of its own scheme (a school counts meal reports, never grain).
       const reports = forScheme(reps.items, shop?.scheme ?? "pds")
-      setData({ shop, reports, witnesses: wits.items, withdrawn: withdrawnKeys(reports, corr.items), atBlock: at, head })
+      const at = past ?? reps.atBlock
+      setData({ shop, reports, witnesses: wits.items, withdrawn: withdrawnKeys(reports, corr.items), atBlock: at, head: past === null ? at : head })
     })().catch(setErr)
   }, [shopId, month, atBlock])
 

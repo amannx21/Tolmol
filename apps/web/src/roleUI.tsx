@@ -14,8 +14,6 @@ import {
   parseResponse,
   parseWitness,
   PROJECT,
-  shopReports,
-  shopResponses,
   TYPE,
   ANSWER_TYPE,
   validResponses,
@@ -28,6 +26,7 @@ import {
   type Response,
   type Witness,
 } from "tolmol-sdk"
+import { shopReports, shopResponses } from "./reads"
 import { CheckShop } from "./checkUI"
 import { loadOutlets } from "./ui"
 import { ActionIcon, type ActionIconName } from "./ActionIcon"

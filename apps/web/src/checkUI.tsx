@@ -7,11 +7,7 @@ import {
   currentMonth,
   dedupeReports,
   forScheme,
-  shopCorrections,
-  shopReports,
   shopStats,
-  shopStocks,
-  shopBoards,
   shopVerdict,
   withdrawnKeys,
   type Scheme,
@@ -19,6 +15,7 @@ import {
   type ShopStats,
   type Verdict,
 } from "tolmol-sdk"
+import { shopBoards, shopCorrections, shopReports, shopStocks } from "./reads"
 import { ActionIcon } from "./ActionIcon"
 import { reader } from "./arkiv"
 import { IssueCounts } from "./extras"

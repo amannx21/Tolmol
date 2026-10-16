@@ -5,15 +5,13 @@ import { useEffect, useState } from "preact/hooks"
 import {
   addMonths,
   currentMonth,
-  dashboardReports,
   explorerAddressUrl,
   formatBp,
-  stateDelegations,
-  stateOfficialActions,
   trackRecords,
   validOfficialActions,
   type TrackRecord,
 } from "tolmol-sdk"
+import { dashboardReports, stateDelegations, stateOfficialActions } from "./reads"
 import { reader, short } from "./arkiv"
 import { STATE_NAMES, useFmt, useLang } from "./i18n"
 import { offKey, useShopDistricts } from "./officialUI"

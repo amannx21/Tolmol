@@ -1,7 +1,8 @@
 // For a phone verified as an outlet's operator (a ration shop's dealer, a school's head teacher, a panchayat's
 // employment assistant): its job, on every page. Card holders and visitors never see any of this.
 import { useEffect, useState } from "preact/hooks"
-import { dedupeReports, shopReports, shopResponses, validResponses } from "tolmol-sdk"
+import { dedupeReports, validResponses } from "tolmol-sdk"
+import { shopReports, shopResponses } from "./reads"
 import { ActionIcon } from "./ActionIcon"
 import { device, reader } from "./arkiv"
 import { outletKey, useLang } from "./i18n"

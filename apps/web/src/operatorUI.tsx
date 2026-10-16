@@ -3,7 +3,8 @@
 // waiting for an answer, answered reports with the reporter's verdict, the monthly board, the Fair badge, officials'
 // actions. Everything is read from Arkiv, and every answer or board is sealed; the outlet cannot edit or hide reports.
 import { useEffect, useState } from "preact/hooks"
-import { dedupeReports, forScheme, latestFollowups, shopCorrections, shopFollowups, shopReports, shopResponses, validResponses, withdrawnKeys, type Followup, type Report, type Response, type Shop } from "tolmol-sdk"
+import { dedupeReports, forScheme, latestFollowups, validResponses, withdrawnKeys, type Followup, type Report, type Response, type Shop } from "tolmol-sdk"
+import { shopCorrections, shopFollowups, shopReports, shopResponses } from "./reads"
 import { ActionIcon } from "./ActionIcon"
 import { device, reader, short } from "./arkiv"
 import { outletKey, useFmt, useLang, type Key } from "./i18n"

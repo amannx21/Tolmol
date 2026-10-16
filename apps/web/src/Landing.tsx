@@ -61,7 +61,7 @@ export function LandingHero({ animationKey = 0 }: { animationKey?: number } = {}
         <a class="button landing-primary" href="#/report" onClick={begin}><FlowIcon kind="report" /><span>{hi ? "मुझे कम राशन मिला" : "I got less ration"}</span><span aria-hidden="true">→</span></a>
         <a class="button secondary" href={prefs.myShop ? `#/shop/${prefs.myShop}` : "#/dashboard"}><FlowIcon kind="shop" />{prefs.myShop ? hi ? "मेरी दुकान देखें" : "See my shop" : hi ? "दुकान का रिकॉर्ड देखें" : "See shop records"}</a>
       </div>
-      <div class="landing-assurances"><span>✓ {hi ? "नाम नहीं माँगते" : "No name needed"}</span><span>✓ {hi ? "फ़ोन पर आसान" : "Easy on your phone"}</span></div>
+      <div class="landing-assurances"><span>✓ {hi ? "नाम नहीं माँगते" : "No name needed"}</span><span>✓ {hi ? "फ़ोन पर आसान" : "Easy on your phone"}</span><span>✓ {hi ? "सुनिए और टैप कीजिए, लिखना नहीं" : "Listen and tap, no typing"}</span></div>
       <ExploreButton />
     </div>
     <div class="landing-side">
