@@ -20,6 +20,7 @@ import { TrustPage } from "./trust"
 import { RawPage } from "./rawPage"
 import { AddOnsPage } from "./schemeHome"
 import { MyOutletPage } from "./operatorUI"
+import { TrackPage } from "./trackUI"
 import "./styles.css"
 import "./design.css"
 import "./flow.css"
@@ -111,6 +112,9 @@ function App() {
       break
     case "myOutlet":
       page = <MyOutletPage />
+      break
+    case "track":
+      page = <TrackPage state={route.state} />
       break
     case "card":
       page = <CardPage c={route.c} />

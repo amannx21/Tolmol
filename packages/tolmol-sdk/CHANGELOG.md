@@ -18,6 +18,11 @@ not know instead of misreading it.
   `GPO` (panchayat employment assistant), both giving the `dealer` (outlet operator) role.
 
 ### Library
+- `trackRecord.ts`: who checks the checkers. `trackRecords` sets every counted official or inspector finding
+  against the reports at that outlet in the next `AFTER_DAYS` (60) days; `isContradicted` flags a clearing finding
+  (`CLEARING_ACTIONS`: no issue found, grain or dues restored) followed by attention-list evidence. Nothing is stored.
+- `proof.ts`: `PROOF_MAX_AGE_S` is now one hour (was 15 minutes), so a proof can travel through a representative
+  when the reporter does not come to the hearing.
 - `schemes.ts`: `SCHEMES`, `ITEM_INFO` (scheme, unit, maximum per item), `SCHEME_ISSUES`, `SCHEME_ISSUE_GROUPS`,
   `formatAmount`, `forScheme`.
 - `queries.ts`: `listOutlets` (one `OR` query over both registry types).

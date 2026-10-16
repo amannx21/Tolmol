@@ -8,8 +8,8 @@ import { getReport, type Reader } from "./queries.js"
 import type { Report } from "./model.js"
 
 export type ReportProof = { v: 1; k: Hex; c: string; t: number; s: Hex }
-/** A proof older than this is refused (the code is one-time and short-lived). */
-export const PROOF_MAX_AGE_S = 15 * 60
+/** A proof older than this is refused. One hour, so a person who does not come to the hearing can send it through someone they trust. */
+export const PROOF_MAX_AGE_S = 60 * 60
 
 export const proofMessage = (reportKey: string, code: string, t: number) => `Tolmol: I created report ${reportKey.toLowerCase()}\ncode ${code}\ntime ${t}`
 

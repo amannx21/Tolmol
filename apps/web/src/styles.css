@@ -1135,3 +1135,9 @@ label.field {
 .operator-banner-text { display: grid; gap: 2px; flex: 1 1 220px; min-width: 0; }
 .operator-banner-text span { font-size: .92rem; color: var(--muted); }
 .operator-banner .button { flex: none; }
+
+/* Who checks the checkers */
+.track-card { border-top: 1px solid var(--line); padding: 14px 0 6px; }
+.track-card h3 { margin: 0 0 4px; font-size: 1.02rem; }
+.track-card.flagged h3::before { content: "⚠ "; color: var(--warn); }
+.small-btn { padding: 4px 10px; font-size: .85rem; margin-top: 4px; }

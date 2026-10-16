@@ -305,7 +305,7 @@ export function ShopPage({ shopId, month, atBlock, letter }: { shopId: string; m
       </section>
 
       <ShopScoreCard shopId={shopId} counted={kept} scheme={data.shop?.scheme} />
-      {data.shop && <OfficialActionsCard shop={data.shop} />}
+      {data.shop && <OfficialActionsCard shop={data.shop} reports={data.reports} />}
       <PatternsCard reports={data.reports} witnesses={data.witnesses} withdrawn={data.withdrawn} />
       <details class="card">
         <summary>{t("howComputed")}</summary>

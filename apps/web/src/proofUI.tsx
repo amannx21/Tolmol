@@ -53,6 +53,7 @@ export function HearingKit({ report }: { report: Report }) {
         </li>
         <li>
           <p class="small">{t("proofHelp")}</p>
+          <p class="small notice">{t("proofRemote")}</p>
           <div class="row wrap">
             <input class="mono" inputMode="numeric" maxLength={6} size={8} placeholder="123456" value={code} onInput={(e) => setCode(e.currentTarget.value)} aria-label={t("proofCodeLabel")} />
             <button onClick={prove} disabled={!/^\d{6}$/.test(code.trim())}>

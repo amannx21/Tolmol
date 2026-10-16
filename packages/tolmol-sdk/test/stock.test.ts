@@ -90,7 +90,7 @@ describe("prove a report is mine", () => {
     expect(decodeProof("not a proof")).toBeNull()
     const ok = await checkProof(fakeReader(acct.address), p, { expectCode: "123456", now: at + 60_000 })
     expect(ok.ok && ok.fresh && ok.codeMatches).toBe(true)
-    const late = await checkProof(fakeReader(acct.address), p, { expectCode: "654321", now: at + 3_600_000 })
+    const late = await checkProof(fakeReader(acct.address), p, { expectCode: "654321", now: at + 7_200_000 })
     expect(late.ok && !late.fresh && late.codeMatches === false).toBe(true)
     expect((await checkProof(fakeReader(other.address), p)).ok).toBe(false) // someone else's report
     expect((await checkProof(fakeReader(null), p)).ok).toBe(false) // no such report

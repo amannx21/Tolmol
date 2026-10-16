@@ -12,6 +12,11 @@ import {
   recordOfficialAction,
   shopOfficialActions,
   validOfficialActions,
+  afterStats,
+  isContradicted,
+  CLEARING_ACTIONS,
+  formatBp,
+  type Report,
   type Attention,
   type OfficialAction,
   type OfficialRecord,
@@ -21,6 +26,7 @@ import { device, ensureGas, reader, short } from "./arkiv"
 import { useFmt, useLang, type Key } from "./i18n"
 import { loadOutlets } from "./ui"
 import { useOfficials } from "./verified"
+import { draftAppeal } from "./rti"
 
 export const offKey = (a: OfficialAction) => `off_${a}` as Key
 
@@ -33,8 +39,9 @@ export function useShopDistricts(): Map<string, string> | null {
   return m
 }
 
-export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: string; district: string; scheme?: Scheme } }) {
-  const { t } = useLang()
+export function OfficialActionsCard({ shop, reports }: { shop: { shopId: string; state: string; district: string; scheme?: Scheme }; reports?: readonly Report[] }) {
+  const { t, lang } = useLang()
+  const [appeal, setAppeal] = useState<string | null>(null)
   const f = useFmt()
   const officials = useOfficials()
   const districts = useShopDistricts()
@@ -108,11 +115,34 @@ export function OfficialActionsCard({ shop }: { shop: { shopId: string; state: s
           {list.map((a) => (
             <li>
               <strong>{t(offKey(a.action))}</strong> <span class="small muted">· #{a.createdAt.toString()} · {short(a.creator)}{a.via ? ` · ${t("byInspector", { official: short(a.via) })}` : ""}</span>
+              {reports && CLEARING_ACTIONS.includes(a.action) && (() => {
+                // What people reported here after this finding: a "no issue" that later reports contradict is flagged.
+                const s = afterStats(reports, shop.shopId, a.createdAt)
+                const bad = isContradicted(a, s)
+                return (
+                  <>
+                    <br />
+                    <span class="small">{t("trackAfter", { n: s.reports, p: s.reporters, pct: formatBp(s.shortfallBp) })}</span>{" "}
+                    {bad && <span class="tag warn">{t("trackContradicted")}</span>}{" "}
+                    <button class="secondary small-btn" onClick={() => setAppeal(draftAppeal({ shop, finding: a, after: s, reports, pageUrl: `${location.origin}${location.pathname}#/shop/${shop.shopId}` }, lang))}>
+                      {t("appealBtn")}
+                    </button>
+                  </>
+                )
+              })()}
             </li>
           ))}
         </ul>
       )}
-      <p class="small muted">{t("officialHelp")}</p>
+      {appeal && (
+        <>
+          <p class="small">{t("appealHelp")}</p>
+          <textarea class="rti" readOnly rows={14} value={appeal} aria-label={t("appealBtn")} />
+        </>
+      )}
+      <p class="small muted">
+        {t("officialHelp")} <a href={`#/track?state=${shop.state}`}>{t("trackLink")} →</a>
+      </p>
       {iAmOfficial && (
         <div class="dealer-answer">
           <h4>{t("actAsOfficial", { district: f.district(shop.district) })}</h4>

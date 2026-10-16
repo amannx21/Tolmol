@@ -4,7 +4,7 @@
 //
 // Legal basis (Right to Information Act, 2005): s.6(1) request in English, Hindi or the official language;
 // s.6(2) no reasons needed; s.7(1) reply within 30 days; s.7(5) no fee for persons below the poverty line.
-import { dedupeReports, explorerEntityUrl, formatBp, formatKg, issueList, schemeIssueList, shopStats, validWitnesses, type AnyItem, type Report, type Scheme, type Shop, type Witness, type IssueName } from "tolmol-sdk"
+import { AFTER_DAYS, BLOCKS_PER_DAY, dedupeReports, explorerEntityUrl, formatBp, formatKg, issueList, schemeIssueList, shopStats, validWitnesses, type AfterStats, type AnyItem, type OfficialAction, type OfficialRecord, type Report, type Scheme, type Shop, type Witness, type IssueName } from "tolmol-sdk"
 import { districtName, monthName, type Lang } from "./i18n"
 
 export type RtiInput = {
@@ -299,4 +299,87 @@ function draftSchemeLetter(kind: "rti" | "complaint", input: RtiInput, scheme: E
   return lang === "hi"
     ? `सेवा में,\nकार्यक्रम अधिकारी, मनरेगा, प्रखंड ______, ${district}\nप्रतिलिपि: ज़िले के मनरेगा लोकपाल\n\nविषय: ग्राम पंचायत ${name} (${input.shopId}) में मनरेगा मज़दूरी न मिलने या कम मिलने की शिकायत\n\nमहोदय/महोदया,\n\n${months} में ${name} में किए गए काम की पूरी मज़दूरी समय पर नहीं मिली।\n${record}\n${issueLines ? `इसके अलावा:\n${issueLines}` : ""}\n\nकृपया मस्टर रोल और भुगतान रिकॉर्ड की जाँच करें, बकाया मज़दूरी दिलवाएँ, और अधिनियम के अनुसार देरी का मुआवज़ा दें।\n\nजॉब कार्ड संख्या: ______________________\n${sign}\n\n${evidence}\n${note}`
     : `To,\nThe Programme Officer, MGNREGA, Block ______, ${district}\nCopy: the MGNREGA Ombudsperson of the district\n\nSubject: Complaint about MGNREGA wages not paid, or paid short, at Gram Panchayat ${name} (${input.shopId})\n\nSir/Madam,\n\nIn ${months}, workers at ${name} did not get the full wages for their work on time.\n${record}\n${issueLines ? `In addition:\n${issueLines}` : ""}\n\nPlease examine the muster rolls and payment records, pay the wages due, and pay compensation for the delay as the Act provides.\n\nJob card number: ______________________\n${sign}\n\n${evidence}\n${note}`
+}
+
+// ------------------------------------------------------------------ appeal above the inspector
+// When people disagree with an official's or inspector's finding ("no issue found", "grain/dues restored"), a letter to
+// the authority above them: for ration, the State Food Commission (National Food Security Act 2013, s.16) with a copy to
+// the shop's Vigilance Committee (s.29); for school meals, the District Magistrate (PM POSHAN) with a copy to the School
+// Management Committee; for MGNREGA wages, the district Ombudsperson, asking for a social audit (MGNREGA 2005, s.17).
+// The signed finding and the reports after it are attached as explorer links. Personal details stay blanks.
+export type AppealInput = {
+  shop: { shopId: string; state: string; district: string; scheme?: Scheme }
+  finding: OfficialRecord
+  after: AfterStats
+  reports: readonly Report[]
+  pageUrl: string
+}
+const FINDING: Record<Lang, Partial<Record<OfficialAction, string>>> = {
+  en: { inspected_no_issue: "Inspected: no issue found", grain_restored: "Grain due to be restored", dues_restored: "Meals or wages due to be given" },
+  hi: { inspected_no_issue: "निरीक्षण: कोई गड़बड़ी नहीं", grain_restored: "बकाया अनाज दिलवाया जाए", dues_restored: "बकाया भोजन या मज़दूरी दी जाए" },
+}
+export function draftAppeal(input: AppealInput, lang: Lang): string {
+  const { shop, finding, after } = input
+  const scheme = shop.scheme ?? "pds"
+  const district = districtName(shop.district, lang)
+  const state = (lang === "hi" ? STATE_HI : STATE_EN)[shop.state] ?? shop.state
+  const until = finding.createdAt + BigInt(AFTER_DAYS) * BLOCKS_PER_DAY
+  const later = dedupeReports([...input.reports]).filter((r) => r.shopId === shop.shopId && r.createdAt > finding.createdAt && r.createdAt <= until)
+  const keys = later.slice(0, 20).map((r) => `- ${explorerEntityUrl(r.key)}`).join("\n")
+  const what = FINDING[lang][finding.action] ?? finding.action
+  const who = finding.via ? (lang === "hi" ? `निरीक्षक ${finding.creator}, जिन्हें अधिकारी ${finding.via} ने भेजा` : `inspector ${finding.creator}, sent by official ${finding.via}`) : (lang === "hi" ? `अधिकारी ${finding.creator}` : `official ${finding.creator}`)
+  const synthetic = shop.shopId.startsWith("SYN-")
+  const to = {
+    en: {
+      pds: `The Chairperson,\nState Food Commission, ${state}\n(National Food Security Act 2013, Section 16)\n\nCopy to: the Vigilance Committee for Fair Price Shop ${shop.shopId} (Section 29)`,
+      mdm: `The District Magistrate,\n${district} (PM POSHAN)\n\nCopy to: the School Management Committee of school ${shop.shopId}`,
+      nrega: `The Ombudsperson, MGNREGA,\n${district}\n\nCopy to: the Gram Sabha, for a social audit under Section 17 of the MGNREGA 2005`,
+    },
+    hi: {
+      pds: `सेवा में,\nअध्यक्ष, राज्य खाद्य आयोग, ${state}\n(राष्ट्रीय खाद्य सुरक्षा अधिनियम 2013, धारा 16)\n\nप्रतिलिपि: उचित मूल्य दुकान ${shop.shopId} की सतर्कता समिति (धारा 29)`,
+      mdm: `सेवा में,\nज़िलाधिकारी, ${district} (पीएम पोषण)\n\nप्रतिलिपि: स्कूल ${shop.shopId} की विद्यालय प्रबंधन समिति`,
+      nrega: `सेवा में,\nलोकपाल, मनरेगा, ${district}\n\nप्रतिलिपि: ग्राम सभा, मनरेगा 2005 की धारा 17 के तहत सामाजिक अंकेक्षण के लिए`,
+    },
+  }[lang][scheme]
+  if (lang === "hi") {
+    return `${to}
+
+विषय: ${shop.shopId} पर दर्ज निरीक्षण फ़ैसले की दोबारा जाँच का अनुरोध
+
+महोदय/महोदया,
+
+${shop.shopId} (${district}) के लिए "${what}" का फ़ैसला ${who} ने दर्ज किया (Arkiv ब्लॉक ${finding.createdAt})।
+इस फ़ैसले के बाद के ${AFTER_DAYS} दिनों में ${after.reporters} लोगों की ${after.reports} रिपोर्टें ${formatBp(after.shortfallBp)} कमी बताती हैं।
+
+कृपया किसी स्वतंत्र अधिकारी से दोबारा जाँच करवाएँ, इस फ़ैसले की समीक्षा करें, और बकाया दिलवाएँ।
+
+नाम / संगठन: ______________________   पता: ______________________
+दिनांक: ____________   हस्ताक्षर: ____________
+
+सबूत (हर रिकॉर्ड को कोई भी Arkiv पर जाँच सकता है):
+- फ़ैसला: ${explorerEntityUrl(finding.key)}
+${keys}
+पूरा रिकॉर्ड: ${input.pageUrl}
+${synthetic ? "\nनोट: यह डेमो जगह नकली (सिंथेटिक) है।\n" : ""}`
+  }
+  return `To,
+${to}
+
+Subject: Request to review the inspection finding recorded for ${shop.shopId}
+
+Sir/Madam,
+
+The finding "${what}" was recorded for ${shop.shopId} (${district}) by ${who} (Arkiv block ${finding.createdAt}).
+In the ${AFTER_DAYS} days after this finding, ${after.reports} reports from ${after.reporters} people show ${formatBp(after.shortfallBp)} short.
+
+Please have an independent officer inspect again, review this finding, and arrange for what is due.
+
+Name / organisation: ______________________   Address: ______________________
+Date: ____________   Signature: ____________
+
+Evidence (anyone can verify each record on Arkiv):
+- The finding: ${explorerEntityUrl(finding.key)}
+${keys}
+Full record: ${input.pageUrl}
+${synthetic ? "\nNote: this demo outlet is SYNTHETIC.\n" : ""}`
 }

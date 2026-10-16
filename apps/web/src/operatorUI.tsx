@@ -113,7 +113,7 @@ export function MyOutletPage() {
         </section>
       )}
       <StockAndFairness shop={shop} counted={data!.counted} />
-      <OfficialActionsCard shop={shop} />
+      <OfficialActionsCard shop={shop} reports={data!.counted} />
     </>
   )
 }

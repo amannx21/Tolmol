@@ -239,6 +239,9 @@ export function Dashboard({ initialState, scheme: initialScheme }: { initialStat
         </label>
       </section>
       {attention && <AttentionList items={attention} labels={labels} />}
+      <p class="small">
+        <a href={`#/track?state=${state}`}>{t("trackLink")} →</a>
+      </p>
       {err ? (
         <ErrorBox error={err} />
       ) : !reports ? (
