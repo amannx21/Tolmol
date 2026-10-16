@@ -207,7 +207,7 @@ minute on a low-end Android browser, one question per screen read aloud in Hindi
 typing; neighbours confirm; the dealer, head teacher or employment assistant answers on the record and posts a
 monthly board that Tolmol sets against the reports; officials get a public "needs attention" list, record actions
 and send an inspector; the person prints a complaint to the right office (NFSA s.15 DGRO, District Education
-Officer, MGNREGA Programme Officer) or an RTI, and sees their state's food helpline. *Works today:* a 141 KB (gzipped)
+Officer, MGNREGA Programme Officer) or an RTI, and sees their state's food helpline. *Works today:* an about 230 KB (gzipped)
 installable app that opens offline and queues reports, on two hosts. Honest limits: it needs a little test gas (our
 relayer covers it), and the demo uses synthetic outlets in real districts.
 
