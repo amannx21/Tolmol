@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks"
-import { formatEther } from "viem"
+import { concat, formatEther, keccak256, toHex } from "viem"
 import { generatePrivateKey, privateKeyToAccount, type PrivateKeyAccount } from "viem/accounts"
 import {
   DuplicateError,
@@ -70,6 +70,18 @@ export function device(): { account: PrivateKeyAccount; writer: Writer } {
     writer = writerFor(account, rpcSetting.http)
   }
   return { account, writer: writer! }
+}
+
+/** This phone's own private key. An official's phone uses it to publish its key for private notes and to read the notes
+ * sent to it; it is never sent anywhere. Null when storage is blocked (the key then lives only in this tab). */
+export function devicePrivateKey(): `0x${string}` | null {
+  device()
+  try {
+    const pk = localStorage.getItem(STORAGE_KEY)
+    return pk && /^0x[0-9a-fA-F]{64}$/.test(pk) ? (pk as `0x${string}`) : null
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -202,6 +214,17 @@ export function writerForAddress(address: string): Writer | null {
     if (acct.address.toLowerCase() === address.toLowerCase()) return writerFor(acct, rpcSetting.http)
   }
   return null
+}
+
+/**
+ * Who signs a confirmation ("I got less too"). Normally this phone's ID. With "separate anonymous ID" on, one ID per
+ * outlet, derived from this phone's key (the same every time for that outlet, so it is never stored and "one
+ * confirmation per report per phone" still holds): a phone's confirmations at different outlets cannot be linked.
+ */
+export function confirmWriter(shopId: string): Writer {
+  const pk = getPrefs().separateIds ? devicePrivateKey() : null
+  if (!pk) return device().writer
+  return writerFor(privateKeyToAccount(keccak256(concat([pk, toHex(`tolmol-confirm|${shopId}`)]))), rpcSetting.http)
 }
 
 /** The phone could not get test gas for the write. */

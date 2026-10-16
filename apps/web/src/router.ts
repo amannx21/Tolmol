@@ -20,6 +20,7 @@ export type Route =
   | { name: "raw" }
   | { name: "myOutlet" }
   | { name: "track"; state?: string }
+  | { name: "public" }
   | { name: "schemes"; s?: "mdm" | "nrega" }
 
 /** Who the Get verified page is showing test cards for. */
@@ -46,6 +47,8 @@ export function parse(hash: string): Route {
       return { name: "trust" }
     case "raw":
       return { name: "raw" }
+    case "public":
+      return { name: "public" }
     case "track": {
       const st = q.get("state")
       return { name: "track", state: st && /^[A-Z]{2}$/.test(st) ? st : undefined }

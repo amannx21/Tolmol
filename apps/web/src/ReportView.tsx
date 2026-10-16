@@ -7,7 +7,11 @@ import {
   DuplicateError,
   explorerAddressUrl,
   formatBp,
+  fullShareContext,
   parseReport,
+  sayFullShare,
+  shopFullShares,
+  type FullShare,
   reportCorrections,
   reportWitnesses,
   withdrawReport,
@@ -17,16 +21,17 @@ import {
   type Report,
   type Witness,
 } from "tolmol-sdk"
-import { device, ensureGas, myAddresses, reader, short, writerForAddress } from "./arkiv"
+import { confirmWriter, device, ensureGas, myAddresses, reader, short, writerForAddress } from "./arkiv"
 import { Say } from "./Easy"
 import { usePrefs } from "./prefs"
-import { useFmt, useLang } from "./i18n"
+import { outletKey, useFmt, useLang } from "./i18n"
 import { IssueList, NextSteps, PrivacyPanel } from "./extras"
 import { DeviceCard, ErrorBox, Explorer, Loading } from "./ui"
 import { RaisedReportNotice } from "./RaisedReportNotice"
 import { useDealers, useVerified, VerifiedBadge } from "./verified"
 import { ShopAnswer } from "./answersUI"
 import { HearingKit } from "./proofUI"
+import { ReporterNote } from "./notesUI"
 
 export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const { t } = useLang()
@@ -34,7 +39,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const f = useFmt()
   // Amounts in the report's own unit (kg, days or rupees).
   const kg = (n: number) => (data?.report ? f.amt(data.report.item, n) : f.kg(n))
-  const [data, setData] = useState<{ report: Report | null; raw: RawEntity | null; witnesses: Witness[]; withdrawnBy: boolean; head: bigint } | null>(null)
+  const [data, setData] = useState<{ report: Report | null; raw: RawEntity | null; witnesses: Witness[]; withdrawnBy: boolean; head: bigint; fullShares: FullShare[] } | null>(null)
   const [confirmWithdraw, setConfirmWithdraw] = useState(false)
   const [err, setErr] = useState<unknown>(null)
   const [busy, setBusy] = useState(false)
@@ -50,12 +55,17 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
       // One read gives both the validated report and the raw entity for the "what is public" panel.
       const raw = (await reader.getEntity(reportKey).catch(() => null)) as RawEntity | null
       const report = raw ? parseReport(raw) : null
-      const [witnesses, corrections] = report
-        ? await Promise.all([reportWitnesses(reader, reportKey, { atBlock: head }), reportCorrections(reader, reportKey, { atBlock: head })])
-        : [{ items: [] as Witness[] }, { items: [] }]
+      const [witnesses, corrections, full] = report
+        ? await Promise.all([
+            reportWitnesses(reader, reportKey, { atBlock: head }),
+            reportCorrections(reader, reportKey, { atBlock: head }),
+            // "I got my full share" at the same outlet and month: the other side of the counter.
+            shopFullShares(reader, report.shopId, report.month, { atBlock: head }).catch(() => ({ items: [] as FullShare[] })),
+          ])
+        : [{ items: [] as Witness[] }, { items: [] }, { items: [] as FullShare[] }]
       // A withdrawal counts only if the report's own creator filed it.
       const withdrawnBy = !!report && corrections.items.some((c) => c.creator.toLowerCase() === report.creator.toLowerCase())
-      setData({ report, raw, witnesses: witnesses.items, withdrawnBy, head })
+      setData({ report, raw, witnesses: witnesses.items, withdrawnBy, head, fullShares: full.items })
     } catch (e) {
       setErr(e)
     }
@@ -74,9 +84,44 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   // Mine if any ID on this phone wrote it: the current one, a retired one, or a separate per-report ID.
   const mine = myAddresses().has(r.creator.toLowerCase())
   const separate = mine && r.creator.toLowerCase() !== me.toLowerCase()
-  const iWitnessed = data.witnesses.some((w) => w.creator.toLowerCase() === me.toLowerCase())
+  // This phone's confirmation ID for this outlet (its main ID, or a per-outlet one with "separate anonymous ID" on).
+  const confirmer = confirmWriter(r.shopId)
+  const iWitnessed = data.witnesses.some((w) => w.creator.toLowerCase() === me.toLowerCase() || w.creator.toLowerCase() === confirmer.account.address.toLowerCase())
   // This phone answers for the report's outlet: its answer comes first, and it is not asked to confirm the report.
   const iAnswerHere = dealers?.get(me.toLowerCase())?.shopId === r.shopId
+  const mineIds = new Set([me.toLowerCase(), confirmer.account.address.toLowerCase()])
+  const iSaidFull = data.fullShares.some((f) => mineIds.has(f.creator.toLowerCase()))
+  const full = fullShareContext(r, data.fullShares, validWitnesses(r, data.witnesses).map((w) => w.creator))
+  const sayFull = async () => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      if (!(await ensureGas(confirmer.account.address))) {
+        setMsg({ ok: false, text: t("gasFailed") })
+        return
+      }
+      await sayFullShare(reader, confirmer, { shopId: r.shopId, state: r.state, district: r.district }, r.month, { synthetic: true })
+      setMsg({ ok: true, text: t("fullThanks") })
+      await load()
+    } catch (e) {
+      setMsg({ ok: false, text: e instanceof DuplicateError ? t("fullAlready") : t("errGeneric") })
+    } finally {
+      setBusy(false)
+    }
+  }
+  // What the others at the same counter said, and the button to say it (not for the reporter, a confirmer or the dealer).
+  const fullBlock = (
+    <>
+      {full.others > 0 && <p class="small">{t("fullOthers", { n: full.others })}</p>}
+      {full.contradicted && <p class="tag warn">{t("fullContradicted", { n: full.others })}</p>}
+      {!mine && !iWitnessed && !iSaidFull && !iAnswerHere && (
+        <button class="secondary" onClick={() => void sayFull()} disabled={busy}>
+          <ActionIcon name="check" />
+          {t(outletKey("fullBtn", r.scheme))}
+        </button>
+      )}
+    </>
+  )
   const link = `${location.origin}${location.pathname}#/r/${r.key}`
 
   const withdraw = async () => {
@@ -122,11 +167,11 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
     setMsg(null)
     try {
       // Fetch free test gas first if this phone has none (Easy mode did this; Full mode now does too).
-      if (!(await ensureGas())) {
+      if (!(await ensureGas(confirmer.account.address))) {
         setMsg({ ok: false, text: t("gasFailed") })
         return
       }
-      await corroborate(reader, device().writer, r.key, { synthetic: true })
+      await corroborate(reader, confirmer, r.key, { synthetic: true })
       setMsg({ ok: true, text: t("corroborated") })
       await load()
     } catch (e) {
@@ -199,7 +244,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             </li>
           ))}
         </ul>
-        {!mine && !iWitnessed && !iAnswerHere && (
+        {!mine && !iWitnessed && !iSaidFull && !iAnswerHere && (
           <>
             <DeviceCard compact />
             <button onClick={confirm} disabled={busy}>
@@ -207,6 +252,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
             </button>
           </>
         )}
+        {fullBlock}
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
@@ -233,6 +279,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {iAnswerHere && <ShopAnswer report={r} mine={mine} />}
         {fullView}
         {mine && <NextSteps shopId={r.shopId} mask={r.issues} scheme={r.scheme} />}
+        {mine && !data.withdrawnBy && <ReporterNote report={r} />}
         {mine && <HearingKit report={r} />}
       </>
     )
@@ -243,7 +290,7 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
   const confirmEasy = async () => {
     setBusy(true)
     setMsg(null)
-    if (!(await ensureGas())) {
+    if (!(await ensureGas(confirmer.account.address))) {
       setMsg({ ok: false, text: t("gasFailed") })
       setBusy(false)
       return
@@ -278,17 +325,19 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
         {data.withdrawnBy && <p class="tag big-tag">{t("withdrawn")}</p>}
         <IssueList mask={r.issues} scheme={r.scheme} />
         <p class="lead">{t("confirmedBy", { n: valid.length })}</p>
-        {!mine && !iWitnessed && !iAnswerHere && (
+        {!mine && !iWitnessed && !iSaidFull && !iAnswerHere && (
           <button class="big-action" onClick={confirmEasy} disabled={busy}>
             <ActionIcon name="people" />{busy ? t("corroborating") : t("confirmEasy")}
           </button>
         )}
+        {fullBlock}
         {mine && <p class="small muted">{t("ownReport")}</p>}
         {withdrawBox}
         {msg && <p class={msg.ok ? "ok confirmation-feedback" : "err"} role={msg.ok ? "status" : "alert"}>{msg.text}</p>}
       </section>
       {!iAnswerHere && <ShopAnswer report={r} mine={mine} big />}
       {mine && <NextSteps shopId={r.shopId} mask={r.issues} scheme={r.scheme} />}
+        {mine && !data.withdrawnBy && <ReporterNote report={r} />}
         {mine && <HearingKit report={r} />}
       <details class="card auditors">
         <summary>{t("detailsAuditors")}</summary>

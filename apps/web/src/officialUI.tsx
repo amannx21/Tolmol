@@ -27,6 +27,7 @@ import { useFmt, useLang, type Key } from "./i18n"
 import { loadOutlets } from "./ui"
 import { useOfficials } from "./verified"
 import { draftAppeal } from "./rti"
+import { OfficialNotes } from "./notesUI"
 
 export const offKey = (a: OfficialAction) => `off_${a}` as Key
 
@@ -143,6 +144,7 @@ export function OfficialActionsCard({ shop, reports }: { shop: { shopId: string;
       <p class="small muted">
         {t("officialHelp")} <a href={`#/track?state=${shop.state}`}>{t("trackLink")} →</a>
       </p>
+      {iAmOfficial && <OfficialNotes shop={shop} reports={reports} />}
       {iAmOfficial && (
         <div class="dealer-answer">
           <h4>{t("actAsOfficial", { district: f.district(shop.district) })}</h4>

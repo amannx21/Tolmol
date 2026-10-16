@@ -1141,3 +1141,17 @@ label.field {
 .track-card h3 { margin: 0 0 4px; font-size: 1.02rem; }
 .track-card.flagged h3::before { content: "⚠ "; color: var(--warn); }
 .small-btn { padding: 4px 10px; font-size: .85rem; margin-top: 4px; }
+
+/* Private notes to the district official */
+.private-note h3 { display: flex; align-items: center; gap: 8px; }
+.private-note textarea { width: 100%; box-sizing: border-box; margin: 8px 0; }
+.official-notes { margin: 12px 0; padding: 12px; border: 1px dashed var(--line); border-radius: 12px; }
+.official-notes h4 { display: flex; align-items: center; gap: 8px; margin-top: 0; }
+.note-text { margin: 4px 0; padding: 8px 12px; border-left: 3px solid var(--brand); background: var(--soft); border-radius: 6px; white-space: pre-wrap; }
+
+/* What a stranger sees */
+.public-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: start; }
+.public-raw td { word-break: break-all; vertical-align: top; }
+.public-never ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.public-never li { color: var(--ink); }
+@media (max-width: 720px) { .public-grid { grid-template-columns: 1fr; } }
