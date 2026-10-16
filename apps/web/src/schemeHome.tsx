@@ -7,6 +7,8 @@ import { setLang, useLang, type Key } from "./i18n"
 import { setPrefs, usePrefs } from "./prefs"
 import { RoleHub } from "./roleUI"
 import { speak } from "./speak"
+import { SchoolMealHero, SchoolMealPhoto, SchoolMealStory } from "./SchoolMealPhotos"
+import { WageHero, WageStory } from "./WagePhotos"
 
 const ICON: Record<Scheme, string> = { pds: "🌾", mdm: "🍲", nrega: "⛏️" }
 
@@ -84,7 +86,7 @@ export function SchemeHome({ scheme }: { scheme: Exclude<Scheme, "pds"> }) {
   const intro = t(`homeIntro_${scheme}` as Key)
   return (
     <>
-      <section class="landing-hero" aria-labelledby="scheme-title">
+      <section class={`landing-hero ${scheme === "mdm" ? "meal-home-hero" : "wage-home-hero"}`} aria-labelledby="scheme-title">
         <div class="landing-copy">
           <LanguageButtons />
           <p class="landing-slogan">
@@ -116,19 +118,20 @@ export function SchemeHome({ scheme }: { scheme: Exclude<Scheme, "pds"> }) {
             <span>✓ {t("homeEasyPhone")}</span>
           </div>
         </div>
-        <div class="scheme-visual" aria-hidden="true">
-          <span class="scheme-visual-icon">{ICON[scheme]}</span>
-          <p>{t(`homeVisual_${scheme}` as Key)}</p>
-        </div>
+        {scheme === "mdm" ? <SchoolMealHero /> : <WageHero />}
       </section>
       {!prefs.chosen && <ModeChoice />}
-      <section class="card scheme-steps">
+      {scheme === "mdm" ? <SchoolMealStory /> : <WageStory />}
+      <section class={`card scheme-steps ${scheme === "mdm" ? "meal-steps" : ""}`}>
+        <div>
         <h2>{t("homeHowTitle")}</h2>
         <ol>
           {[1, 2, 3, 4].map((n) => (
             <li>{t(`homeStep${n}_${scheme}` as Key)}</li>
           ))}
         </ol>
+        </div>
+        {scheme === "mdm" && <SchoolMealPhoto kind="child" />}
       </section>
       <RoleHub scheme={scheme} />
     </>

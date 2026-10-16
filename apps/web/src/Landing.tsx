@@ -4,6 +4,7 @@ import { usePrefs } from "./prefs"
 import { speak } from "./speak"
 import { ActionIcon } from "./ActionIcon"
 import { DistributionStory } from "./ReferencePhotos"
+import { HomeSchemeButtons } from "./workspace"
 
 function FairMeasure() {
   const { lang } = useLang()
@@ -63,6 +64,9 @@ export function LandingHero({ animationKey = 0 }: { animationKey?: number } = {}
       <div class="landing-assurances"><span>✓ {hi ? "नाम नहीं माँगते" : "No name needed"}</span><span>✓ {hi ? "फ़ोन पर आसान" : "Easy on your phone"}</span></div>
       <ExploreButton />
     </div>
-    <FairMeasure key={animationKey} />
+    <div class="landing-side">
+      <FairMeasure key={animationKey} />
+      <HomeSchemeButtons />
+    </div>
   </section><DistributionStory /></>
 }

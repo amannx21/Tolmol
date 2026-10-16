@@ -78,7 +78,7 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
           </a>
         ))}
       </nav>
-      <WorkspaceBar ws={ws} />
+      <WorkspaceBar ws={ws} rationOnly={route.name === "home"} />
       <p class="banner" role="note">
         {t("synthetic")}
       </p>

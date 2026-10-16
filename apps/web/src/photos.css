@@ -11,7 +11,16 @@
 .shop-preview .reference-photo { margin-bottom: 8px; }
 .shop-preview .shop-photo-note { margin-bottom: 20px; }
 .shop-photo-note { color: var(--muted); font-size: .67rem; line-height: 1.5; margin: 8px 2px 0; }
+.page-schemes:has(.meal-home-hero), .page-schemes:has(.wage-home-hero) { max-width: 1080px; }
+.meal-hero-art, .wage-hero-art { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 24px; background: var(--card); }
+.meal-photo img, .wage-photo img { aspect-ratio: auto; background: #fff; }
+.meal-hero-caption, .wage-hero-caption { margin: 16px 0 0; padding: 14px 4px 0; border-top: 1px solid var(--line); color: var(--brand); font-size: .92rem; font-weight: 600; text-align: center; }
+.meal-steps { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: center; }
+.meal-steps h2 { margin-top: 0; }
 @media (max-width: 720px) {
+  .meal-hero-art, .wage-hero-art { padding: 12px; border-radius: 20px; }
+  .meal-steps { grid-template-columns: 1fr; gap: 16px; }
+  .meal-photo-child { width: 100%; max-width: 400px; margin: 0 auto; }
   .photo-band { grid-template-columns: 1fr; gap: 18px; padding: 16px; }
   .photo-band-copy { padding: 4px; }
   .photo-story-points { gap: 10px; }
