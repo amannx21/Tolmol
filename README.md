@@ -19,7 +19,7 @@
 </div>
 
 Ration card holders, parents of school children and MGNREGA workers record what they were owed and what they
-actually got: grain at the ration shop, hot meals at school, wages at the panchayat. Neighbours confirm it, the
+actually got: grain at the ration shop, the mid-day meal at school, wages at the panchayat. Neighbours confirm it, the
 dealer, head teacher or employment assistant answers on the record, and district officials act on it. Every record
 lives on [Arkiv](https://arkiv.network), sealed so that nobody, including us, can edit or delete it, and anyone can
 read it without our website.
@@ -30,7 +30,7 @@ and every seeded record carries `synthetic = true`; districts are real place nam
 ## Why this exists
 
 81.35 crore Indians get free grain at more than 5 lakh ration shops, yet about **28% of PDS grain never reaches
-them** ([ICRIER, 2024](https://icrier.org/pdf/pb-27.pdf)). School meals and MGNREGA wages go missing the same way.
+them** ([ICRIER, 2024](https://icrier.org/pdf/pb-27.pdf)). Mid-day meals and MGNREGA wages go missing the same way.
 In each case the only record (the machine slip, the meal register, the muster roll) is kept by the side people would
 complain about. A complaint becomes their word against the dealer's, and portals and WhatsApp groups lose or delete
 it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES.md`](docs/SOURCES.md).
@@ -41,7 +41,7 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 
 <img src="docs/media/voice.jpg" alt="Two Hindi report screens with speech bubbles: the phone reads each question aloud" width="100%">
 
-1. Tap **मुझे कम राशन मिला** (or School meals, or MGNREGA wages). The phone **reads each question aloud in Hindi**
+1. Tap **मुझे कम राशन मिला** (or **मिड-डे मील की समस्या**, or **मनरेगा मज़दूरी की समस्या**). The phone **reads each question aloud in Hindi**
    with its own built-in voice, so nothing is sent to a server. With no internet it still speaks if the phone has the
    Hindi voice downloaded (Android: Settings → Text-to-speech). 🔊 सुनें replays a question.
 2. Answer with big buttons, pictures and **+ / −** steps: which shop, which month, how many people on the card, how
@@ -82,9 +82,9 @@ explorer link per row, and check an edited evidence file against the chain. They
 
 ## One ledger, three schemes
 
-<img src="docs/media/schemes.jpg" alt="Ration stock board, school meal board and MGNREGA report in Hindi" width="100%">
+<img src="docs/media/schemes.jpg" alt="Ration stock board, mid-day meal board and MGNREGA report in Hindi" width="100%">
 
-| | Ration (PDS) | School meals (PM POSHAN) | MGNREGA wages |
+| | Ration problem | Mid-day meal problem (PM POSHAN) | MGNREGA wage problem |
 |---|---|---|---|
 | People report | grain owed vs received | days with a hot meal | wages owed vs paid |
 | Who answers, and their board | dealer: stock board | head teacher: meal board | employment assistant: work board |
