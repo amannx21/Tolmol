@@ -1207,6 +1207,243 @@
           "$ref": "#/$defs/bool"
         }
       }
+    },
+    {
+      "title": "tolmol.stock",
+      "description": "A ration shop's monthly stock board, by the shop's verified dealer: grain received for the month, cards served and distribution days. Sealed (readonly, owner 0x...dEaD), 365 days, empty payload. A correction is a new board; every version is kept.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "shop_id",
+        "state",
+        "district",
+        "month",
+        "month_num",
+        "rice_g",
+        "wheat_g",
+        "millet_g",
+        "cards",
+        "from_day",
+        "to_day"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.stock"
+                }
+              }
+            }
+          ]
+        },
+        "month": {
+          "$ref": "#/$defs/str"
+        },
+        "month_num": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 200001,
+                  "maximum": 299912
+                }
+              }
+            }
+          ]
+        },
+        "rice_g": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 100000000
+                }
+              }
+            }
+          ]
+        },
+        "wheat_g": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 100000000
+                }
+              }
+            }
+          ]
+        },
+        "millet_g": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 0,
+                  "maximum": 100000000
+                }
+              }
+            }
+          ]
+        },
+        "cards": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 5000
+                }
+              }
+            }
+          ]
+        },
+        "from_day": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 31
+                }
+              }
+            }
+          ]
+        },
+        "to_day": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 1,
+                  "maximum": 31
+                }
+              }
+            }
+          ]
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
+      }
+    },
+    {
+      "title": "tolmol.delegation",
+      "description": "A district official names an inspector wallet for one outlet until a block (at most 30 days ahead). Readonly but kept owned by the official, who can delete it to revoke; lives the window plus 365 days. Counts only if its creator is an official of the outlet's district. Empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "inspector",
+        "shop_id",
+        "state",
+        "district",
+        "until_block"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.delegation"
+                }
+              }
+            }
+          ]
+        },
+        "inspector": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "pattern": "^0x[0-9a-f]{40}$"
+                }
+              }
+            }
+          ]
+        },
+        "until_block": {
+          "$ref": "#/$defs/u64"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        }
+      }
     }
   ]
 }

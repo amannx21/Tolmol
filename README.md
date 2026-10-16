@@ -183,7 +183,7 @@ meant for WhatsApp, NGO posters or panchayat boards, not the dealer's wall, wher
 
 ## Why Arkiv (and what breaks without it)
 
-| If we used… | What breaks for a ration card holder |
+| If we used… | What breaks for a card holder, a parent or a worker |
 |---|---|
 | **Postgres behind our API** | We, our host or anyone who pressures us can `DELETE` a complaint or edit a number, and nobody outside can tell. The record is only as trustworthy as the operator. |
 | **Our own API with signed records** | Signatures prove authorship, but the operator still decides what to serve. Hiding a shop's complaints is invisible to readers. |
@@ -194,18 +194,23 @@ What Tolmol relies on, and gets only from Arkiv:
 
 - **Queryable and owned by no one.** Reports are typed, indexed attributes that any browser can query with
   `arkiv_query`, with no Tolmol backend in between. If our website disappears, the data does not.
-- **Unforgeable authorship.** `$creator` is set by the protocol from the signer. The "different witness" rule and
-  per-device dedupe both depend on it.
+- **Unforgeable authorship.** `$creator` is set by the protocol from the signer. Every trust rule depends on it:
+  per-device dedupe, a witness from a different device, answers and monthly boards only from the outlet's verified
+  operator, "fixed" and withdrawals only from the reporter, official actions only from that district, an inspector's
+  findings only inside the delegated window, and the hearing proof (the signer must be the report's `$creator`).
 - **Undeletable without a contract.** `readonly` + an ownership transfer to `0x…dEaD` in the same atomic batch
   means nobody (not even the reporter) can edit or delete a report.
 - **Community-kept lifetime.** `permissionlessExtension` lets the people who corroborate a report keep it alive.
 - **History.** `atBlock` reads show exactly what was public at any block, for evidence that something was (or was
   not) on record at a given time.
+- **Authority that expires by itself.** An inspector's delegation is an entity whose window ends at a block; the
+  official keeps ownership so they can revoke it early. No contract, no admin list.
 
-**Kept off Arkiv on purpose:** names, phone numbers, Aadhaar, ration card numbers, addresses (hashing does not
-help, they are guessable), free text, photos of receipts or scales, household size as a field (but see below), the exact time of a report
-(rounded to the day), device private keys, relayer rate-limit data and IPs, and aggregates (anyone can recompute
-them). Details in [`arkiv/schema.md`](arkiv/schema.md#what-stays-off-arkiv-on-purpose).
+**Kept off Arkiv on purpose:** names, phone numbers, Aadhaar, ration card and job card numbers, children's names,
+addresses (hashing does not help, they are guessable), free text, photos of receipts or scales, household size as a
+field (but see below), the exact time of a report (rounded to the day), exact MGNREGA wages (rounded to ₹500, because
+muster rolls are public), proofs of authorship (checked in person, never stored), device private keys, relayer
+rate-limit data and IPs, and aggregates such as the Fair shop badge (anyone can recompute them). Details in [`arkiv/schema.md`](arkiv/schema.md#what-stays-off-arkiv-on-purpose).
 
 **Honest limit, shown before sending.** The amount you were due (`entitled_g`) is public, and so is the rule that
 sets it (5 kg a person, 35 kg for an Antyodaya card), so it can hint at your family size. We keep the exact amount
@@ -222,6 +227,8 @@ Every feature below changes something the user sees. Permalinks to exact lines: 
 | Typed attributes vs payload | 16 typed attributes per report (i32 grams, i32 basis points, i32 issue bitmask, u64 day, str IDs); **empty payload** | Everything a reader filters on is indexed; there is nothing else to store, and no field for free text | [`attributes.ts`](packages/tolmol-sdk/src/attributes.ts) |
 | Compound queries + ranges | `state = BR AND month_num >= 202608 AND month_num <= 202610 [AND shortfall_bp >= x]` | Dashboard ranking by district and month range | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
 | `createdBy()` | Shops are trusted only from the registry wallet; dedupe checks use the device as creator | Fake shops never appear in the picker; one report per device per shop-month-grain | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
+| `OR` query + `createdBy()` | One query reads every outlet of every scheme: `(type = tolmol.shop OR type = tolmol.outlet)`, trusted only from the registry | Ration shops, schools and gram panchayats in one read; a separate type keeps ration-only readers unchanged | [`queries.ts`](packages/tolmol-sdk/src/queries.ts) |
+| Typed attributes per scheme | A school or panchayat report carries `scheme`; its item fixes the unit (grams, meal days, rupees) | One data model for three schemes; readers drop a report whose scheme and item disagree | [`schemes.ts`](packages/tolmol-sdk/src/schemes.ts), [`attributes.ts`](packages/tolmol-sdk/src/attributes.ts) |
 | `$creator` in the UX | Every report and witness shows its device address with an explorer link | Authorship anyone can verify, that no one can forge | [`ReportView.tsx`](apps/web/src/ReportView.tsx) |
 | `$creator` as the trust rule | A withdrawal (`tolmol.correction`) counts only if its creator wrote the report | A dealer cannot "withdraw" a card holder's complaint | [`rules.ts`](packages/tolmol-sdk/src/rules.ts) |
 | `$creator` + district for official actions | A `tolmol.action` counts only from a device verified as an official whose ID's shop is in the same district (from the registry); sealed in one batch | Strict action is on the record and attributable; nobody can fake it or delete it | [`official.ts`](packages/tolmol-sdk/src/official.ts) |
@@ -236,6 +243,13 @@ Every feature below changes something the user sees. Permalinks to exact lines: 
 | Atomic batches | Report = create + transfer; witness = create + transfer + N extensions | Either all of it lands or none: no window where a report is deletable | [`writes.ts`](packages/tolmol-sdk/src/writes.ts) |
 | `predictEntityKeys` | Predicts the new key so the same batch can transfer it | Needed to reference an entity created in the same batch | [`writes.ts`](packages/tolmol-sdk/src/writes.ts) |
 | WebSocket entity events | `watchEntityEvents` on a `webSocket()` transport, no `fromBlock` | The dashboard updates when a report lands, without polling | [`live.ts`](packages/tolmol-sdk/src/live.ts), [`Dashboard.tsx`](apps/web/src/Dashboard.tsx) |
+| Sealed monthly boards + `$creator` | The verified operator posts the month's board (`tolmol.stock`: grain and cards; `tolmol.board`: meals served or wages paid), sealed; a correction is a new version and every version is shown; boards from anyone else are ignored | The outlet's own claim, set against the reports: "about N kg / ₹N unaccounted for" | [`stock.ts`](packages/tolmol-sdk/src/stock.ts), [`boards.ts`](packages/tolmol-sdk/src/boards.ts) |
+| Verdicts recomputed, never stored | The Fair shop badge and the red / amber / green verdict are worked out by every reader from reports, answers, follow-ups and boards | Nobody can write a badge; it lapses by itself when things get worse | [`stock.ts`](packages/tolmol-sdk/src/stock.ts) |
+| Entity Expiration as an authority window | `tolmol.delegation`: an official names an inspector for one outlet until a block (at most 30 days); readonly, owner kept so the official can delete it to revoke | An inspector's findings count only for that outlet, inside the window | [`delegation.ts`](packages/tolmol-sdk/src/delegation.ts), [`official.ts`](packages/tolmol-sdk/src/official.ts) |
+| `$creator` checked off chain | At a hearing the reporter signs a one-time code with the report's key; the official checks the signer is the report's `$creator`. Nothing is written | "This report is mine" without becoming public | [`proof.ts`](packages/tolmol-sdk/src/proof.ts), [`proofUI.tsx`](apps/web/src/proofUI.tsx) |
+| RPC headers `Arkiv-Cost`, `RateLimit` | Each query's cost and the reads left are shown in the footer; on 429 the last good answer is shown, labelled | The read budget is visible before it runs out (friction F13, F14) | [`metered.ts`](packages/tolmol-sdk/src/metered.ts), [`inspector.tsx`](apps/web/src/inspector.tsx) |
+| Raw JSON-RPC, no Tolmol code | `#/raw` lists every query the app makes for an outlet, as curl, JavaScript or Python | Anyone can read the data without us | [`rawPage.tsx`](apps/web/src/rawPage.tsx) |
+| Registry anchored outside Arkiv | `#/trust` checks the registry address against this repository and lets a person trust another registry | The one key everything starts from can be checked and replaced | [`trust.tsx`](apps/web/src/trust.tsx) |
 
 ## Reproduce it (judges)
 
@@ -262,6 +276,7 @@ npm run tolmol -- query --shop SYN-BR-0042 --format csv      # evidence export
 npm run tolmol -- query --shop SYN-BR-0042 --at-block 518000 # what was public at that block
 npm run tolmol -- dashboard --state BR                        # worst shops in Bihar (synthetic)
 npm run tolmol -- answers --shop SYN-BR-0042                  # dealer answers and "fixed" that count, and the planted fakes that do not
+npm run tolmol -- outlets --state BR                          # ration shops, schools and gram panchayats (one OR query)
 ```
 
 ### 2. Run it from a clean clone
@@ -269,7 +284,7 @@ npm run tolmol -- answers --shop SYN-BR-0042                  # dealer answers a
 ```bash
 git clone https://github.com/amannx21/Tolmol && cd Tolmol
 npm ci
-npm test                         # 54 unit tests, no network
+npm test                         # 103 unit tests, no network
 node --import tsx scripts/privacy-audit.ts   # every Tolmol entity on Tiramisu vs the data contract (read-only)
 npm run dev -w tolmol-web        # http://localhost:5173 (reads Tiramisu directly)
 ```
@@ -293,7 +308,7 @@ creator and transaction, so the evidence can be re-checked even after entities e
 
 | Address | Role |
 |---|---|
-| `0x6DBf6A36E27d814c58A05312913DCEEfc0dAe221` | Registry: creates every `tolmol.shop` (synthetic) |
+| `0x6DBf6A36E27d814c58A05312913DCEEfc0dAe221` | Registry: creates every `tolmol.shop` and `tolmol.outlet` (synthetic) and names the verifiers |
 | `0xDAD092E626A158220Aa2838d25CCD69F51de76BE` | Reporter in tests; funds the seed devices |
 | `0xAe8DCc161d9F27fACFE6D48A8B4DF148D64ab9E3` | Witness A in tests |
 | `0xA7EF19b057E28BcB7048a202992423Da937Df140` | Witness B in tests |
@@ -301,55 +316,81 @@ creator and transaction, so the evidence can be re-checked even after entities e
 | `0x1C58335A9C5c5a3440f8018984cf9069b7C9408B` | Card verifier: creates `tolmol.attestation` entities (named by the registry's `tolmol.verifier`) |
 | `0x20e2B6010a4a9128EAEDea408B29A4AC5a44a410` | Demo official for Gaya district (verified with a private test official ID); recorded 3 actions on SYN-BR-0042 |
 | `0xFdbFff21C655c698a69205D2eb5Ec73a2F2d2dE6` | Demo dealer of SYN-BR-0042 (verified with a private test licence); answers reports |
+| `0x40885B892dFbc317F9ffb7b5A410e9E8f00406e0` | Demo dealer of SYN-BR-0001, the shop that earns the Fair shop badge; posts its stock board |
+| `0xC29C54165B368C42E1263b675286aBd3DCfDCf0A` | Demo head teacher of school SYN-BR-5001; answers parents' reports, posts meal boards |
+| `0xff2343feCC600f8A68DF60376334C68B3eA3a114` | Demo employment assistant of gram panchayat SYN-BR-7001; answers workers' reports, posts work boards |
+| `0xDa4c041B4A1ec3825D6Fb389bfda91DBEC1188E6` | Demo inspector delegated to SYN-BR-0002 for 14 days; recorded one finding |
 | `0x75a542B54Ab0E187e41b3644e47Ac546B7D1011f` | TEST card issuer: signs the synthetic test ration cards; never writes to Arkiv |
 | 10 seed device wallets | Synthetic beneficiaries; listed in [`arkiv/wallets.md`](arkiv/wallets.md) and `docs/seed-manifest.json` |
+| 3 "stranger" wallets | Wrote a fake dealer answer and a fake "fixed" at SYN-BR-0042 and SYN-BR-5001; the pages list them as ignored. See [`arkiv/wallets.md`](arkiv/wallets.md) |
 
 Real users' device wallets are created in their browsers. To list every wallet that created a report, run the query
 above without the `shop_id` filter and read `creator`.
 
 ## Track fit
 
-**Best Indian Use Case (Why India?).** Users: PDS beneficiaries (81.35 crore people), social-audit groups, local
-journalists and RTI filers. The problem is specific to India's fair-price shops: under-weighing and failed
-authentication leave card holders with nothing but their word. Tolmol works on a low-end Android browser, in Hindi
-and English, with a numeric-only form, a 141 KB (gzipped) installable app that opens offline and queues reports
-until there is signal, and a "Draft my RTI" letter that turns the evidence into an official information request. Honest limits: it needs a little test gas
-(our relayer covers it), and the demo uses synthetic shops.
+Each track's question, answered as: who is harmed today, and what changes from day one with Tolmol.
 
-**Censorship Resistance.** Who is harmed if this data is censored? The card holder whose complaint vanishes,
-and the auditor who never sees the pattern. We cannot delete or edit a report, and neither can our host: the
-data is on Arkiv, readable with the curl above, the SDK or the CLI, even if the website is down.
+**Best Indian Use Case (Why India?).** *Who:* PDS card holders (81.35 crore people, more than 5 lakh fair-price
+shops), parents of children on PM POSHAN school meals, and MGNREGA workers, plus the social-audit groups, local
+journalists, RTI filers and district officials who act for them. *Today:* each is owed a fixed amount at a known
+place, and the only record (ePoS slip, meal register, muster roll) is kept by the side they would complain about; a
+complaint is their word against the dealer's, the school's or the panchayat's. *From day one:* they report in under a
+minute on a low-end Android browser, one question per screen read aloud in Hindi, with big + / − buttons and no
+typing; neighbours confirm; the dealer, head teacher or employment assistant answers on the record and posts a
+monthly board that Tolmol sets against the reports; officials get a public "needs attention" list, record actions
+and send an inspector; the person prints a complaint to the right office (NFSA s.15 DGRO, District Education
+Officer, MGNREGA Programme Officer) or an RTI, and sees their state's food helpline. *Works today:* a 141 KB (gzipped)
+installable app that opens offline and queues reports, on two hosts. Honest limits: it needs a little test gas (our
+relayer covers it), and the demo uses synthetic outlets in real districts.
 
-The site itself is on two hosts, any Arkiv RPC can be set in Settings, and `mirror.html` is a single file anyone
-can keep and open offline.
+**Censorship Resistance.** *Who is censored today:* the person whose complaint vanishes when a portal, a WhatsApp
+admin, the dealer's friends or the app's host remove it, and the auditor who never sees the pattern. *From day one:*
+every report, confirmation, answer, board and official action is sealed (readonly, handed to `0x…dEaD` in the
+creating batch): nobody, including us, can edit or delete it. Anyone reads it without us: the curl above, `#/raw`
+(every query the app makes, as curl, JavaScript or Python), the one-file `mirror.html` (any Arkiv RPC, works offline),
+a Python reader with no dependencies, the SDK or the CLI. The site is on two hosts, takes any Arkiv endpoint, shows
+the last good copy if the read budget runs out, and anyone can choose which registry to trust (`#/trust`).
 
-**Privacy.** Who is exposed if this data leaks? A card holder who complains about the dealer they depend on every
-month. So the explorer shows nothing personal: no name, phone, Aadhaar, card number, address, household size field or
-free text (not even hashed; the entitlement can hint at family size, and the report screen says so before sending); 16 small attributes; empty payloads; the time rounded to the day. The user controls
-expiry: 30, 90 or 180 days, and whether neighbours may extend it. With **a separate anonymous ID for each
-report** turned on, every report is signed by a fresh key funded by the relayer (which funds every fresh wallet), so
-nobody can link one person's reports, not even through who paid the gas. Letters keep name and card number as paper
-blanks. Anyone can run
-`scripts/privacy-audit.ts`, which checks every Tolmol entity on Tiramisu against
-[`docs/data-contract.schema.json`](docs/data-contract.schema.json). Open: block times are public, and with the
-option off, reports under one ID are linkable (threat model T15).
+**Privacy.** *Who is exposed today:* a person who complains about the dealer, head teacher or panchayat they depend on
+every month, and can be scolded, refused work or have their card kept. *From day one:* the explorer shows nothing
+personal: no name, phone, Aadhaar, card or job card number, child's name, address, household size field or free
+text, not even hashed; 16 small attributes; empty payloads; the time rounded to the day. The person chooses the expiry
+(30, 90 or 180 days) and whether neighbours may extend it, and sees "what becomes public" before sending. **A separate
+anonymous ID per report** (on by default for threats, a kept ration or job card, money or bribes asked, children seated apart, and fake names on the muster roll) is funded by the relayer
+like every fresh wallet, so nobody can link one person's reports, not even through who paid the gas. A random send
+delay of 1 to 6 hours breaks the link to a shop visit; a warning shows when an outlet has few reporters; MGNREGA wages
+are rounded to ₹500 because muster rolls are public; a hearing proof shows "this report is mine" in person and writes
+nothing. Letters keep name and card number as paper blanks. `scripts/privacy-audit.ts` checks every Tolmol entity on
+Tiramisu against [`docs/data-contract.schema.json`](docs/data-contract.schema.json) (PASS), and a GitHub Action reruns
+it daily. Open: the entitlement can hint at family size (shown before sending), block times are public, and with the
+option off, reports under one ID are linkable (threat model T15, T36, T48).
 
-**Security.** Who is misled if this data is forged? Officials and journalists who act on it. Authorship by
-`$creator` everywhere: registry-only shops, per-device dedupe, a witness must be a different device, a withdrawal
-counts only from the report's own creator, derived numbers recomputed by every reader, a Verify page for exported
-evidence, a rate-limited relayer that never signs data, no secrets or personal data on chain. Fake reports from
-many phones are hard to stop, so Tolmol makes them visible: each shop page lists **patterns to look at** (3 or more
-phones filing within one minute, rapid confirmations, one-off devices), worked out from public block numbers and
-`$creator`, and the dashboard can leave burst reports out. On the live data it flags exactly the shops our seed script
-filled in bursts. And a phone can be **verified with a ration card** (demo: synthetic test cards): the badge counts only
-from verifiers named by the registry, one card per phone, so a fake account cannot claim it. See the threat model below for what is still open.
+**Security.** *Who is misled today:* officials, journalists and other card holders who act on records that can be
+forged ("all fixed", "full ration given") or quietly withdrawn. *From day one:* every count filters on `$creator`,
+never on a field anyone can write: outlets only from the registry; per-device dedupe; witnesses from a different
+device; answers and boards only from the outlet's verified operator; "fixed" and withdrawals only from the reporter;
+official actions only from that district; an inspector's findings only for the delegated outlet inside its window.
+Planted fakes (a fake dealer answer and a fake "fixed", at a shop and at a school) are shown as ignored, with their
+writers. Derived numbers are recomputed by every reader, a Verify page catches an edited evidence file row by row, and
+the registry address is checked against this repository. Fake reports from many phones are hard to stop, so Tolmol
+makes them visible: each outlet page lists **patterns to look at** (3 or more phones filing within one minute, rapid
+confirmations, one-off devices) from public block numbers and `$creator`, and the dashboard can leave burst reports
+out; on the live data it flags exactly the shops our seed script filled in bursts. A phone can be **verified with a
+card** (synthetic test cards in the demo): the badge counts only from verifiers the registry names, one card per
+phone. 103 tests, CodeQL, and a rate-limited relayer that never signs data. See the threat model below for what is
+still open.
 
-**Open Source.** MIT. A documented data contract ([`arkiv/schema.md`](arkiv/schema.md), and as JSON Schema in
-[`docs/data-contract.schema.json`](docs/data-contract.schema.json)), a reusable [`tolmol-sdk`](packages/tolmol-sdk)
-package **published on npm** (`npm install tolmol-sdk`), a read-only CLI, a [minimal reader](examples/minimal-reader.mjs) with no Tolmol code, and contribution
-notes. Every shop and dashboard page prints the exact queries it ran ("How this is computed"). Another scheme
-(mid-day meals, MGNREGA wages) could reuse the same pattern: synthetic registry, device-signed claims,
-corroboration as lease renewal.
+**Open Source.** *Who is locked out today:* civic groups, journalists and other states' projects, who need a
+permission and an integration for each portal's data. *From day one:* MIT; a documented data contract
+([`arkiv/schema.md`](arkiv/schema.md), and all 13 entity types as JSON Schema in
+[`docs/data-contract.schema.json`](docs/data-contract.schema.json)); a reusable [`tolmol-sdk`](packages/tolmol-sdk)
+**published on npm** (`npm install tolmol-sdk`) with a changelog; a read-only CLI; a
+[minimal reader](examples/minimal-reader.mjs) and a [Python reader](examples/tolmol_reader.py) written only from the
+contract; a daily public data check; contribution notes. Every outlet and dashboard page prints the exact queries it
+ran ("How this is computed"). The pattern is proven reusable: school meals and MGNREGA wages were added on the same
+model (synthetic registry, device-signed claims, corroboration as lease renewal, sealed boards) without changing a
+single ration record or breaking the published reader.
 
 ## Threat model (summary)
 
