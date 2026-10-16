@@ -200,7 +200,14 @@ export function ErrorBox({ error }: { error: unknown }) {
 // The registry lists every outlet: ration shops, schools and gram panchayats. Ration screens use loadShops (ration
 // shops only), so they never offer a school as a ration shop; pages that serve any scheme use loadOutlets.
 let outletsPromise: Promise<Shop[]> | undefined
-export const loadOutlets = () => (outletsPromise ??= listOutlets(reader, {}, { registry: trustedRegistry() }).then((r) => r.items.sort((a, b) => (a.shopId < b.shopId ? -1 : 1))))
+export const loadOutlets = () =>
+  (outletsPromise ??= listOutlets(reader, {}, { registry: trustedRegistry() }).then(
+    (r) => r.items.sort((a, b) => (a.shopId < b.shopId ? -1 : 1)),
+    (e: unknown) => {
+      outletsPromise = undefined // a failed read (say, the read limit) is retried on the next page, not kept
+      throw e
+    },
+  ))
 export const loadShops = () => loadOutlets().then((all) => all.filter((s) => s.scheme === "pds"))
 
 export const ShortfallBar = ({ bp }: { bp: number }) => (

@@ -9,6 +9,7 @@ import {
   formatBp,
   fullShareContext,
   parseReport,
+  quotaError,
   sayFullShare,
   type FullShare,
   reportCorrections,
@@ -53,7 +54,11 @@ export function ReportView({ reportKey }: { reportKey: `0x${string}` }) {
     try {
       const head = await reader.getBlockNumber({ cacheTime: 0 })
       // One read gives both the validated report and the raw entity for the "what is public" panel.
-      const raw = (await reader.getEntity(reportKey).catch(() => null)) as RawEntity | null
+      // A refused read (Arkiv's free read limit) is not a missing report: show the limit message instead.
+      const raw = (await reader.getEntity(reportKey).catch((e: unknown) => {
+        if (quotaError(e)) throw e
+        return null
+      })) as RawEntity | null
       const report = raw ? parseReport(raw) : null
       const [witnesses, corrections, full] = report
         ? await Promise.all([
