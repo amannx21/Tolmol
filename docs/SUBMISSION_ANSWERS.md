@@ -14,7 +14,7 @@ Each answer below is written to the rubric's top band.
 - **Tracks:** Best Indian Use Case, Censorship Resistance, Open Source, Privacy, Security
 - **Technologies:** Arkiv (Tiramisu), @arkiv-network/sdk 0.8.1, viem, TypeScript, Preact, Vite, Vitest, Node.js, Python (reader)
 - **Platforms:** Web (mobile-first, installable, offline), CLI
-- **Media:** `docs/media/dashboard-en.jpg`, `dashboard-hi.jpg`, `shop-page.jpg`, `report.jpg`
+- **Media:** `docs/media/hero.jpg`, `voice.jpg`, `arch.jpg`, `schemes.jpg`, `trust.jpg` (older: `dashboard-en.jpg`, `dashboard-hi.jpg`, `shop-page.jpg`, `report.jpg`)
 - **Links:** repo https://github.com/amannx21/Tolmol · app https://tolmol-web-kappa.vercel.app · backup
   https://amannx21.github.io/Tolmol/ · video [FILL]
 
