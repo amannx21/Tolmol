@@ -1444,6 +1444,209 @@
           "$ref": "#/$defs/bool"
         }
       }
+    },
+    {
+      "title": "tolmol.officekey",
+      "description": "A verified official's public key for private notes (compressed secp256k1). Counts only if the key hashes to $creator and $creator is a verified official of `district`. Readonly, owned by the official, 365 days, empty payload.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "pubkey",
+        "state",
+        "district"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.officekey"
+                }
+              }
+            }
+          ]
+        },
+        "pubkey": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "pattern": "^0x0[23][0-9a-f]{64}$"
+                }
+              }
+            }
+          ]
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        }
+      }
+    },
+    {
+      "title": "tolmol.note",
+      "description": "A private note from a reporter to the district official about their own report. Counts only if $creator is the report's creator. Sealed (readonly, owner 0x...dEaD), 180 days. The payload is exactly the JSON envelope {v:1, alg:'ecies-secp256k1-hkdf-sha256-aes-256-gcm', epk, iv, ct}: ciphertext only, readable by the official in `to`.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "report_key",
+        "shop_id",
+        "state",
+        "district",
+        "to"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.note"
+                }
+              }
+            }
+          ]
+        },
+        "report_key": {
+          "$ref": "#/$defs/key"
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "to": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "pattern": "^0x[0-9a-f]{40}$"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "title": "tolmol.fullshare",
+      "description": "\"I got my full share at this outlet this month\": once per device, outlet and month. Sealed (readonly, owner 0x...dEaD), 90 days, empty payload. Readers label an unconfirmed report 'contradicted by others' when 3 or more other devices say this; the report is never hidden.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "type",
+        "schema_version",
+        "shop_id",
+        "state",
+        "district",
+        "month",
+        "month_num"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/project"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/schemaVersion"
+        },
+        "reported_at": {
+          "$ref": "#/$defs/u64"
+        },
+        "synthetic": {
+          "$ref": "#/$defs/bool"
+        },
+        "type": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/str"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "tolmol.fullshare"
+                }
+              }
+            }
+          ]
+        },
+        "shop_id": {
+          "$ref": "#/$defs/shopId"
+        },
+        "state": {
+          "$ref": "#/$defs/state"
+        },
+        "district": {
+          "$ref": "#/$defs/str"
+        },
+        "month": {
+          "$ref": "#/$defs/month"
+        },
+        "month_num": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/i32"
+            },
+            {
+              "properties": {
+                "value": {
+                  "minimum": 200001,
+                  "maximum": 299912
+                }
+              }
+            }
+          ]
+        }
+      }
     }
   ]
 }

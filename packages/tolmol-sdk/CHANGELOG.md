@@ -7,6 +7,7 @@ not know instead of misreading it.
 ## 0.2.0 (2026-10-16)
 
 ### Data contract (new entity types and attributes, all optional for older readers)
+- `tolmol.officekey`, `tolmol.note` (the only payload Tolmol fills: an encryption envelope) and `tolmol.fullshare`.
 - `tolmol.outlet`: schools (`scheme = mdm`, school meals) and gram panchayats (`scheme = nrega`, MGNREGA wages), from
   the same registry wallet. A separate type, so `listShops` (ration shops) never returns a school.
 - `tolmol.report` for another scheme: `scheme` attribute, items `meal_days` (school days) and `wage_inr` (rupees), the
@@ -18,6 +19,14 @@ not know instead of misreading it.
   `GPO` (panchayat employment assistant), both giving the `dealer` (outlet operator) role.
 
 ### Library
+- `notes.ts`: private notes to the district official. `tolmol.officekey` (an official's public key; counts only if it
+  hashes to `$creator` and the official is of that district: `validOfficeKeys`) and `tolmol.note` (ECIES on secp256k1,
+  HKDF-SHA256, AES-256-GCM, bound to the report and the official; sealed; counts only from the report's own creator:
+  `validNotes`). `encryptNote`, `decryptNote`, `publishOfficeKey`, `sendNote`, queries Q26 to Q28. Uses the audited
+  `@noble` libraries viem is built on (now explicit dependencies).
+- `fullshare.ts`: "I got my full share this month" (`tolmol.fullshare`, once per device, outlet and month, sealed),
+  `sayFullShare`, `shopFullShares` (Q29) and `fullShareContext`, which labels an unconfirmed report contradicted when
+  `CONTRADICT_MIN` (3) other devices got their full share. The report is never hidden.
 - `trackRecord.ts`: who checks the checkers. `trackRecords` sets every counted official or inspector finding
   against the reports at that outlet in the next `AFTER_DAYS` (60) days; `isContradicted` flags a clearing finding
   (`CLEARING_ACTIONS`: no issue found, grain or dues restored) followed by attention-list evidence. Nothing is stored.

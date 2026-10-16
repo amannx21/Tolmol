@@ -1,10 +1,11 @@
 // Privacy audit: reads EVERY entity tagged project = "tolmol" on Tiramisu and checks it against the data contract.
 // Fails if any entity of a Tolmol type carries an unknown attribute, a value outside its allowed format, or a payload
-// (reports, witnesses and corrections must have an empty payload; shops a small JSON with display labels only).
+// (reports, witnesses and corrections must have an empty payload; shops a small JSON with display labels only; private
+// notes exactly an encryption envelope, so the explorer only ever shows ciphertext).
 // Read-only. Usage: node --import tsx scripts/privacy-audit.ts
 import { str } from "@arkiv-network/sdk/attr"
 import { eq } from "@arkiv-network/sdk/query"
-import { httpReader, PROJECT } from "../packages/tolmol-sdk/src/index.js"
+import { httpReader, parseEnvelope, PROJECT } from "../packages/tolmol-sdk/src/index.js"
 
 const SHOP = /^SYN-[A-Z]{2}-\d{4}$/
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/
@@ -54,6 +55,12 @@ const CONTRACT: Record<string, Record<string, Rule>> = {
   "tolmol.board": { ...COMMON, type: oneOf("tolmol.board"), scheme: oneOf("mdm", "nrega"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912),
     children: isInt(1, 5000), open_days: isInt(1, 31), meal_days: isInt(0, 31), grain_g: isInt(0, 100_000_000),
     workers: isInt(1, 10_000), person_days: isInt(0, 100_000), rate_inr: isInt(1, 5000), wages_paid_inr: isInt(0, 1_000_000_000) },
+  // An official's public key for private notes: a public key and a district, nothing else.
+  "tolmol.officekey": { ...COMMON, type: oneOf("tolmol.officekey"), pubkey: re(/^0x0[23][0-9a-f]{64}$/), state: re(STATE), district: re(DISTRICT) },
+  // A private note to the official: addresses and keys in the attributes; the payload must be ciphertext (checked below).
+  "tolmol.note": { ...COMMON, type: oneOf("tolmol.note"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), to: re(/^0x[0-9a-f]{40}$/) },
+  // "I got my full share" at an outlet for a month: numbers and IDs only.
+  "tolmol.fullshare": { ...COMMON, type: oneOf("tolmol.fullshare"), shop_id: re(SHOP), state: re(STATE), district: re(DISTRICT), month: re(MONTH), month_num: isInt(200001, 299912) },
   "tolmol.followup": { ...COMMON, type: oneOf("tolmol.followup"), report_key: re(HEX32), shop_id: re(SHOP), state: re(STATE), month: re(MONTH), status: oneOf("fixed", "not_fixed") },
 }
 
@@ -93,6 +100,9 @@ for (const e of all) {
     } catch {
       problems.push(`${e.key} (shop): payload is not the expected JSON`)
     }
+  } else if (type === "tolmol.note") {
+    // The only payload that is not empty: exactly the encryption envelope (ephemeral key, IV, ciphertext), no plain text.
+    if (!parseEnvelope(payload)) problems.push(`${e.key} (note): payload is not an encryption envelope`)
   } else if (payload.length !== 0) problems.push(`${e.key} (${type}): payload is not empty (${payload.length} bytes)`)
 }
 
@@ -103,4 +113,4 @@ if (problems.length) {
   for (const p of problems.slice(0, 50)) console.log("  " + p)
   process.exit(1)
 }
-console.log("PASS: every Tolmol entity matches the data contract: no unknown attributes, no free text, no personal data, empty payloads.")
+console.log("PASS: every Tolmol entity matches the data contract: no unknown attributes, no free text, no personal data, empty payloads (private notes: ciphertext only).")
