@@ -85,8 +85,8 @@ can short a single family, but no longer a lone word against the dealer either.
 Verified once with a (test) licence or staff ID, their phone shows a **My shop** item in the menu and a banner on every
 page with the reports waiting for their answer; on their own outlet's reports the answer buttons come first.
 They answer from a fixed list (stock arrived, scale checked, meals resumed, wages paid, or "we dispute this") and post
-a **monthly board**: grain received, meals served, wages paid. Tolmol sets the board against the reports: *"13 card
-holders say they got 37.6% less; about 752 kg is unaccounted for"*. Only the reporter's own phone can then say
+a **monthly board**: grain received, meals served, wages paid. Tolmol sets the board against the reports: *"14 card
+holders say they got 37.3% less; about 745 kg is unaccounted for"* (SYN-BR-0042 on 18 October). Only the reporter's own phone can then say
 **fixed ✓** or **not fixed ✗**. A shop that keeps its board posted and its reporters satisfied earns a **Fair shop**
 badge, which lapses by itself if things get worse.
 

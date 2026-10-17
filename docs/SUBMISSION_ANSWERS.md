@@ -39,7 +39,7 @@ Images of the app and how it works: `docs/media/` (hero, Hindi voice, architectu
 **What Tolmol does:**
 1. **Report by tapping and listening.** The phone reads every question aloud in Hindi, and answers are big buttons and + / − steps. No typing, no name, no card number, no sign-up, no app to install. No signal? The report waits on the phone and goes out later.
 2. **Neighbours confirm.** Others at the same shop tap "I got less too", or "I got my full ration". A lone claim that 3 others contradict is labelled, never hidden.
-3. **The dealer must answer, in public.** Answers come from a fixed list, and a monthly stock board is set against the reports, e.g. *"13 card holders say they got 37.6% less; about 752 kg is unaccounted for."*
+3. **The dealer must answer, in public.** Answers come from a fixed list, and a monthly stock board is set against the reports, e.g. at one shop on 18 October: *"14 card holders say they got 37.3% less; about 745 kg is unaccounted for."*
 4. **Officials act, and are checked too.** A "needs attention" list, actions on the record, and an inspector's "no issue found" flagged when the next reports say otherwise.
 5. **It reaches the right desk.** One tap prints the complaint for the right officer under the right law: the District Grievance Officer (NFSA s.15), an RTI, the State Food Commission.
 
@@ -184,7 +184,7 @@ App: https://tolmol-web-kappa.vercel.app. Note: Arkiv lets each network make abo
 
 1. **Read the data without our app:** run the `curl` in the README, or open https://tolmol-web-kappa.vercel.app/#/raw and copy any query the app makes. Every report's owner is `0x…dEaD`: nobody can delete it.
 2. **Report in Hindi:** https://tolmol-web-kappa.vercel.app/#/report. Each question is read aloud; answer with big buttons and + / −; before sending you see exactly what becomes public.
-3. **A ration shop's record:** https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-0042. The dealer's stock board against the reports ("about 752 kg unaccounted for"), "2 answers or follow-ups ignored" (fakes written by strangers' wallets), officials' actions, and "Show as it was at block N".
+3. **A ration shop's record:** https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-0042. The dealer's stock board against the reports (on 18 October, "about 745 kg is unaccounted for"), "2 answers or follow-ups ignored" (fakes written by strangers' wallets), officials' actions, and "Show as it was at block N".
 4. **Who checks the checkers:** https://tolmol-web-kappa.vercel.app/#/track?state=BR. The demo inspector's "no issue found" at SYN-BR-0002 is flagged "contradicted by later reports".
 5. **A complaint others contradict:** https://tolmol-web-kappa.vercel.app/#/r/0xc4e04f15b6d787d8c1e434afd9312d47c2b70993db0c18703e93eabcc7ac7fe3 shows "Contradicted by 3 others".
 6. **What a stranger sees:** https://tolmol-web-kappa.vercel.app/#/public. A real report and a real private note as anyone sees them, and the latest daily audit (PASS).
