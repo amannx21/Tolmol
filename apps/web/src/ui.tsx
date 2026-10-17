@@ -177,8 +177,25 @@ export function Loading() {
   return <p class="muted loading" role="status"><span class="loading-dot" aria-hidden="true" />{t("loading")}</p>
 }
 
+/** No connection (or the request never left the phone): browsers word this differently, anywhere in the cause chain. */
+function noConnection(error: unknown): boolean {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return true
+  for (let c: unknown = error, i = 0; c && i < 12; c = (c as { cause?: unknown }).cause, i++) {
+    const o = c as { message?: string; details?: string }
+    if (/Failed to fetch|NetworkError|Load failed|fetch failed|ERR_INTERNET_DISCONNECTED/i.test(`${o.message ?? ""} ${o.details ?? ""}`)) return true
+  }
+  return false
+}
+
 export function ErrorBox({ error }: { error: unknown }) {
   const { t } = useLang()
+  if (noConnection(error)) {
+    return (
+      <p class="err" role="alert">
+        {t("noConnection")}
+      </p>
+    )
+  }
   const q = quotaError(error)
   if (q) {
     const mins = q.retryAfterSeconds ? Math.ceil(q.retryAfterSeconds / 60) : null
