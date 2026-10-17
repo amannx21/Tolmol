@@ -33,5 +33,7 @@ export default defineConfig({
     alias: { "tolmol-sdk": fileURLToPath(new URL("../../packages/tolmol-sdk/src/index.ts", import.meta.url)) },
   },
   base: "./",
-  build: { target: "es2022", sourcemap: true, chunkSizeWarningLimit: 800 },
+  // Older phones matter: iOS 14 Safari and Chrome 87 cannot parse newer syntax (class fields, static blocks), and one
+  // unparseable line blanks the whole app. esbuild rewrites such syntax for these targets.
+  build: { target: ["es2020", "safari14", "chrome87", "firefox78", "edge88"], sourcemap: true, chunkSizeWarningLimit: 800 },
 })

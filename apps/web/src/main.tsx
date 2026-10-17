@@ -1,3 +1,4 @@
+import "./polyfills" // first: other modules need it while they load
 import { Component, render, type ComponentChildren } from "preact"
 import { Dashboard } from "./Dashboard"
 import { EasyHome, EasyReport, Welcome } from "./Easy"

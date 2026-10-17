@@ -260,7 +260,7 @@ export function EasyReport({ initialShop }: { initialShop?: string }) {
           <div class="stepper-value" aria-live="polite">
             {members} <span>{t("people")}</span>
           </div>
-          <div class="stepper-buttons">
+          <div class="stepper-buttons two">
             <button type="button" onClick={() => setMembers(Math.max(1, members - 1))} aria-label="-1">−1</button>
             <button type="button" onClick={() => setMembers(Math.min(20, members + 1))} aria-label="+1">+1</button>
           </div>
