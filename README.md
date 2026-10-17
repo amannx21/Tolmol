@@ -225,6 +225,9 @@ card, name or phone number.
   than impossible.
 - Test cards are public, so anyone can act as a demo dealer or official. In real use a state department would issue them.
 - The amount a person was due can hint at family size; the app says so before sending.
+- Read-aloud uses the browser's own voices. Chrome and Edge have Hindi and Indian-English voices; Brave and Firefox on
+  Windows usually have no Hindi voice (the app then says so) and read English with an American voice. Use Chrome or
+  Edge, or add Hindi under Windows Settings → Speech.
 
 ## Licence and credits
 
