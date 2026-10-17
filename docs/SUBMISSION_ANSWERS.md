@@ -90,10 +90,10 @@ department's registry key instead of ours, which the app already supports (`#/tr
 - **Open Source.** *Who is locked out today:* civic groups, journalists and other states, who need a separate permission
   and integration for each portal's data. *From day one, and the pillar's ask, "another team can build on the dataset
   or tool without asking permission, from a documented data contract":* MIT; `arkiv/schema.md` and all 16 record types
-  as JSON Schema (`docs/data-contract.schema.json`); `tolmol-sdk` on npm with a changelog where every change is
-  additive [FILL: 0.2.0 once published]; a CLI that reads, files and confirms; a Python reader written only from the contract;
+  as JSON Schema (`docs/data-contract.schema.json`); `tolmol-sdk` 0.2.0 on npm with a changelog where every change is
+  additive; a CLI that reads, files and confirms (`npx tolmol`); a Python reader written only from the contract;
   **`examples/build-on-tolmol.mjs`: every outlet's verdict and every inspector's track record for a state in about 25
-  lines, with no key and no Tolmol server**; and a daily public check that what is on chain still matches the
+  lines, with no key and no Tolmol server, from `npm install tolmol-sdk` alone (no clone)**; and a daily public check that what is on chain still matches the
   contract. The proof it is reusable: mid-day meals and MGNREGA wages were added on the same model without changing a
   single ration record or breaking the published reader.
 - **Privacy.** *Who is exposed today:* a person who complains about the dealer, head teacher or panchayat they depend

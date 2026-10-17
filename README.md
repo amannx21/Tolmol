@@ -212,7 +212,8 @@ card, name or phone number.
   [`docs/data-contract.schema.json`](docs/data-contract.schema.json).
 - **SDK:** `npm install tolmol-sdk` reads the data and applies the same trust rules; `npx tolmol-sdk` is its CLI.
 - **Build on it in 25 lines:** [`examples/build-on-tolmol.mjs`](examples/build-on-tolmol.mjs) prints every outlet's verdict
-  and every inspector's track record for a state, straight from Arkiv, with no Tolmol server and no key.
+  and every inspector's track record for a state, straight from Arkiv, with no Tolmol server and no key. It needs
+  nothing but `npm install tolmol-sdk` in an empty folder.
 - **Wallets and their roles:** [`arkiv/wallets.md`](arkiv/wallets.md). **Everything else:** [`docs/FEATURES.md`](docs/FEATURES.md).
 
 ## Limits

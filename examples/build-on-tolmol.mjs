@@ -2,7 +2,8 @@
 // straight from Arkiv and judged with the same public rules the app uses (tolmol-sdk, MIT).
 // It prints, for one state: every outlet's verdict (red / amber / green / grey), and every official's and inspector's
 // track record, with findings that later reports contradict.
-// Usage: npm ci && npm run build -w tolmol-sdk && node examples/build-on-tolmol.mjs [BR|UP|JH]
+// Usage, in any empty folder: npm install tolmol-sdk && node build-on-tolmol.mjs [BR|UP|JH]
+// (in a clone of the repository: npm ci && npm run build -w tolmol-sdk && node examples/build-on-tolmol.mjs BR)
 import {
   addMonths, currentMonth, dashboardReports, formatBp, httpReader, listAttestations, listOutlets, listVerifiers, shopStats,
   shopVerdict, stateDelegations, stateOfficialActions, trackRecords, validOfficialActions, verifiedOfficials,
