@@ -62,7 +62,8 @@ export function addressOfPublicKey(pubkey: string): Hex {
  * (spaces, dots and dashes between them ignored). The ciphertext stays in Arkiv's history even after the note expires,
  * so identifying numbers are refused, not just discouraged.
  */
-export const noteHasPersonalNumber = (text: string): boolean => /\d{10,}/.test(text.replace(/(?<=\d)[\s.\-–]+(?=\d)/g, ""))
+// (No lookbehind in these patterns: iPhones before iOS 16.4 cannot parse it, and one such pattern stops the whole app.)
+export const noteHasPersonalNumber = (text: string): boolean => /\d{10,}/.test(text.replace(/(\d)[\s.\-–]+(?=\d)/g, "$1"))
 
 /**
  * Encrypts a note to an official's public key, bound to one report and one official. Standard ECIES (SEC 1 v2, s.5.1)

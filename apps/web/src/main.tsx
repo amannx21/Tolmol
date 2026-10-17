@@ -6,6 +6,7 @@ import { About, Home } from "./pages"
 import { ReportForm } from "./ReportForm"
 import { ReportView } from "./ReportView"
 import { startQueue, useQueueCount } from "./queue"
+import { useVoiceMissing } from "./speak"
 import { useRoute } from "./router"
 import { ShopPage } from "./ShopPage"
 import { VerifyPage } from "./extras"
@@ -40,6 +41,17 @@ function QueueBanner() {
   return n > 0 ? (
     <p class="queue" role="status">
       {n} {t("queuedCount")}
+    </p>
+  ) : null
+}
+
+/** When the browser has no Hindi voice, say so: otherwise "Listen" would just stay silent. */
+function VoiceNote() {
+  const missing = useVoiceMissing()
+  const { t } = useLang()
+  return missing ? (
+    <p class="queue" role="status">
+      {t("voiceMissing")}
     </p>
   ) : null
 }
@@ -136,6 +148,7 @@ function App() {
   return (
     <Layout route={route}>
       <QueueBanner />
+      <VoiceNote />
       <PageGuard key={location.hash}>{page}</PageGuard>
     </Layout>
   )
