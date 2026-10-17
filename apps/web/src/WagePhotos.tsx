@@ -9,13 +9,18 @@ const images = {
     credit: "StudyIQ",
     en: "MGNREGA scheme graphic with Mahatma Gandhi’s portrait and the scheme name",
     hi: "महात्मा गांधी के चित्र और मनरेगा के नाम वाला योजना परिचय चित्र",
+    captionEn: "Representative MGNREGA illustration",
+    captionHi: "मनरेगा का प्रतिनिधि चित्र",
   },
   workers: {
-    name: "nrega-workers", height: 672,
-    source: "https://www.shutterstock.com/image-generated/mgnrega-2622134373",
-    credit: "Shutterstock AI · Preview",
-    en: "Illustration of women and men with shovels and baskets working in green fields beneath an MGNREGA banner",
-    hi: "मनरेगा के बैनर के नीचे हरे खेतों में फावड़े और टोकरियों के साथ काम करती महिलाओं और पुरुषों का चित्र",
+    // Photo: McKay Savage, CC BY 2.0 (https://creativecommons.org/licenses/by/2.0/), resized; see docs/PHOTO-CREDITS.md
+    name: "nrega-workers", height: 640,
+    source: "https://commons.wikimedia.org/wiki/File:Rural_villages_digging_out_a_silted-up_water_tank_(5103636919).jpg",
+    credit: "McKay Savage · CC BY 2.0",
+    en: "Villagers, women in colourful saris and men, digging out a silted-up water tank as MGNREGA work",
+    hi: "मनरेगा के काम में गाँव के लोग, रंगीन साड़ियों में महिलाएँ और पुरुष, गाद से भरा तालाब खोदकर साफ़ कर रहे हैं",
+    captionEn: "An MGNREGA work site (photo)",
+    captionHi: "मनरेगा का कार्यस्थल (फ़ोटो)",
   },
 }
 
@@ -25,7 +30,7 @@ function WagePhoto({ kind, priority = false }: { kind: keyof typeof images; prio
   const photo = images[kind]
   return <figure class={`reference-photo wage-photo wage-photo-${kind}`}>
     <img src={`images/${photo.name}-960.webp`} srcSet={`images/${photo.name}-640.webp 640w, images/${photo.name}-960.webp 960w`} sizes="(max-width: 720px) calc(100vw - 64px), 500px" width="960" height={photo.height} loading={priority ? "eager" : "lazy"} decoding="async" alt={hi ? photo.hi : photo.en} />
-    <figcaption><span>{hi ? "मनरेगा का प्रतिनिधि चित्र" : "Representative MGNREGA illustration"}</span><a href={photo.source} target="_blank" rel="noopener">{photo.credit} ↗</a></figcaption>
+    <figcaption><span>{hi ? photo.captionHi : photo.captionEn}</span><a href={photo.source} target="_blank" rel="noopener">{photo.credit} ↗</a></figcaption>
   </figure>
 }
 

@@ -2,18 +2,22 @@
 
 > **Placeholders for the demo.** The pictures in `apps/web/public/images/` and `docs/media/reference-photos/` illustrate
 > the layout only. They belong to their owners, are credited below, and are **not** covered by this repository's MIT
-> licence. A real deployment would use original or licensed images.
+> licence. Two are free to reuse under the licence shown with them (the MGNREGA work-site photo, CC BY 2.0, and the
+> children's mid-day meal photo, CC0). A real deployment would use original or licensed images.
 
 ## MGNREGA images
 
-The wage homepage pairs the supplied workers-in-a-field illustration with the existing heading and buttons. The supplied StudyIQ scheme graphic appears in a matching photo band below the hero, beside an explanation of work days, wages and workers' confirmations. Both keep their natural proportions and source credits. Responsive 640/960 px WebP files are served locally; source files are `nrega-scheme.jpg` and `nrega-workers.jpg` in `docs/media/reference-photos/`. No report questions, links or submission behavior changed.
+The wage homepage pairs a photograph of an MGNREGA work site with the existing heading and buttons. The supplied StudyIQ
+scheme graphic appears in a matching photo band below the hero, beside an explanation of work days, wages and workers'
+confirmation.
 
-| Image | Source |
-| --- | --- |
-| Supplied scheme graphic, with Gandhi portrait | [StudyIQ](https://www.studyiq.com/articles/mahatma-gandhi-national-rural-employment-guarantee-scheme/) |
-| Supplied workers beneath an MGNREGA banner | [Shutterstock AI, asset 2622134373](https://www.shutterstock.com/image-generated/mgnrega-2622134373) |
+| Image | Credit and licence | Source |
+| --- | --- | --- |
+| Villagers digging out a silted-up water tank as NREGA work (photograph) | McKay Savage, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/). Resized and converted to WebP; not otherwise changed | [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Rural_villages_digging_out_a_silted-up_water_tank_(5103636919).jpg) |
+| Supplied scheme graphic, with Gandhi portrait | StudyIQ; copyright remains with its owner | [StudyIQ](https://www.studyiq.com/articles/mahatma-gandhi-national-rural-employment-guarantee-scheme/) |
 
-These are third-party representative illustrations, not Tolmol records or proof of official endorsement. Their copyrights remain with their owners. The workers' picture is an existing Shutterstock AI asset matching the user reference, not a newly generated image. Its public preview, including any source marks, is preserved and labelled as a preview.
+The photograph is free to reuse under CC BY 2.0 with this credit. The scheme graphic is a third-party representative
+illustration, not a Tolmol record or proof of official endorsement.
 
 ## School-meal illustrations
 
