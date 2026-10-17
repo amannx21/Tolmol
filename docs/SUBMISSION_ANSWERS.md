@@ -3,9 +3,8 @@
 Copy-paste source for the Devfolio form. `[FILL]` marks anything not yet true or not yet known.
 Nothing here is submitted automatically; the builder submits and publishes.
 
-Judging (docs/scoring-rubric.md in the challenge repo): four criteria, 25 points each. For each track, its own first
-criterion ("Why India?" or "Why this pillar?") plus **Why Arkiv**, **How you use Arkiv** and the **Friction report**.
-Each answer below is written to the rubric's top band, and every claim links to something a judge can open.
+The form asks, for each track, "Why India?" or "Why this pillar?", plus **Why Arkiv**, **How you use Arkiv** and the
+**Friction report**, which are the same for every track. Every claim below links to something anyone can open.
 
 ## Public fields
 
@@ -102,7 +101,7 @@ department's registry key instead of ours, which the app already supports (`#/tr
   **No personal data on the explorer:** no name, phone, Aadhaar, card or job card number, or child's name, not even
   hashed; `#/public` shows a real report exactly as a stranger sees it, beside everything that never left the phone.
   **Few attributes, each earning its place:** a ration report is 16 small typed fields and nothing else, each there
-  because a reader filters or ranges on it (the rubric's "numbers where you need ranges"): the outlet and its place (3),
+  because a reader filters or ranges on it (amounts are typed numbers so ranges run on chain): the outlet and its place (3),
   the month and its number (2), the item, the amounts owed and received with the shortfall in grams and basis points
   (4), a bitmask of what went wrong, the day (not the time), and four tags (project, type, version, synthetic). No free
   text, no household-size field; MGNREGA wages rounded to ₹500. **Encrypted payloads:** every payload is empty except a
@@ -112,8 +111,14 @@ department's registry key instead of ours, which the app already supports (`#/tr
   numbers, because ciphertext outlives the note in chain history. **Expiry the user controls:** 30, 90 or 180 days,
   and whether neighbours may extend it. *Beyond the ask:* a separate anonymous ID with one tap, switched on by itself for
   the reports a dealer would retaliate against (threats, a kept card, bribes, discrimination), and one ID per outlet for
-  confirmations; a random send delay of 1 to 6 hours; a small-outlet warning; a hearing proof that writes nothing and
-  can be sent through someone trusted. The audit of every Tolmol entity runs daily in public (GitHub Actions, PASS).
+  confirmations; a random send delay of 1 to 6 hours, on by itself for those same reports and wherever fewer than 3
+  people have reported the outlet this month; a small-outlet warning; **"Remove Tolmol from this phone"** for someone
+  whose phone may be checked (every key, waiting report and setting, then a blank tab, so nothing is re-created); a
+  hearing proof that writes nothing and can be sent through someone trusted. The audit of every Tolmol entity runs
+  daily in public (GitHub Actions, PASS). *Why the amounts stay public, on purpose:* Tolmol protects the person, not
+  the facts. The shortfall is the evidence: encrypting the amounts would hide it from the neighbours who confirm it
+  and the officials who must act on it. So everything that could point to a person is kept off chain or locked, and
+  only the numbers about the shop are public.
   *A trade-off we state, not hide:* ordinary reports use the phone's usual ID unless separate IDs are on, so "one report
   per phone" can still be checked on chain. Honest limits (threat model T36, T48, T51, T56): the amount owed can hint at
   family size, block times are public, and that a note exists is public, not its words.

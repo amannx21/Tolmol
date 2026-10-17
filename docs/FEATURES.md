@@ -84,7 +84,9 @@ The complete feature list and design notes. The short version is the [README](..
    matched to who was at the counter; this switches on by itself for risky reports and for shops where few people have
    reported this month (which also gets a warning). **"Prove this report is mine"** lets a reporter back their
    complaint at a hearing: the official reads out a one-time code, the phone signs it with the key that wrote the
-   report, the official checks it against `$creator` (`#/proof`). Nothing new goes public.
+   report, the official checks it against `$creator` (`#/proof`). Nothing new goes public. If someone may check the
+   phone, **"Remove Tolmol from this phone"** (About) deletes every key, waiting report and setting, then leaves for a
+   blank page so no new ID is made; the reports stay on Arkiv.
 17. **Choose whom to trust.** `#/trust` shows the one registry address every trust decision starts from, checks it
    against the address published in this repository (outside Arkiv and outside the site), lists the verifiers it
    names and when each approval lapses, and lets anyone switch to a registry they trust more (`?registry=0x…`), with a
@@ -255,7 +257,8 @@ anonymous ID per report** (on by default for threats, a kept ration or job card,
 like every fresh wallet, so nobody can link one person's reports, not even through who paid the gas. A random send
 delay of 1 to 6 hours breaks the link to a shop visit; a warning shows when an outlet has few reporters; MGNREGA wages
 are rounded to ₹500 because muster rolls are public; a hearing proof shows "this report is mine" in person and writes
-nothing. Letters keep name and card number as paper blanks. `scripts/privacy-audit.ts` checks every Tolmol entity on
+nothing; one tap removes every Tolmol key and setting from a phone that may be checked. Letters keep name and card
+number as paper blanks. `scripts/privacy-audit.ts` checks every Tolmol entity on
 Tiramisu against [`docs/data-contract.schema.json`](data-contract.schema.json) (PASS), and a GitHub Action reruns
 it daily. Open: the entitlement can hint at family size (shown before sending), block times are public, and with the
 option off, reports under one ID are linkable (threat model T15, T36, T48).

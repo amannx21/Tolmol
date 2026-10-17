@@ -61,7 +61,9 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 3. Tap what else went wrong: asked to pay, fingerprint failed, card kept, children seated apart, wages late. These are
    fixed choices, never free text.
 4. Before sending, see **exactly what becomes public** and what stays on the phone. Choose how long it stays (30, 90
-   or 180 days). Use a separate anonymous ID for this report, or send it at a random time in the next 1 to 6 hours.
+   or 180 days). Use a separate anonymous ID for this report, or send it at a random time in the next 1 to 6 hours;
+   both switch on by themselves for reports a dealer could retaliate against. If someone may check the phone,
+   **Remove Tolmol from this phone** (in About) deletes every key, waiting report and setting.
    **No signal?** The report is kept on the phone and goes out by itself when the connection is back.
 5. Next steps appear: the state's food helpline, and a printable complaint to the right officer or an RTI letter,
    with name and address left blank to fill in by hand.
