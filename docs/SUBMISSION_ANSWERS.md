@@ -1,6 +1,6 @@
-# Devfolio submission answers (draft)
+# Devfolio submission answers
 
-Copy-paste source for the Devfolio form. `[FILL]` marks anything not yet true or not yet known.
+Copy-paste source for the Devfolio form. `[FILL]` marks anything only the builder can choose.
 Nothing here is submitted automatically; the builder submits and publishes.
 
 The form asks, for each track, "Why India?" or "Why this pillar?", plus **Why Arkiv**, **How you use Arkiv** and the
@@ -9,147 +9,136 @@ The form asks, for each track, "Why India?" or "Why this pillar?", plus **Why Ar
 ## Public fields
 
 - **Project name:** Tolmol (तोलमोल)
-- **Tagline:** A complaint anyone can make in a few taps, read aloud in Hindi, on a record nobody can edit or delete: ration, mid-day meals, MGNREGA wages. Built on Arkiv.
+- **Tagline:** Got less ration, mid-day meal or MGNREGA wages? Report it in a few taps, sealed on Arkiv.
 - **Tracks:** Best Indian Use Case, Censorship Resistance, Open Source, Privacy, Security
 - **Technologies:** Arkiv (Tiramisu), @arkiv-network/sdk 0.8.1, viem, @noble (secp256k1, AES-GCM), TypeScript, Preact, Vite, Vitest, Node.js, Python (reader)
 - **Platforms:** Web (mobile-first, installable, offline), CLI
-- **Media:** `docs/media/hero-v3.jpg`, `voice-v2.jpg`, `arch.jpg`, `schemes-v2.jpg`, `trust-v2.jpg`
+- **Media:** screenshots of the live app (report in Hindi, a shop's record, the dealer's view, the track record, what a stranger sees)
 - **Links:** repo https://github.com/amannx21/Tolmol · app https://tolmol-web-kappa.vercel.app · backup
   https://amannx21.github.io/Tolmol/ · video https://youtu.be/e98TA-ygH4M
 
 ### The problem it solves * (this is also our "Why India?")
 
-*An illustration (synthetic, like all our data).* At a ration shop in Gaya, a woman with an Antyodaya card is owed
-35 kg. The scale says 35; she carries home 31. If she complains, it is her word against the dealer she depends on
-every month, on a portal that can lose it, in a WhatsApp group whose admin can delete it.
+**The problem.** 81.35 crore Indians are owed free grain every month at more than 5 lakh ration shops, yet about 28%
+of PDS grain never reaches them (ICRIER, 2024). Mid-day meals for school children and MGNREGA wages go missing the
+same way. The only record (machine slip, meal register, muster roll) is kept by the side people would complain about,
+so a complaint is one person's word against a dealer they must face again next month, on a portal that can lose it
+or in a WhatsApp group whose admin can delete it.
 
-**Who, in India.** 81.35 crore people get free grain at more than 5 lakh fair-price shops (NFSA 2013: 5 kg a person,
-35 kg for an Antyodaya family), and about 28% of PDS grain never reaches them (ICRIER). Parents of children on PM
-POSHAN mid-day meals and MGNREGA workers face the same thing: a fixed amount owed at a known place, and the only
-record (ePoS slip, meal register, muster roll) kept by the side they would complain about.
+**What Tolmol does:**
+1. **Report by tapping and listening.** The phone reads every question aloud in Hindi, and answers are big buttons
+   and + / − steps. No typing, no name, no card number, no sign-up, no app to install. No signal? The report waits on
+   the phone and goes out later.
+2. **Neighbours confirm.** Others at the same shop tap "I got less too", or "I got my full ration". A lone claim that
+   3 others contradict is labelled, never hidden.
+3. **The dealer must answer, in public.** Answers come from a fixed list, and a monthly stock board is set against the
+   reports, e.g. *"13 card holders say they got 37.6% less; about 752 kg is unaccounted for."*
+4. **Officials act, and are checked too.** A "needs attention" list, actions on the record, and an inspector's "no
+   issue found" flagged when the next reports say otherwise.
+5. **It reaches the right desk.** One tap prints the complaint for the right officer under the right law: the
+   District Grievance Officer (NFSA s.15), an RTI, the State Food Commission.
 
-**Today.** One person's word against the outlet's, records that can be edited or lost, and nobody who can see the
-pattern across a shop or a district. And complaining is itself hard: forms, logins, typing, English, an office visit.
+**Safe to speak up.** Nothing that names the person is stored. Risky reports (a threat, a kept card, a bribe) get a
+fresh anonymous ID by themselves, and what cannot be said in public goes in a private note only the district
+official can read.
 
-**Built for the person at the counter, not for a computer user.** If she can tap and listen, she can complain: every
-question is read aloud in Hindi, every answer is a big button or a + / − step, and there is nothing to type, no
-form, no sign-up and no app to install. Weak signal is fine: the report waits on the phone and sends itself.
-
-**What changes from day one.**
-1. **She reports in under a minute, out loud in Hindi.** One question per screen, read aloud by the phone's own voice,
-   big buttons and + / − steps; no typing, no name, no card number, no account. It works offline and sends when there
-   is signal. School meals and wages work the same way.
-2. **Neighbours back her, or say otherwise.** Others at the counter tap "I got less too", or "I got my full ration".
-   A lone claim that 3 others contradict is labelled so; it is never hidden.
-3. **The dealer answers on the record.** A verified dealer, head teacher or employment assistant sees their waiting
-   reports first, answers from a fixed list, and posts a monthly board that Tolmol sets against the reports ("about
-   752 kg is unaccounted for"). Only she can say "fixed" or "not fixed".
-4. **Officials act, and are watched.** A public "needs attention" list, recorded actions, inspectors whose authority
-   covers one outlet for a few days, and a public track record that flags a "no issue found" when later reports
-   contradict it.
-5. **She is never exposed.** What she cannot say in public goes in a private note only the district official can
-   read. If she must prove "this report is mine", she can send the proof through someone she trusts instead of going.
-6. **It reaches the right desk.** Printable complaints to the District Grievance Redressal Officer (NFSA s.15), the
-   District Education Officer or the MGNREGA Programme Officer and Ombudsperson, an RTI, the state's food helpline,
-   and a letter above the inspector to the State Food Commission when an inspection is contradicted.
-
-**It works today:** live in Hindi and English at the links above, installable, offline. The demo uses synthetic shops,
-schools and panchayats in real districts of Bihar, Uttar Pradesh and Jharkhand. Real use needs one change: a state
-department's registry key instead of ours, which the app already supports (`#/trust`).
+**Works today** in Hindi and English, in the phone's browser, on synthetic shops, schools and panchayats in real
+districts of Bihar, Uttar Pradesh and Jharkhand. 4 people outside the team have already filed reports from their own
+phones, sealed on Arkiv: [1](https://tiramisu.explorer.arkiv.network/entity/0xeb120ffac3d68a43202fe188c855c6cee13bb7cd950aba0c0047cd39158c1d45) [2](https://tiramisu.explorer.arkiv.network/entity/0x509b0046f489a8f51dafbaedc8ce90898b351e43ee9bf6e50a35b3738c883844) [3](https://tiramisu.explorer.arkiv.network/entity/0x4d2083fb525deb9a423fbeb77583cde9aa8a607270d9aa45c75257e4452a3d94) [4](https://tiramisu.explorer.arkiv.network/entity/0xf978ed2dfda6ecb26b6fd7e036592aef0c4a4679d0f54e7706ce8d5aff605682). A state turns it on for real by using its own registry (`#/trust`).
 
 ### Challenges I ran into *
 
-- The anonymous query budget (10,000 units, 100 per query, up to about an hour to reset) is invisible until it is gone,
-  and viem silently waited out `Retry-After`, so reads looked like hangs. We fail fast, show each query's `Arkiv-Cost`
-  and the reads left, and serve a labelled saved copy when the budget runs out (friction F13, F14).
-- The public RPC rejects request bodies over 262,144 bytes, reported as "Execution error without revert data"; we
-  probed the HTTP 413 directly and cap batches at 40 creates (F5).
-- On Arkiv the owner can delete even a read-only entity, so a pressured reporter could delete evidence. We solved it
-  without contracts: create + transfer to a burn address in one atomic batch, using predicted keys.
-- Privacy and public evidence pull in opposite directions. We kept every number public (so anyone can recount a shop)
-  and encrypted only the one thing meant for one person, a note to the official, to a key that proves itself:
-  it must hash to the official's `$creator`.
-- Anonymity needed more than "no names": exact MGNREGA wages could name a worker on the public muster roll (we round
-  to ₹500), a report landing right after a visit can be matched by time (random send delay), and one phone's
-  confirmations could be linked across shops (one ID per outlet).
+- **Reads ran out without warning.** Arkiv gives an anonymous visitor about 100 queries an hour, but nothing says how
+  many are left until it stops, and our library then waited silently for up to an hour. We made a shop page read
+  everything about the shop in one query (a third of the reads), show the reads left on every page, and say so in
+  plain words when the limit is hit (friction F13, F14).
+- **"Read-only" was not enough.** On Arkiv the owner can still delete a read-only record, so a pressured reporter
+  could be made to delete their own. We hand every record to an address nobody owns in the same transaction that creates
+  it: nobody can delete it, with no smart contract.
+- **Privacy against evidence.** The numbers must be public so anyone can recount a shop; the person must stay hidden.
+  So the amounts are public, nothing that names anyone is stored, and only the note to the official is encrypted, to a
+  key that proves it belongs to that official.
+- **Real phones are messy.** Old iPhones, laptops without a Hindi voice, the Brave browser, weak signal: we tested
+  each one, fixed what we could, and made the app explain the rest instead of failing silently.
+- **A misleading error.** Large batches failed with "Execution error without revert data"; the real cause was a
+  262 KB request limit, so we cap a batch at 40 records (friction F5).
 
 ### Why this pillar? (one paragraph per track, if the form asks)
 
-- **Censorship Resistance.** *Who is silenced today:* the card holder, parent or worker whose complaint about the
-  person they depend on every month is lost on a portal, deleted by a WhatsApp admin, or quietly dropped by whoever
-  runs the app, so nobody ever sees the pattern at a shop or across a district. *A bad day for one complaint, and what
-  happens on Tolmol:*
-  1. **The dealer pressures her to take it back.** Nobody can delete it, not even her: the report was sealed as it was
-     written (readonly, handed to `0x…dEaD` in the same batch). Only her own withdrawal can mark it, and that is public
-     too.
+- **Censorship Resistance.** *Who is silenced today:* the card holder, parent or worker whose complaint about someone
+  they depend on every month is lost on a portal, deleted by a WhatsApp admin, or quietly dropped by whoever runs the
+  app, so nobody ever sees the pattern at a shop or across a district.
+  *A bad day for one complaint, and what happens on Tolmol:*
+  1. **The dealer pressures the reporter to take it back.** Nobody can delete it, not even the reporter: it was
+     sealed as it was written (read-only, handed to `0x…dEaD` in the same transaction). Only the reporter's own
+     withdrawal can mark it, and that is public too.
   2. **Someone asks us to remove it.** We cannot. Nobody holds a key that could delete it, including us.
   3. **Our website is blocked or taken down.** The same app runs on a second host (GitHub Pages); the one-file
-     `mirror.html` reads every record from any Arkiv server; the README's `curl` and a 25-line script
-     (`examples/build-on-tolmol.mjs`) read them with no Tolmol server at all.
-  4. **Our relayer (free gas) is blocked.** Filing still works: `tolmol submit` signs on her own or a helper's computer,
-     with gas from Arkiv's public faucet. A report filed that way:
+     `mirror.html` reads every record from any Arkiv server; the README's `curl` and a 25-line script read them with no
+     Tolmol server at all.
+  4. **Our relayer (free gas) is blocked.** Filing still works: `tolmol submit` signs on the reporter's or a helper's
+     computer, with gas from Arkiv's public faucet. A report filed that way:
      https://tiramisu.explorer.arkiv.network/entity/0x046b33122784cbf97bd5ea221d780bd1d01a9ec7c6f4a2c55ac7d0a0040c047c
   5. **Someone tries to change whose "verified" counts.** Every trust decision starts from one registry address,
      checked against this repository; every page warns while a different one is in use, and a state or NGO can point
      the app at its own (`#/trust`).
 
-  *The pillar's ask, "someone outside the team can read and query the data from Arkiv without the team's backend":*
-  there is no backend to remove, and `#/raw` lists every query the app makes as curl, JavaScript or Python. *Honest
-  limits:* Tiramisu is a testnet, and a person who cannot use a terminal still needs our relayer or the faucet for gas.
-- **Open Source.** *Who is locked out today:* civic groups, journalists and other states, who need a separate permission
-  and integration for each portal's data. *From day one, and the pillar's ask, "another team can build on the dataset
-  or tool without asking permission, from a documented data contract":* MIT; `arkiv/schema.md` and all 16 record types
-  as JSON Schema (`docs/data-contract.schema.json`); `tolmol-sdk` 0.2.0 on npm with a changelog where every change is
-  additive; a CLI that reads, files and confirms (`npx tolmol`); a Python reader written only from the contract;
-  **`examples/build-on-tolmol.mjs`: every outlet's verdict and every inspector's track record for a state in about 25
-  lines, with no key and no Tolmol server, from `npm install tolmol-sdk` alone (no clone)**; and a daily public check that what is on chain still matches the
-  contract. The proof it is reusable: mid-day meals and MGNREGA wages were added on the same model without changing a
-  single ration record or breaking the published reader.
-- **Privacy.** *Who is exposed today:* a person who complains about the dealer, head teacher or panchayat they depend
-  on every month, and can be scolded, refused work or have their card kept. *From day one, point by point against the
-  pillar's ask:*
-  **No personal data on the explorer:** no name, phone, Aadhaar, card or job card number, or child's name, not even
-  hashed; `#/public` shows a real report exactly as a stranger sees it, beside everything that never left the phone.
-  **Few attributes, each earning its place:** a ration report is 16 small typed fields and nothing else, each there
-  because a reader filters or ranges on it (amounts are typed numbers so ranges run on chain): the outlet and its place (3),
-  the month and its number (2), the item, the amounts owed and received with the shortfall in grams and basis points
-  (4), a bitmask of what went wrong, the day (not the time), and four tags (project, type, version, synthetic). No free
-  text, no household-size field; MGNREGA wages rounded to ₹500. **Encrypted payloads:** every payload is empty except a
-  **private note to the district official**, encrypted on the phone with standard ECIES (secp256k1, HKDF-SHA256,
-  AES-256-GCM; a test proves Node's own OpenSSL opens it) to a key that must hash to that official's `$creator`. The
-  explorer shows ciphertext, the daily audit fails on anything else, and the note box refuses phone, Aadhaar and card
-  numbers, because ciphertext outlives the note in chain history. **Expiry the user controls:** 30, 90 or 180 days,
-  and whether neighbours may extend it. *Beyond the ask:* a separate anonymous ID with one tap, switched on by itself for
-  the reports a dealer would retaliate against (threats, a kept card, bribes, discrimination), and one ID per outlet for
-  confirmations; an optional random send delay of 1 to 6 hours (off by default: people open Tolmol about once a
-  month, so a report is sent at once unless they choose, and a held one shows on every page with Send now); a
-  small-outlet warning; **"Remove Tolmol from this phone"** for someone
-  whose phone may be checked (every key, waiting report and setting, then a blank tab, so nothing is re-created); a
-  hearing proof that writes nothing and can be sent through someone trusted. The audit of every Tolmol entity runs
-  daily in public (GitHub Actions, PASS). *Why the amounts stay public, on purpose:* Tolmol protects the person, not
-  the facts. The shortfall is the evidence: encrypting the amounts would hide it from the neighbours who confirm it
-  and the officials who must act on it. So everything that could point to a person is kept off chain or locked, and
-  only the numbers about the shop are public.
-  *A trade-off we state, not hide:* ordinary reports use the phone's usual ID unless separate IDs are on, so "one report
-  per phone" can still be checked on chain. Honest limits (threat model T36, T48, T51, T56): the amount owed can hint at
-  family size, block times are public, and that a note exists is public, not its words.
+  Anyone can read and query everything without our backend, because there is none: `#/raw` lists every query the app
+  makes as curl, JavaScript or Python. *Honest limits:* Tiramisu is a testnet, and someone who cannot use a terminal
+  still needs our relayer or the faucet for gas.
+- **Open Source.** *Who is locked out today:* a civic group, a journalist or another state that wants ration-shop data
+  has to ask each portal for permission and write a new integration every time.
+  *What anyone can do with Tolmol, without asking us:*
+  - **Read the rules:** `arkiv/schema.md`, and all 16 record types as JSON Schema (`docs/data-contract.schema.json`).
+  - **Install it:** `npm install tolmol-sdk` (0.2.0) gives the same reader and trust rules the app uses; `npx tolmol`
+    reads, files and confirms from a terminal.
+  - **Build on it in 25 lines:** `examples/build-on-tolmol.mjs` prints every outlet's verdict and every inspector's
+    track record for a state, with no key, no Tolmol server and no clone.
+  - **Use another language:** a Python reader written only from the contract, with the standard library alone.
+  - **Count on it staying stable:** a changelog where every change is additive, and a daily public check that what is
+    on chain still matches the contract.
+
+  *Proof it is reusable:* mid-day meals and MGNREGA wages were added on the same model without changing a single
+  ration record or breaking the published reader. MIT licence.
+- **Privacy.** *Who is exposed today:* the person who complains about someone they depend on every month (the dealer,
+  the head teacher, the panchayat) and can be scolded, refused work or have their card kept.
+  *What Tolmol does:*
+  - **Nothing that names you is stored**, not even hashed: no name, phone, Aadhaar, card or job card number, or
+    child's name. `#/public` shows a real report exactly as a stranger sees it.
+  - **Only numbers about the shop are public.** A ration report is 16 small fields (shop, month, amounts owed and
+    received, what went wrong, the day but not the time), with no free text. MGNREGA wages are rounded to ₹500, so a
+    public muster roll cannot point to one worker.
+  - **Risky reports cannot be linked to you.** A threat, a kept card, a bribe: a fresh anonymous ID is used by itself.
+    Confirmations use a different ID for every shop.
+  - **Say what you cannot say in public.** A note to the district official is encrypted on the phone (standard ECIES;
+    a test proves OpenSSL itself opens it) to a key that must belong to that official. Everyone else sees scrambled
+    bytes. The box refuses phone, Aadhaar and card numbers, because encrypted text stays in chain history.
+  - **You stay in control:** choose how long a report lives (30, 90 or 180 days); "Remove Tolmol from this phone"
+    deletes every key and setting in one tap if someone may check the phone; optionally send a report later, at a
+    random time.
+
+  *Why the amounts stay public, on purpose:* Tolmol protects the person, not the facts. Hiding the shortfall would
+  hide it from the neighbours and officials who must act on it. *Honest limits:* ordinary reports use the phone's usual
+  ID, so "one report per phone" can still be checked; the amount owed can hint at family size; the time a record
+  appears on chain is public. A public audit checks every Tolmol record every day (PASS).
 - **Security.** *Who is misled today:* officials, journalists and card holders who act on records that can be forged
-  ("all fixed", "full ration given") or quietly withdrawn, and on inspections that can be bought. *The pillar's ask,
-  "shows or filters entities by `$creator`, not by a field anyone can write", everywhere:* outlets only from the
-  registry; answers and boards only from the outlet's verified operator; "fixed" and withdrawals only from the reporter;
-  official actions only from that district; inspector findings only for the delegated outlet inside its window;
-  private notes only from the report's own key, to an office key that must hash to its `$creator`; "I got my full share"
-  once per `$creator` per month. Planted fakes (a fake dealer answer and a fake "fixed", at a shop and a school) are
-  shown as ignored, with their writers. *Who checks the checkers:* every finding is set against the reports that follow
-  it; the demo inspector's "no issue found" at SYN-BR-0002, followed by reports 31% short, is flagged on the public
-  track record (`#/track`) under the inspector and the official who sent them. *Where we stop, said plainly:* one person
-  with many phones is the open problem every entry shares. Tolmol makes it visible instead of pretending: burst patterns
-  on every outlet, a one-tap verified-only view on the dashboard, one card verifies one phone. The demo's test cards are
-  public on purpose so judges can act as any role; a state would issue real ones (DigiLocker design,
-  `docs/VERIFIED_REPORTERS.md`), and the registry that names verifiers is replaceable (`#/trust`) and can name several.
-  Every number is recomputed by every reader, an edited evidence file fails the Verify page, and the registry address
-  is checked against this repository. 121 tests, CodeQL, and two real relayer bugs found and fixed (IP spoofing, a
-  429 hang).
+  ("all fixed", "full ration given"), quietly withdrawn, or signed off by an inspector who was paid.
+  *Tolmol's one rule: who wrote it, not what it says.* Arkiv itself records who wrote every entry (`$creator`), and
+  nobody can fake it. So:
+  - shops count only from the registry; answers and stock boards only from that shop's verified dealer;
+  - "fixed" and withdrawals only from the person who reported;
+  - official actions only from that district's official; an inspector's findings only for the one shop and the days
+    they were sent;
+  - private notes only to a key that proves it belongs to the official.
+
+  *See it work:* at SYN-BR-0042 a stranger's wallet planted a fake dealer answer and a fake "fixed". The page shows
+  both as ignored, with who wrote them. *Who checks the checkers:* every finding is set against the reports that
+  follow it. The demo inspector's "no issue found" at SYN-BR-0002, followed by reports 31% short, is flagged on the
+  public track record (`#/track`) under that inspector and the official who sent them. *Where we stop, honestly:* one
+  person with many phones is the open problem every entry shares; Tolmol shows it (burst patterns on every shop, a
+  verified-only view, one card verifies one phone) instead of hiding it. The demo's test cards are public so judges can
+  try every role; a state would issue real ones. *Checked by:* 121 tests, CodeQL, every number recomputed by every
+  reader, and an edited evidence file fails the Verify page.
 
 ## Organiser questions (private to judges)
 
@@ -157,52 +146,58 @@ department's registry key instead of ours, which the app already supports (`#/tr
 2. **Indian nationality** \*: Yes (AMAN ARORA)
 3. **Why Arkiv?** \*
 
-   What Tolmol builds on Arkiv is **a chain of trust that nobody can step outside, officials included**. A registry
-   names verifiers; verifiers vouch for card holders, dealers, head teachers and officials; officials send inspectors for
-   a few days; and every one of them is held to account by records written later by the people they serve: a dealer's
-   "fixed" by the reporter, an inspector's "no issue" by the next month's reports. Every link is an Arkiv entity, and
-   the only thing that makes a link count is who wrote it. **Without Arkiv it falls apart**, because it needs three
-   properties together. (1) **Authorship set by the protocol** (`$creator`): every rule hangs on it, down to an
-   official's encryption key, which proves itself by hashing to its `$creator`. A field anyone can write would make all
-   of it forgeable; our own signed API would still let us choose what to serve. (2) **Records nobody can delete**,
-   without a contract: `readonly` plus an ownership transfer to `0x…dEaD` in the same atomic batch. On Postgres behind
-   our API, we, our host or anyone who pressures us could delete a complaint and nobody outside could tell. (3)
-   **Queries with no operator**: anyone can ask "every report at this school in October" or "everything about this
-   shop, in one query" over typed attributes. IPFS keeps content but needs an indexer someone runs; a subgraph needs a
-   contract, an indexer and its operator. Expiration (lifetimes the reporter chooses, inspector windows that end by
-   themselves), Extension (neighbours keep evidence alive) and `atBlock` (what was public at block N) complete it.
-   **Even we are replaceable:** a state can point the app at its own registry (`#/trust`), anyone can read everything
-   with curl, and anyone can file a report from their own computer with the CLI, without our website or our relayer.
+   **In one line:** Tolmol needs records that nobody can delete, whose author nobody can fake, and that anyone can
+   search without asking us. Arkiv gives all three at once.
 
-   **Kept off Arkiv on purpose:** names, phones, Aadhaar, ration card and job card numbers, children's names,
-   addresses (hashes would be reversible), free text, photos, household size as a field, the exact time (rounded to the
-   day), exact MGNREGA wages (rounded to ₹500), the words of a private note (only ciphertext goes on chain), an
-   official's private key, proofs of authorship (checked in person, never stored), device keys, the relayer's
-   rate-limit data and IPs, and aggregates (anyone can recompute them).
+   **What would break anywhere else:**
+   - **Postgres behind our API:** we, our host or anyone who pressures us could delete a complaint, and nobody outside
+     could tell.
+   - **IPFS:** nobody can change a file, but someone has to keep it pinned and run an index before anyone can ask
+     "every report at this school in October".
+   - **A subgraph:** a contract, an indexer and its operator, each one a new point to pressure.
+   - **Our own signed API:** it proves who wrote a record, but we would still choose what to show.
 
-4. **How do you use Arkiv?** \* We judge ourselves by how and why, not how many. **Five features Tolmol could not exist
-   without**, each chosen for a reason the user sees:
+   **What Arkiv gives us:**
+   1. **The author is set by the network** (`$creator`). Every trust rule hangs on it, down to an official's
+      encryption key, which proves itself by hashing to its `$creator`.
+   2. **Records nobody can delete, with no contract:** read-only, and handed to an address nobody owns in the same
+      transaction.
+   3. **Questions with no operator:** anyone can ask "everything about this shop" in one query, over typed numbers.
+   4. **Time built in:** a report lives as long as its reporter chose; an inspector's authority ends by itself;
+      neighbours who confirm a report keep it alive longer; anyone can see the record "as it was at block N".
 
-   1. **`$creator` as the only trust rule.** Answers, boards, "fixed", withdrawals, official actions, inspector
-      findings, private notes and published keys count only from the right wallet. *User sees:* "2 answers or
-      follow-ups ignored", with who wrote them; "Private notes for you" only on the real official's phone.
-   2. **Readonly + ownership transfer to `0x…dEaD` in one atomic batch** (`predictEntityKeys`). *Why:* on Arkiv an owner
-      can delete even a readonly entity, so a pressured reporter could be made to. *User sees:* "Sealed: nobody can edit
+   **What we built on it:** a chain of trust that nobody can step outside, officials included. A registry names
+   verifiers; verifiers vouch for card holders, dealers, head teachers and officials; officials send inspectors for a
+   few days; and each of them is checked by records written later by the people they serve. **Even we are
+   replaceable:** a state can use its own registry, anyone can read everything with curl, and anyone can file a report
+   with the CLI, without our website or relayer.
+
+   **Kept off Arkiv on purpose:** names, phones, Aadhaar, ration and job card numbers, children's names, addresses,
+   free text, photos, household size, the exact time and exact wages, the words of a private note (only ciphertext),
+   proofs of authorship, and every private key.
+
+4. **How do you use Arkiv?** \* By how and why, not how many: **five features Tolmol could not exist without**, each
+   with the reason and what the user sees.
+
+   1. **`$creator` as the only trust rule.** *Why:* anyone can write any field, but nobody can fake who wrote an entry.
+      *User sees:* "2 answers or follow-ups ignored", with who wrote them; "Private notes for you" only on the real
+      official's phone.
+   2. **Read-only + handed to `0x…dEaD` in one atomic batch** (`predictEntityKeys`). *Why:* on Arkiv an owner can
+      delete even a read-only entity, so a pressured reporter could be made to. *User sees:* "Sealed: nobody can edit
       or delete it, including us".
-   3. **Typed attributes and compound, range and `OR` queries, read by anyone.** Grams, days and rupees as numbers so
-      the dashboard can range on them; one `OR` query reads every shop, school and panchayat from the registry; the
-      payload stays empty except a note's ciphertext. *User sees:* rankings by district and month, and `#/raw` with
-      every query as curl.
-   4. **Entity Expiration as product logic.** The reporter chooses 30, 90 or 180 days; an inspector's authority ends at a
-      block by itself; a private note lives 180 days. *User sees:* the expiry choice, and days left on every report.
-   5. **Lifetime Extension as a lease renewed by neighbours.** The second confirmation extends the report and its
-      witnesses (`permissionlessExtension`, read back so a reporter's opt-out is respected). *User sees:* the expiry
-      moving out when neighbours confirm.
+   3. **Typed attributes with compound, range and `OR` queries, read by anyone.** *Why:* grams, days and rupees are
+      numbers, so a dashboard can rank by them; one `OR` query reads every shop, school and panchayat; one query reads
+      everything about a shop. *User sees:* rankings by district and month, and `#/raw` with every query as curl.
+   4. **Entity Expiration as product logic.** *Why:* evidence should not outlive its purpose, and authority should end
+      by itself. *User sees:* the reporter picks 30, 90 or 180 days and sees days left on every report; an inspector's
+      window ends on its own.
+   5. **Lifetime Extension renewed by neighbours.** *Why:* a confirmed report deserves to stay longer, decided by the
+      people who confirm it, unless the reporter opted out. *User sees:* the expiry moving out when neighbours confirm.
 
-   With the same care: `atBlock` history ("show as it was at block N"), WebSocket `watchEntityEvents` with no
-   `fromBlock` (the live dashboard), block numbers as evidence (a finding judged by the reports after its block), the
-   owner kept on purpose so an official can revoke an inspector, `createdBy()` to stop repeats, and the `Arkiv-Cost` /
-   `RateLimit` headers shown to the user. Every feature, with a permalink to the exact lines (49 in all):
+   Also used with the same care: `atBlock` ("show as it was at block N"), live WebSocket events (the dashboard updates
+   by itself), block numbers as evidence (a finding judged by the reports after it), an owner kept on purpose so an
+   official can revoke an inspector, `createdBy()` to stop repeats, and the read-limit headers shown to the user. Every
+   feature, with a permalink to the exact lines (49 in all):
    https://github.com/amannx21/Tolmol/blob/submission-v1/docs/ARKIV_USAGE.md
 
 5. **Friction report** \*: https://github.com/amannx21/Tolmol/blob/submission-v1/arkiv/friction.md (14 issues, each
