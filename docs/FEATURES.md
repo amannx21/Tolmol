@@ -73,7 +73,7 @@ The complete feature list and design notes. The short version is the [README](..
    with a hot meal, at a school) and **MGNREGA wages** (rupees owed vs paid, at a gram panchayat), each with its own
    questions, answers from the head teacher or employment assistant, official actions, and letters to the right
    authority (District Education Officer; MGNREGA Programme Officer and Ombudsperson). Ration data did not change, and
-   older readers simply do not see the new records ([`arkiv/schema.md`](../arkiv/schema.md#other-schemes-on-the-same-ledger)).
+   older readers simply do not see the new records ([`arkiv/schema.md`](../arkiv/schema.md#tolmoloutlet-schools-and-gram-panchayats-other-schemes-on-the-same-ledger)).
    Ration stays the first workspace; a bar under the menu keeps School meals and MGNREGA wages in view on every page,
    each a separate workspace with its own home, report and records. Their reports are as easy as ration's: one
    question per screen read aloud in Hindi, big + / − steps instead of typing, and the same privacy protections.

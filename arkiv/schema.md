@@ -18,7 +18,7 @@ value outside this contract, or a non-empty payload (see "Privacy audit" below).
 | Type | Created by | Owner after creation | Flags | Lifetime | Payload |
 |---|---|---|---|---|---|
 | `tolmol.shop` | Registry wallet (one fixed address) | Registry wallet | readonly, permissionlessExtension | 180 days | small JSON: synthetic display labels (EN/HI) |
-| `tolmol.outlet` | Registry wallet | Registry wallet | readonly, permissionlessExtension | 180 days | same JSON as a shop. A school (school meals) or gram panchayat (MGNREGA wages), see [Other schemes](#other-schemes-on-the-same-ledger) |
+| `tolmol.outlet` | Registry wallet | Registry wallet | readonly, permissionlessExtension | 180 days | same JSON as a shop. A school (school meals) or gram panchayat (MGNREGA wages), see [Other schemes](#tolmoloutlet-schools-and-gram-panchayats-other-schemes-on-the-same-ledger) |
 | `tolmol.report` | The reporter's own device wallet | `0x000000000000000000000000000000000000dEaD` (burn) | readonly; permissionlessExtension unless the reporter opts out | **reporter chooses 30, 90 (default) or 180 days**; extended by corroboration if allowed (see below) | empty |
 | `tolmol.witness` | A different device wallet | burn address | readonly, permissionlessExtension | Same deadline as its report | empty |
 | `tolmol.correction` | The report's own device wallet (honoured only then) | burn address | readonly, permissionlessExtension | until the report's `createdAt` + 365 days | empty |
