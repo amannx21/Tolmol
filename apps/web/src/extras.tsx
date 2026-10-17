@@ -29,7 +29,7 @@ import {
 } from "tolmol-sdk"
 import { shopReports, shopWitnesses } from "./reads"
 import { key as keyAttr } from "@arkiv-network/sdk/attr"
-import { newIdentity, reader, rpcSetting, setRpc } from "./arkiv"
+import { forgetThisPhone, newIdentity, reader, rpcSetting, setRpc } from "./arkiv"
 import { usePrefs } from "./prefs"
 import { useLang, type Key } from "./i18n"
 import { ErrorBox } from "./ui"
@@ -233,6 +233,7 @@ export function Settings() {
   const [http, setHttp] = useState(rpcSetting.http ?? "")
   const [ws, setWs] = useState(rpcSetting.ws ?? "")
   const [confirmNewId, setConfirmNewId] = useState(false)
+  const [confirmForget, setConfirmForget] = useState(false)
   const [prefs, setPrefs] = usePrefs()
   return (
     <section class="card">
@@ -265,6 +266,24 @@ export function Settings() {
       ) : (
         <button class="secondary" onClick={() => setConfirmNewId(true)}>
           <ActionIcon name="id" />{t("newId")}
+        </button>
+      )}
+      <h3>{t("forgetTitle")}</h3>
+      <p class="small">{t("forgetHelp")}</p>
+      {confirmForget ? (
+        <div class="row wrap">
+          <button onClick={() => void forgetThisPhone()}>
+            <ActionIcon name="shield" />
+            {t("forgetConfirm")}
+          </button>
+          <button class="secondary" onClick={() => setConfirmForget(false)}>
+            {t("back")}
+          </button>
+        </div>
+      ) : (
+        <button class="secondary" onClick={() => setConfirmForget(true)}>
+          <ActionIcon name="shield" />
+          {t("forgetTitle")}
         </button>
       )}
       <h3>{t("mirrorLink")}</h3>

@@ -106,6 +106,30 @@ export function devicePrivateKey(): `0x${string}` | null {
  * Privacy: start a fresh anonymous identity. The old key is kept on this phone only (so its reports can still be
  * withdrawn from here), but new reports are signed by a new key and are not linked to the old ones on chain.
  */
+/**
+ * Removes every trace of Tolmol from this phone's browser storage: this phone's IDs (current, retired, one-time and per
+ * report), reports still waiting to be sent, proof codes, settings and saved copies of public data, plus the offline
+ * app copy. Every Tolmol item is named `tolmol.…`. Records already on Arkiv are untouched: still public and sealed.
+ */
+export async function forgetThisPhone() {
+  for (const get of [() => localStorage, () => sessionStorage]) {
+    try {
+      const store = get()
+      for (const k of Object.keys(store)) if (k.startsWith("tolmol.")) store.removeItem(k)
+    } catch {
+      /* storage unavailable: nothing was kept there */
+    }
+  }
+  try {
+    for (const k of await caches.keys()) if (k.startsWith("tolmol-")) await caches.delete(k)
+    for (const r of (await navigator.serviceWorker?.getRegistrations()) ?? []) await r.unregister()
+  } catch {
+    /* no offline copy on this phone */
+  }
+  // Leave for a blank page: reopening Tolmol here would make a new ID at once, and someone checking the phone would see it.
+  location.replace("about:blank")
+}
+
 export function newIdentity() {
   try {
     const old = localStorage.getItem(STORAGE_KEY)
