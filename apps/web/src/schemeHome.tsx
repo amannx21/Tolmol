@@ -67,7 +67,7 @@ function ModeChoice() {
           <strong>{t("modeEasy")}</strong>
           <span class="small">{t("modeEasyHelp")}</span>
         </button>
-        <button class="big-choice" onClick={() => setPrefs({ mode: "full", voice: false, chosen: true })}>
+        <button class="big-choice" onClick={() => setPrefs({ mode: "full", chosen: true })}>
           <span class="icon" aria-hidden="true">📊</span>
           <strong>{t("modeFull")}</strong>
           <span class="small">{t("modeFullHelp")}</span>

@@ -5,7 +5,7 @@ import { device, MIN_WRITE_WEI, reader, requestGas, short, useBalance } from "./
 import { outletKey, useLang } from "./i18n"
 import { OperatorBanner, useOperator } from "./operatorBanner"
 import { usePrefs } from "./prefs"
-import { stopSpeaking } from "./speak"
+import { speak, stopSpeaking } from "./speak"
 import { PhoneVerification } from "./verified"
 import type { Route } from "./router"
 import { Mark } from "./Identity"
@@ -44,7 +44,7 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
         <div class="top-actions">
           <button
             class="lang"
-            onClick={() => setPrefs({ mode: prefs.mode === "easy" ? "full" : "easy", chosen: true })}
+            onClick={() => setPrefs(prefs.mode === "easy" ? { mode: "full", chosen: true } : { mode: "easy", voice: true, chosen: true })}
             aria-label={`${t("switchMode")}: ${prefs.mode === "easy" ? t("modeFull") : t("modeEasy")}`}
           >
             {prefs.mode === "easy" ? t("modeFull") : t("modeEasy")}
@@ -68,6 +68,7 @@ export function Layout({ route, children }: { route: Route; children: ComponentC
             class="voice"
             onClick={() => {
               if (prefs.voice) stopSpeaking()
+              else speak(t("voiceOnSay"), lang) // says what the button does, so nobody wonders
               setPrefs({ voice: !prefs.voice })
             }}
           >

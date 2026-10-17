@@ -4,7 +4,7 @@ import { useEffect, useState } from "preact/hooks"
 
 export type Mode = "easy" | "full"
 export type Theme = "light" | "dark"
-export type Prefs = { mode: Mode; voice: boolean; myShop: string | null; chosen: boolean; separateIds: boolean; theme: Theme }
+export type Prefs = { mode: Mode; voice: boolean; myShop: string | null; chosen: boolean; separateIds: boolean; theme: Theme; voiceOnce?: boolean }
 
 const KEY = "tolmol.prefs.v1"
 const DEFAULTS: Prefs = { mode: "easy", voice: true, myShop: null, chosen: false, separateIds: false, theme: "light" }
@@ -12,7 +12,19 @@ const listeners = new Set<(p: Prefs) => void>()
 
 function load(): Prefs {
   try {
-    return { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY) ?? "{}") as Partial<Prefs>) }
+    const p: Prefs = { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(KEY) ?? "{}") as Partial<Prefs>) }
+    // Read-aloud is on by default. Choosing "Full" used to switch it off for good, so it is switched back on once for
+    // every phone; after that, the person's own choice is kept.
+    if (!p.voiceOnce) {
+      p.voice = true
+      p.voiceOnce = true
+      try {
+        localStorage.setItem(KEY, JSON.stringify(p))
+      } catch {
+        /* private mode */
+      }
+    }
+    return p
   } catch {
     return { ...DEFAULTS }
   }

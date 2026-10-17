@@ -38,7 +38,7 @@ function moreVoices(): Promise<void> {
 }
 
 /** The voice list, waiting briefly for it when the browser has not filled it in yet. */
-function voicesReady(): Promise<void> {
+function voicesReady(ms = 1500): Promise<void> {
   if (voices.length) return Promise.resolve()
   return new Promise((done) => {
     const synth = window.speechSynthesis
@@ -48,7 +48,7 @@ function voicesReady(): Promise<void> {
       done()
     }
     synth.addEventListener?.("voiceschanged", finish)
-    setTimeout(finish, 1500)
+    setTimeout(finish, ms)
   })
 }
 
@@ -164,7 +164,12 @@ export function speak(text: string, lang: Lang) {
   // Speak at once when possible (some phones only allow speech straight from a tap); otherwise wait for the voices,
   // and leave Chrome a moment after a cancel so it does not drop the new speech.
   if (!voices.length && !onPhone) void voicesReady().then(say)
-  else if (busy && !onPhone) setTimeout(say, 80)
+  // First tap on a phone: many Android phones drop speech asked for before their engine has listed its voices, so
+  // wait for that once (at most 0.8 s). After the first time the list is there and speech starts at once.
+  else if (onPhone && !window.speechSynthesis.getVoices().length) {
+    voices = []
+    void voicesReady(800).then(say)
+  } else if (busy && !onPhone) setTimeout(say, 80)
   else say()
 }
 
@@ -172,3 +177,6 @@ export const stopSpeaking = () => {
   latest++
   if (canSpeak()) window.speechSynthesis.cancel()
 }
+
+// Going to another page stops what the last page was reading, instead of it reading on over the next page.
+if (canSpeak()) window.addEventListener("hashchange", stopSpeaking)

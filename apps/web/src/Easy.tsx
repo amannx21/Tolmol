@@ -8,7 +8,7 @@ import { STATE_NAMES, useFmt, useLang, type Key } from "./i18n"
 import { getPrefs, setPrefs, usePrefs } from "./prefs"
 import { enqueueReport, getSendLater, isOffline } from "./queue"
 import { go } from "./router"
-import { speak } from "./speak"
+import { speak, stopSpeaking } from "./speak"
 import { IssueList, IssuePicker, NextSteps, PublicPreview, QueuedNote, SENSITIVE_ISSUES } from "./extras"
 import { ErrorBox, Loading, loadShops } from "./ui"
 import { HomeFlow } from "./HomeFlow"
@@ -25,6 +25,8 @@ export function Say({ text }: { text: string }) {
   useEffect(() => {
     if (prefs.voice) speak(text, lang)
   }, [text, lang, prefs.voice])
+  // Leaving this question stops its voice (the next question, if any, starts its own).
+  useEffect(() => () => stopSpeaking(), [])
   return (
     <button class="listen" type="button" onClick={() => speak(text, lang)}>
       <ActionIcon name="listen" />{t("listen")}
@@ -44,7 +46,7 @@ export function Welcome() {
           <strong>{t("modeEasy")}</strong>
           <span class="small">{t("modeEasyHelp")}</span>
         </button>
-        <button class="big-choice" onClick={() => setPrefs({ mode: "full", voice: false, chosen: true })}>
+        <button class="big-choice" onClick={() => setPrefs({ mode: "full", chosen: true })}>
           <span class="icon" aria-hidden="true">📊</span>
           <strong>{t("modeFull")}</strong>
           <span class="small">{t("modeFullHelp")}</span>
