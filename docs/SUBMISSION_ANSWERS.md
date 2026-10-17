@@ -75,17 +75,27 @@ department's registry key instead of ours, which the app already supports (`#/tr
 
 ### Why this pillar? (one paragraph per track, if the form asks)
 
-- **Censorship Resistance.** *Who is censored today:* a card holder, parent or worker whose complaint disappears when a
-  portal, a WhatsApp admin, the dealer's friends or the app's own host remove it, and the auditor who never sees the
-  pattern. *From day one:* every report, confirmation, answer, board and official action is sealed on Arkiv (readonly,
-  handed to `0x…dEaD` in the creating batch): nobody, including us, can edit or delete it. *The pillar's ask, "someone
-  outside the team can read and query the data from Arkiv without the team's backend":* there is no backend to remove.
-  `#/raw` gives every query the app makes as curl, JavaScript or Python; the README's curl, a standard-library Python
-  reader, the one-file `mirror.html` (any Arkiv RPC) and `examples/build-on-tolmol.mjs` all read Arkiv directly and
-  apply the same rules. The site runs on two hosts, takes any Arkiv endpoint, works offline, shows a labelled saved copy
-  if the read budget runs out, and anyone can switch the trusted registry. **Even filing does not need us:** with the
-  CLI, anyone can file or confirm a report from their own computer with gas from the public faucet, so blocking our
-  site or our relayer does not stop a complaint.
+- **Censorship Resistance.** *Who is silenced today:* the card holder, parent or worker whose complaint about the
+  person they depend on every month is lost on a portal, deleted by a WhatsApp admin, or quietly dropped by whoever
+  runs the app, so nobody ever sees the pattern at a shop or across a district. *A bad day for one complaint, and what
+  happens on Tolmol:*
+  1. **The dealer pressures her to take it back.** Nobody can delete it, not even her: the report was sealed as it was
+     written (readonly, handed to `0x…dEaD` in the same batch). Only her own withdrawal can mark it, and that is public
+     too.
+  2. **Someone asks us to remove it.** We cannot. Nobody holds a key that could delete it, including us.
+  3. **Our website is blocked or taken down.** The same app runs on a second host (GitHub Pages); the one-file
+     `mirror.html` reads every record from any Arkiv server; the README's `curl` and a 25-line script
+     (`examples/build-on-tolmol.mjs`) read them with no Tolmol server at all.
+  4. **Our relayer (free gas) is blocked.** Filing still works: `tolmol submit` signs on her own or a helper's computer,
+     with gas from Arkiv's public faucet. A report filed that way:
+     https://tiramisu.explorer.arkiv.network/entity/0x046b33122784cbf97bd5ea221d780bd1d01a9ec7c6f4a2c55ac7d0a0040c047c
+  5. **Someone tries to change whose "verified" counts.** Every trust decision starts from one registry address,
+     checked against this repository; every page warns while a different one is in use, and a state or NGO can point
+     the app at its own (`#/trust`).
+
+  *The pillar's ask, "someone outside the team can read and query the data from Arkiv without the team's backend":*
+  there is no backend to remove, and `#/raw` lists every query the app makes as curl, JavaScript or Python. *Honest
+  limits:* Tiramisu is a testnet, and a person who cannot use a terminal still needs our relayer or the faucet for gas.
 - **Open Source.** *Who is locked out today:* civic groups, journalists and other states, who need a separate permission
   and integration for each portal's data. *From day one, and the pillar's ask, "another team can build on the dataset
   or tool without asking permission, from a documented data contract":* MIT; `arkiv/schema.md` and all 16 record types
