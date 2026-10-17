@@ -6,7 +6,7 @@ import { usePrefs } from "./prefs"
 import { About, Home } from "./pages"
 import { ReportForm } from "./ReportForm"
 import { ReportView } from "./ReportView"
-import { startQueue, useQueueCount } from "./queue"
+import { nextDelayed, sendWaitingNow, startQueue, useQueueChanges, useQueueCount } from "./queue"
 import { useVoiceMissing } from "./speak"
 import { useRoute } from "./router"
 import { ShopPage } from "./ShopPage"
@@ -39,9 +39,20 @@ import "./theme.css"
 function QueueBanner() {
   const n = useQueueCount()
   const { t } = useLang()
+  // A report held for later is shown on every page with "Send now", so it cannot be forgotten on the phone.
+  useQueueChanges() // "Send now" changes the queue without changing the count
+  const held = n > 0 && nextDelayed() !== null
   return n > 0 ? (
     <p class="queue" role="status">
       {n} {t("queuedCount")}
+      {held && (
+        <>
+          {" · "}
+          <button type="button" class="linkish" onClick={sendWaitingNow}>
+            {t("sendNow")}
+          </button>
+        </>
+      )}
     </p>
   ) : null
 }

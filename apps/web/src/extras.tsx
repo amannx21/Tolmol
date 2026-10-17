@@ -3,7 +3,7 @@ import { ActionIcon } from "./ActionIcon"
 // (helpline, grievance letter, RTI), the "what is public" panel, settings (server, new ID, offline reader)
 // and the evidence-file checker.
 import { useEffect, useState } from "preact/hooks"
-import { nextDelayed, useSendLater } from "./queue"
+import { nextDelayed, sendWaitingNow, useQueueChanges, useQueueCount, useSendLater } from "./queue"
 import { str } from "@arkiv-network/sdk/attr"
 import { eq, or } from "@arkiv-network/sdk/query"
 import {
@@ -470,12 +470,9 @@ export function PublicPreview({ separateId, issues, scheme = "pds", sensitive, s
   const pds = scheme === "pds"
   const others = useReporterCount(shopId, month)
   const few = others !== null && others < FEW_REPORTERS
-  // Send at a random later time: on by default when the report is risky or few people reported here (can be switched off).
+  // Send at a random later time: only when the person ticks it. People open Tolmol about once a month, and a report
+  // held for later goes out only when Tolmol is open, so it is never switched on by itself.
   const [later, setLater] = useSendLater()
-  const [touched, setTouched] = useState(false)
-  useEffect(() => {
-    if (!touched) setLater(risky || few)
-  }, [risky, few, touched])
   useEffect(() => () => setLater(false), [])
   return (
     <section class="public-preview" aria-labelledby="public-preview-title">
@@ -495,9 +492,9 @@ export function PublicPreview({ separateId, issues, scheme = "pds", sensitive, s
       {separateId && risky && <p class="small notice">{t(pds ? "previewSensitive" : "previewSensitiveScheme")}</p>}
       {few && <p class="small notice">{t("previewFewReporters", { n: others ?? 0 })}</p>}
       <label class="inline check">
-        <input type="checkbox" checked={later} onChange={(e) => (setTouched(true), setLater(e.currentTarget.checked))} /> {t("sendLaterLabel")}
+        <input type="checkbox" checked={later} onChange={(e) => setLater(e.currentTarget.checked)} /> {t("sendLaterLabel")}
       </label>
-      <p class="small muted">{t("sendLaterHelp")}</p>
+      <p class={later ? "small notice" : "small muted"}>{t("sendLaterHelp")}</p>
       <p class="small muted">{t("previewNoEncrypt")}</p>
     </section>
   )
@@ -523,9 +520,21 @@ export function SchemeIssuePicker({ scheme, value, onChange, only, big = true }:
   )
 }
 
-/** After saving offline or with "send at a random time": what will happen, in plain words. */
+/** After saving offline or with "send later": what will happen, in plain words, and "Send now" for a held report. */
 export function QueuedNote() {
   const { t } = useLang()
+  const waiting = useQueueCount()
+  useQueueChanges() // re-renders when the report is released or goes out
   const at = nextDelayed()
-  return at ? <>{t("queuedLater", { time: new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) })}</> : <>{t("queued")}</>
+  if (waiting === 0) return <>{t("queueAllSent")}</>
+  if (!at) return <>{t(navigator.onLine ? "queueSending" : "queued")}</>
+  const time = new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  return (
+    <>
+      {t("queuedLater", { time })}{" "}
+      <button type="button" class="linkish" onClick={sendWaitingNow}>
+        {t("sendNow")}
+      </button>
+    </>
+  )
 }
