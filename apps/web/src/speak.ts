@@ -55,13 +55,23 @@ function pickVoice(lang: Lang): SpeechSynthesisVoice | null {
   return voices.filter((v) => tag(v).startsWith(want)).sort((a, b) => rank(a) - rank(b))[0] ?? null
 }
 
-/** Sentence-sized parts, so Chrome's online voices never reach their 15-second cut-off. */
-function parts(text: string): string[] {
+/**
+ * What to hand the voice in one go. A voice on the device reads the whole text at once, as a person would: splitting
+ * makes it stop and start after every sentence. Chrome's online voices stop after about 15 seconds, so for them the
+ * text goes in chunks of a few sentences, split only where a sentence really ends (a full stop followed by a space,
+ * never inside "37.6" or "Rs."-style numbers).
+ */
+function parts(text: string, voice: SpeechSynthesisVoice | null): string[] {
+  if (voice?.localService) return [text]
   // (No lookbehind: iPhones before iOS 16.4 cannot parse it, and one such pattern stops the whole app.)
-  return (text.match(/[^।.!?]+[।.!?]*/g) ?? [text])
-    .flatMap((s) => (s.length > 220 ? (s.match(/[^,;:]+[,;:]*/g) ?? [s]) : [s]))
-    .map((s) => s.trim())
-    .filter(Boolean)
+  const sentences = text.replace(/([।.!?])\s+/g, "$1\u0001").split("\u0001")
+  const chunks: string[] = []
+  for (const s of sentences) {
+    const last = chunks.length - 1
+    if (last >= 0 && chunks[last]!.length + s.length < 180) chunks[last] += " " + s
+    else chunks.push(s)
+  }
+  return chunks.map((c) => c.trim()).filter(Boolean)
 }
 
 // "This browser has no Hindi voice": shown on screen until something is read aloud successfully.
@@ -107,7 +117,7 @@ export function speak(text: string, lang: Lang) {
     setMissing(false)
     try {
       synth.resume() // Chrome can be left paused
-      for (const part of parts(text)) {
+      for (const part of parts(text, voice)) {
         const u = new SpeechSynthesisUtterance(part)
         u.lang = voice?.lang ?? (lang === "hi" ? "hi-IN" : "en-IN")
         if (voice) u.voice = voice
