@@ -385,7 +385,7 @@ report's confirmers are never counted, and one device counts once.
 With "separate anonymous ID" on, a phone's confirmations and full-share records come from one ID per outlet (derived on
 the phone from its key), so they cannot be linked across outlets.
 
-## Other schemes on the same ledger
+## `tolmol.outlet` (schools and gram panchayats): other schemes on the same ledger
 
 The evidence model fits any scheme where a person is owed a fixed amount at a known place. Since 2026-10-16 the same
 ledger also records **school meals** (PM POSHAN, at a school) and **MGNREGA wages** (at a gram panchayat). Nothing in
@@ -481,6 +481,7 @@ Tiramisu blocks are 2 s, so 1 day = 43,200 blocks. Durations use whole days only
 | `tolmol.response`, `tolmol.followup` | until report `createdAt` + 365 days | outlive the report they are about |
 | `tolmol.action` | 365 days | a year of a shop's enforcement history |
 | `tolmol.stock` | 365 days | a year of a shop's boards, to compare with a year of reports |
+| `tolmol.board` | 365 days | a year of a school's meal boards or a panchayat's work boards, like a shop's stock boards |
 | `tolmol.outlet` | 180 days, any wallet can extend | like a shop |
 | `tolmol.delegation` | the window (1 to 30 days) + 365 days | findings made in time stay attributable after the window |
 | `tolmol.officekey` | 365 days | an official turns notes on again yearly; a new key replaces an old one |
