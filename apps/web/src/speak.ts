@@ -11,7 +11,24 @@ export const canSpeak = () => typeof window !== "undefined" && "speechSynthesis"
 let voices: SpeechSynthesisVoice[] = []
 if (canSpeak()) {
   voices = window.speechSynthesis.getVoices()
-  window.speechSynthesis.addEventListener?.("voiceschanged", () => (voices = window.speechSynthesis.getVoices()))
+  window.speechSynthesis.addEventListener?.("voiceschanged", () => {
+    voices = window.speechSynthesis.getVoices()
+    if (missing && pickVoice("hi")) setMissing(false) // a Hindi voice arrived after all
+  })
+}
+
+/** Chrome lists its device voices first and adds its online voices (Google हिन्दी among them) a moment later. */
+function moreVoices(): Promise<void> {
+  return new Promise((done) => {
+    const synth = window.speechSynthesis
+    const finish = () => {
+      voices = synth.getVoices()
+      synth.removeEventListener?.("voiceschanged", finish)
+      done()
+    }
+    synth.addEventListener?.("voiceschanged", finish)
+    setTimeout(finish, 2000)
+  })
 }
 
 /** The voice list, waiting briefly for it when the browser has not filled it in yet. */
@@ -72,17 +89,27 @@ export function speak(text: string, lang: Lang) {
   const synth = window.speechSynthesis
   const busy = synth.speaking || synth.pending
   synth.cancel()
+  let waited = false
   const say = () => {
     if (mine !== latest) return // a newer request replaced this one
     const voice = pickVoice(lang)
-    // Hindi text through an English voice is silence or gibberish: say so instead.
-    if (!voice && lang === "hi") return setMissing(true)
+    // The browser lists voices and none is Hindi: an English voice would read Hindi as silence or gibberish, so say so,
+    // after giving the browser a moment to add its online voices. An empty list proves nothing: some Android browsers
+    // never fill it in, yet speak Hindi when asked by language.
+    if (!voice && lang === "hi" && voices.length > 0) {
+      if (!waited) {
+        waited = true
+        void moreVoices().then(say)
+        return
+      }
+      return setMissing(true)
+    }
     setMissing(false)
     try {
       synth.resume() // Chrome can be left paused
       for (const part of parts(text)) {
         const u = new SpeechSynthesisUtterance(part)
-        u.lang = voice?.lang ?? "en-IN"
+        u.lang = voice?.lang ?? (lang === "hi" ? "hi-IN" : "en-IN")
         if (voice) u.voice = voice
         u.rate = 0.9
         synth.speak(u)
