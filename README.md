@@ -54,8 +54,10 @@ it. Nobody sees the pattern across a shop or a district. Sources: [`docs/SOURCES
 
 1. Tap **मुझे कम राशन मिला** ("I got less ration"), or **मिड-डे मील की समस्या** ("mid-day meal problem") or
    **मनरेगा मज़दूरी की समस्या** ("MGNREGA wage problem"). The phone **reads each question aloud in Hindi**
-   with its own built-in voice, so nothing is sent to a server. With no internet it still speaks if the phone has the
-   Hindi voice downloaded (Android: Settings → Text-to-speech). 🔊 सुनें ("Listen") replays a question.
+   with its own built-in voice (on Android, the phone's text-to-speech, which works with no internet once the Hindi
+   voice is downloaded: Settings → Text-to-speech). On laptops, Chrome and Edge use online voices: the sentence being
+   read, which on the review screen includes the shop and amounts, goes to Google or Microsoft to be spoken. No name or
+   card number is ever in it, and "Read aloud: off" stops it. 🔊 सुनें ("Listen") replays a question.
 2. Answer with big buttons, pictures and **+ / −** steps: which shop, which month, how many people on the card, how
    much you got. No typing, no name, no card number, no account.
 3. Tap what else went wrong: asked to pay, fingerprint failed, card kept, children seated apart, wages late. These are
@@ -231,7 +233,7 @@ card, name or phone number.
 
 ## Licence and credits
 
-[MIT](LICENSE), for the code and docs. The photos and illustrations in the app are demo placeholders that belong to
-their owners and are not covered by MIT; a real deployment would use original or licensed images
-([`docs/PHOTO-CREDITS.md`](docs/PHOTO-CREDITS.md)). Sources for every figure and rule: [`docs/SOURCES.md`](docs/SOURCES.md). Built 13 to 18 October 2026 for the Arkiv Global Tour Stop, with no
+[MIT](LICENSE), for the code and docs. The photos and illustrations in the app are demo placeholders, credited in
+[`docs/PHOTO-CREDITS.md`](docs/PHOTO-CREDITS.md): two are free-licence photos (CC BY 2.0 and CC0), the rest belong to
+their owners and are not covered by MIT; a real deployment would use original or licensed images. Sources for every figure and rule: [`docs/SOURCES.md`](docs/SOURCES.md). Built 13 to 18 October 2026 for the Arkiv Global Tour Stop, with no
 earlier code ([`docs/BASELINE.md`](docs/BASELINE.md)).
