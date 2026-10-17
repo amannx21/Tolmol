@@ -13,7 +13,13 @@ if (canSpeak()) {
   voices = window.speechSynthesis.getVoices()
   window.speechSynthesis.addEventListener?.("voiceschanged", () => {
     voices = window.speechSynthesis.getVoices()
-    if (missing && pickVoice("hi")) setMissing(false) // a Hindi voice arrived after all
+    if (missing && pickVoice("hi")) {
+      // A Hindi voice arrived after all: clear the note and read what the person last asked for, if it was just now.
+      setMissing(false)
+      const p = pendingHindi
+      pendingHindi = null
+      if (p && Date.now() - p.at < 15_000) speak(p.text, "hi")
+    }
   })
 }
 
@@ -27,7 +33,7 @@ function moreVoices(): Promise<void> {
       done()
     }
     synth.addEventListener?.("voiceschanged", finish)
-    setTimeout(finish, 2000)
+    setTimeout(finish, 4000)
   })
 }
 
@@ -46,6 +52,17 @@ function voicesReady(): Promise<void> {
   })
 }
 
+/**
+ * Phones read aloud well with their own speech engine, so on a phone Tolmol keeps the simple choice it always made:
+ * the phone's first voice of the language, the whole text in one go, no waiting. The careful choosing below is for
+ * laptop browsers, where the voice list arrives late and may hold no Hindi voice at all.
+ */
+const onPhone = typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+function phoneVoice(lang: Lang): SpeechSynthesisVoice | null {
+  const want = lang === "hi" ? "hi" : "en-in"
+  return window.speechSynthesis.getVoices().find((v) => (v.lang ?? "").toLowerCase().replace("_", "-").startsWith(want)) ?? null
+}
+
 /** The best voice for the language: the Indian regional voice first (hi-IN, en-IN), and one on the device before an
  *  online one (it also works without internet). */
 function pickVoice(lang: Lang): SpeechSynthesisVoice | null {
@@ -62,7 +79,7 @@ function pickVoice(lang: Lang): SpeechSynthesisVoice | null {
  * never inside "37.6" or "Rs."-style numbers).
  */
 function parts(text: string, voice: SpeechSynthesisVoice | null): string[] {
-  if (voice?.localService) return [text]
+  if (onPhone || voice?.localService) return [text]
   // (No lookbehind: iPhones before iOS 16.4 cannot parse it, and one such pattern stops the whole app.)
   const sentences = text.replace(/([।.!?])\s+/g, "$1\u0001").split("\u0001")
   const chunks: string[] = []
@@ -76,6 +93,8 @@ function parts(text: string, voice: SpeechSynthesisVoice | null): string[] {
 
 // "This browser has no Hindi voice": shown on screen until something is read aloud successfully.
 let missing = false
+// What the person asked to hear while no Hindi voice was there yet (read as soon as one arrives).
+let pendingHindi: { text: string; at: number } | null = null
 const listeners = new Set<(v: boolean) => void>()
 function setMissing(v: boolean) {
   if (v === missing) return
@@ -114,21 +133,23 @@ export function speak(text: string, lang: Lang) {
   let waited = false
   const say = () => {
     if (mine !== latest) return // a newer request replaced this one
-    const voice = pickVoice(lang)
+    const voice = onPhone ? phoneVoice(lang) : pickVoice(lang)
     // The browser lists voices and none is Hindi: an English voice would read Hindi as silence or gibberish, so say so,
-    // after giving the browser a moment to add its online voices. An empty list proves nothing: some Android browsers
-    // never fill it in, yet speak Hindi when asked by language.
-    if (!voice && lang === "hi" && voices.length > 0) {
-      if (!waited) {
+    // after giving a laptop browser a moment to add its online voices. An empty list proves nothing: some Android
+    // browsers never fill it in, yet speak Hindi when asked by language.
+    if (!voice && lang === "hi" && (onPhone ? window.speechSynthesis.getVoices().length : voices.length) > 0) {
+      if (!waited && !onPhone) {
         waited = true
         void moreVoices().then(say)
         return
       }
+      pendingHindi = { text, at: Date.now() }
       return setMissing(true)
     }
     setMissing(false)
+    pendingHindi = null
     try {
-      synth.resume() // Chrome can be left paused
+      if (!onPhone) synth.resume() // laptop Chrome can be left paused
       for (const part of parts(text, voice)) {
         const u = new SpeechSynthesisUtterance(part)
         u.lang = voice?.lang ?? (lang === "hi" ? "hi-IN" : "en-IN")
@@ -142,8 +163,8 @@ export function speak(text: string, lang: Lang) {
   }
   // Speak at once when possible (some phones only allow speech straight from a tap); otherwise wait for the voices,
   // and leave Chrome a moment after a cancel so it does not drop the new speech.
-  if (!voices.length) void voicesReady().then(say)
-  else if (busy) setTimeout(say, 80)
+  if (!voices.length && !onPhone) void voicesReady().then(say)
+  else if (busy && !onPhone) setTimeout(say, 80)
   else say()
 }
 
