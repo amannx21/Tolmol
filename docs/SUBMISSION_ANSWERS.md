@@ -110,9 +110,9 @@ phones, sealed on Arkiv: [1](https://tiramisu.explorer.arkiv.network/entity/0xeb
     public muster roll cannot point to one worker.
   - **Risky reports cannot be linked to you.** A threat, a kept card, a bribe: a fresh anonymous ID is used by itself.
     Confirmations use a different ID for every shop.
-  - **Say what you cannot say in public.** A note to the district official is encrypted on the phone (standard ECIES;
-    a test proves OpenSSL itself opens it) to a key that must belong to that official. Everyone else sees scrambled
-    bytes. The box refuses phone, Aadhaar and card numbers, because encrypted text stays in chain history.
+  - **Say what you cannot say in public.** A note to the district official is locked on the phone with standard,
+    tested encryption, so only that official's phone can open it; everyone else sees scrambled bytes. The box refuses
+    phone, Aadhaar and card numbers, because even locked text stays in the chain's history.
   - **You stay in control:** choose how long a report lives (30, 90 or 180 days); "Remove Tolmol from this phone"
     deletes every key and setting in one tap if someone may check the phone; optionally send a report later, at a
     random time.
@@ -213,29 +213,27 @@ phones, sealed on Arkiv: [1](https://tiramisu.explorer.arkiv.network/entity/0xeb
    - `0x357A30b18BF4020F243186d76dBdD44b830119e2`: relayer, sends test-GLM drips only, never creates Tolmol entities
    - Real visitors' phones create their own wallets in the browser: read `creator` from any query
 7. **Schema** \*: https://github.com/amannx21/Tolmol/blob/submission-v1/arkiv/schema.md
-8. **How judges can reproduce** \* (app: https://tolmol-web-kappa.vercel.app). *Note:* Arkiv gives each anonymous
-   visitor about 100 queries an hour; the footer shows how many are left, and pages fall back to a labelled saved copy
-   if they run out. These seven steps fit well inside it:
-   1. **Without our app:** run the curl in the README, open `#/raw` and copy any query as curl, JavaScript or Python, or
-      run `node examples/build-on-tolmol.mjs BR`. Every report has `owner = 0x…dEaD`.
-   2. **Report in Hindi** (`#/report`): each question read aloud, big + / − buttons, then "what becomes public". On your
-      own report at a Gaya outlet, the private-note box encrypts to the Gaya official; its explorer link shows only
-      ciphertext.
-   3. **`#/shop/SYN-BR-0042`:** the stock board against card holders' reports ("about 752 kg unaccounted for"), "2
-      answers or follow-ups ignored" (planted fakes, written by strangers' wallets), the score card, officials' actions,
-      and "Show as it was at block".
-   4. **`#/track?state=BR`:** the demo inspector's "no issue found" at SYN-BR-0002 flagged "contradicted by later
-      reports"; on that shop's page, "Complain about this finding" drafts the letter to the State Food Commission.
-   5. **The lone claim at SYN-BR-0004** (`#/r/0xc4e04f15b6d787d8c1e434afd9312d47c2b70993db0c18703e93eabcc7ac7fe3`):
-      "3 others at this outlet say they got their full share", "Contradicted by 3 others".
-   6. **`#/public`:** a real report and a real private note exactly as a stranger sees them, and the latest daily audit
-      (PASS).
-   7. **`#/test-cards` → "Who are you?":** pick a dealer licence; the phone gets "My shop" and the reports waiting first.
+8. **How judges can reproduce** \* (app: https://tolmol-web-kappa.vercel.app). *Note:* Arkiv lets each network make about 100 free reads an
+   hour; the footer of every page shows how many are left. These seven steps fit well inside it.
+   1. **Read the data without our app:** run the `curl` in the README, or open https://tolmol-web-kappa.vercel.app/#/raw and copy any query the app
+      makes. Every report's owner is `0x…dEaD`: nobody can delete it.
+   2. **Report in Hindi:** https://tolmol-web-kappa.vercel.app/#/report. Each question is read aloud; answer with big buttons and + / −; before
+      sending you see exactly what becomes public.
+   3. **A ration shop's record:** https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-0042. The dealer's stock board against the reports ("about
+      752 kg unaccounted for"), "2 answers or follow-ups ignored" (fakes written by strangers' wallets), officials'
+      actions, and "Show as it was at block N".
+   4. **Who checks the checkers:** https://tolmol-web-kappa.vercel.app/#/track?state=BR. The demo inspector's "no issue found" at SYN-BR-0002 is
+      flagged "contradicted by later reports".
+   5. **A complaint others contradict:** https://tolmol-web-kappa.vercel.app/#/r/0xc4e04f15b6d787d8c1e434afd9312d47c2b70993db0c18703e93eabcc7ac7fe3
+      shows "3 others at this outlet say they got their full share" and "Contradicted by 3 others".
+   6. **What a stranger sees:** https://tolmol-web-kappa.vercel.app/#/public. A real report and a real private note as anyone sees them, and the
+      latest daily audit (PASS).
+   7. **Be the dealer:** https://tolmol-web-kappa.vercel.app/#/test-cards → "Who are you?" → a dealer licence. The phone gets "My shop", with the
+      reports waiting for an answer first.
 
-   More, if you have time: the mid-day meal and MGNREGA bar under the menu (`#/shop/SYN-BR-5001`, `#/shop/SYN-BR-7001`),
-   `#/proof` (prove a report is yours), `#/verify` ("Tamper with a copy and check it"), `#/trust`. From a clone:
-   `npm ci && npm test` (121 tests), `node --import tsx scripts/privacy-audit.ts` (PASS), and
-   `npm run tolmol -- submit …` to file without our site (README, "Report even if our site is blocked").
+   More if you have time: mid-day meals https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-5001, MGNREGA https://tolmol-web-kappa.vercel.app/#/shop/SYN-BR-7001, and
+   https://tolmol-web-kappa.vercel.app/#/proof (prove a report is yours). From a clone: `npm ci && npm test` (121 tests), and
+   `npm run tolmol -- submit …` files a report without our website.
 9. **Pre-existing work** \*: None. Baseline commit `0902494` contains only GitHub's generated LICENSE and .gitignore.
 10. **Arkiv surfaces used** \*: TypeScript SDK, Direct JSON-RPC, WebSocket events, Docs, Hub, Faucet, Block Explorer.
     (Arkiv skills: read as reference, not installed.) See `docs/SURFACES_USED.md`.
