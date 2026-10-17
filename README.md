@@ -9,7 +9,7 @@
 **A complaint anyone can make: tap, listen, done.** The phone reads every question aloud in Hindi; answers are big
 buttons. No typing, no forms, no sign-up, no app to install.
 
-[Open the app](https://tolmol-web-kappa.vercel.app) · [Backup host](https://amannx21.github.io/Tolmol/) ·
+[Open the app](https://tolmol-web-kappa.vercel.app) · [Demo video](https://youtu.be/e98TA-ygH4M) · [Backup host](https://amannx21.github.io/Tolmol/) ·
 [Data contract](arkiv/schema.md) · [npm: `tolmol-sdk`](https://www.npmjs.com/package/tolmol-sdk) ·
 [One-file reader](https://tolmol-web-kappa.vercel.app/mirror.html)
 
