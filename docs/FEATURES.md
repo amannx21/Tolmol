@@ -80,9 +80,10 @@ The complete feature list and design notes. The short version is the [README](..
    MGNREGA wages are rounded to ₹500 by default, because muster rolls are public and an exact amount could name the
    worker.
 16. **Privacy you can feel.** Before sending, a box shows what becomes public and what stays on the phone. Reports
-   can be held on the phone and sent at a **random time 1 to 6 hours later**, so the moment a report lands cannot be
-   matched to who was at the counter; this switches on by itself for risky reports and for shops where few people have
-   reported this month (which also gets a warning). **"Prove this report is mine"** lets a reporter back their
+   are sent at once; the person can choose to hold one on the phone and send it at a **random time 1 to 6 hours
+   later**, so the moment it lands cannot be matched to who was at the counter. It goes out only while Tolmol is open,
+   so it is never switched on by itself, and a held report shows on every page with **Send now**. Shops where few
+   people have reported this month get a warning. **"Prove this report is mine"** lets a reporter back their
    complaint at a hearing: the official reads out a one-time code, the phone signs it with the key that wrote the
    report, the official checks it against `$creator` (`#/proof`). Nothing new goes public. If someone may check the
    phone, **"Remove Tolmol from this phone"** (About) deletes every key, waiting report and setting, then leaves for a
@@ -255,7 +256,7 @@ text, not even hashed; 16 small attributes; empty payloads; the time rounded to 
 (30, 90 or 180 days) and whether neighbours may extend it, and sees "what becomes public" before sending. **A separate
 anonymous ID per report** (on by default for threats, a kept ration or job card, money or bribes asked, children seated apart, and fake names on the muster roll) is funded by the relayer
 like every fresh wallet, so nobody can link one person's reports, not even through who paid the gas. A random send
-delay of 1 to 6 hours breaks the link to a shop visit; a warning shows when an outlet has few reporters; MGNREGA wages
+delay of 1 to 6 hours, chosen by the person (with Send now on every page while it is held), breaks the link to a shop visit; a warning shows when an outlet has few reporters; MGNREGA wages
 are rounded to ₹500 because muster rolls are public; a hearing proof shows "this report is mine" in person and writes
 nothing; one tap removes every Tolmol key and setting from a phone that may be checked. Letters keep name and card
 number as paper blanks. `scripts/privacy-audit.ts` checks every Tolmol entity on

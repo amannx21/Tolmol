@@ -111,8 +111,9 @@ department's registry key instead of ours, which the app already supports (`#/tr
   numbers, because ciphertext outlives the note in chain history. **Expiry the user controls:** 30, 90 or 180 days,
   and whether neighbours may extend it. *Beyond the ask:* a separate anonymous ID with one tap, switched on by itself for
   the reports a dealer would retaliate against (threats, a kept card, bribes, discrimination), and one ID per outlet for
-  confirmations; a random send delay of 1 to 6 hours, on by itself for those same reports and wherever fewer than 3
-  people have reported the outlet this month; a small-outlet warning; **"Remove Tolmol from this phone"** for someone
+  confirmations; an optional random send delay of 1 to 6 hours (off by default: people open Tolmol about once a
+  month, so a report is sent at once unless they choose, and a held one shows on every page with Send now); a
+  small-outlet warning; **"Remove Tolmol from this phone"** for someone
   whose phone may be checked (every key, waiting report and setting, then a blank tab, so nothing is re-created); a
   hearing proof that writes nothing and can be sent through someone trusted. The audit of every Tolmol entity runs
   daily in public (GitHub Actions, PASS). *Why the amounts stay public, on purpose:* Tolmol protects the person, not
