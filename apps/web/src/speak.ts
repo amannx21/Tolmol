@@ -92,8 +92,20 @@ export function useVoiceMissing(): boolean {
 }
 
 let latest = 0
+/**
+ * Hindi as it should be heard. Several laptop Hindi voices read "20" or "37.6%" in English; Devanagari digits, and
+ * "प्रतिशत" / "रुपये" for % and ₹, are read in Hindi by every Hindi voice. Only what is spoken changes, not the screen.
+ */
+export function spokenHindi(text: string): string {
+  return text
+    .replace(/[0-9]/g, (d) => "०१२३४५६७८९"[Number(d)]!)
+    .replace(/₹\s?([०-९][०-९,.]*)/g, "$1 रुपये")
+    .replace(/%/g, " प्रतिशत")
+}
+
 export function speak(text: string, lang: Lang) {
   if (!text) return
+  if (lang === "hi") text = spokenHindi(text)
   if (!canSpeak()) return setMissing(lang === "hi")
   const mine = ++latest
   const synth = window.speechSynthesis
